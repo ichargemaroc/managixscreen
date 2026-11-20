@@ -8,9 +8,9 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useStore, uid, formatBytes, formatDuration, type Media } from "@/lib/store";
+import { useStore, formatBytes, formatDuration, addMedia, deleteMedia, type Media } from "@/lib/store";
 
-export const Route = createFileRoute("/media")({
+export const Route = createFileRoute("/_authenticated/media")({
   head: () => ({ meta: [
     { title: "Médiathèque — ScreenFlow" },
     { name: "description", content: "Importez et organisez vos photos et vidéos." },
@@ -28,28 +28,42 @@ function readDuration(url: string) {
 }
 
 function MediaPage() {
-  const { media, set } = useStore();
+  const { media, refresh } = useStore();
   const input = useRef<HTMLInputElement>(null);
   const [tab, setTab] = useState("all"); const [q, setQ] = useState(""); const [preview, setPreview] = useState<Media | null>(null);
+  const [uploading, setUploading] = useState(false);
   const list = media.filter((m) => (tab === "all" || m.type === tab) && m.name.toLowerCase().includes(q.toLowerCase()));
 
   async function onFiles(files: FileList | null) {
     if (!files) return;
-    const added: Media[] = [];
-    for (const f of Array.from(files)) {
-      const type = f.type.startsWith("video/") ? "video" : f.type.startsWith("image/") ? "image" : null;
-      if (!type) continue;
-      const url = URL.createObjectURL(f);
-      added.push({ id: uid(), name: f.name, type, size: f.size, url, duration: type === "video" ? await readDuration(url) : null, createdAt: new Date().toISOString() });
+    setUploading(true);
+    let added = 0;
+    try {
+      for (const f of Array.from(files)) {
+        const type = f.type.startsWith("video/") ? "video" : f.type.startsWith("image/") ? "image" : null;
+        if (!type) continue;
+        let duration: number | null = null;
+        if (type === "video") {
+          const url = URL.createObjectURL(f);
+          duration = await readDuration(url);
+          URL.revokeObjectURL(url);
+        }
+        await addMedia(f, type, duration);
+        added++;
+      }
+      refresh();
+      if (added) toast.success(`${added} média(s) ajouté(s)`);
+    } catch {
+      toast.error("L'import a échoué, réessayez.");
+    } finally {
+      setUploading(false);
     }
-    set((s) => ({ ...s, media: [...added, ...s.media] }));
-    if (added.length) toast.success(`${added.length} média(s) ajouté(s)`);
   }
 
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader title="Médiathèque" description="Photos et vidéos disponibles pour vos playlists."
-        action={<Button onClick={() => input.current?.click()}><Upload /> Importer</Button>} />
+        action={<Button onClick={() => input.current?.click()} disabled={uploading}><Upload /> {uploading ? "Import en cours…" : "Importer"}</Button>} />
       <input ref={input} type="file" accept="image/*,video/*" multiple hidden onChange={(e) => { onFiles(e.target.files); e.target.value = ""; }} />
       {media.length === 0 ? (
         <div onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); onFiles(e.dataTransfer.files); }}>
@@ -76,7 +90,7 @@ function MediaPage() {
                     <p className="truncate text-sm font-medium">{m.name}</p>
                     <p className="text-xs text-muted-foreground">{m.type === "image" ? "Photo" : "Vidéo"} · {formatBytes(m.size)}{m.type === "video" ? ` · ${formatDuration(m.duration)}` : ""}</p>
                   </div>
-                  <Button variant="ghost" size="icon" aria-label="Supprimer" onClick={() => set((s) => ({ ...s, media: s.media.filter((x) => x.id !== m.id), playlists: s.playlists.map((p) => ({ ...p, items: p.items.filter((i) => i.mediaId !== m.id) })) }))}><Trash2 /></Button>
+                  <Button variant="ghost" size="icon" aria-label="Supprimer" onClick={async () => { await deleteMedia(m); refresh(); toast.success("Média supprimé"); }}><Trash2 /></Button>
                 </div>
               </Card>
             ))}

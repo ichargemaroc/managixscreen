@@ -12,9 +12,9 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useStore, uid, isValidPairingCode, type Screen } from "@/lib/store";
+import { useStore, isValidPairingCode, addScreen, updateScreen, deleteScreen, type Screen } from "@/lib/store";
 
-export const Route = createFileRoute("/screens")({
+export const Route = createFileRoute("/_authenticated/screens")({
   head: () => ({ meta: [
     { title: "Écrans — ScreenFlow" },
     { name: "description", content: "Ajoutez, organisez et gérez vos TV Android." },
@@ -27,12 +27,15 @@ export const Route = createFileRoute("/screens")({
 const NONE = "__none";
 
 function Screens() {
-  const { screens, groups, playlists, set } = useStore();
+  const { screens, groups, playlists, refresh } = useStore();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Screen | null>(null);
   const [filter, setFilter] = useState("all");
   const list = filter === "all" ? screens : screens.filter((s) => (s.groupId ?? NONE) === filter);
-  const update = (id: string, patch: Partial<Screen>) => set((s) => ({ ...s, screens: s.screens.map((x) => (x.id === id ? { ...x, ...patch } : x)) }));
+  const update = async (id: string, patch: Partial<Screen>) => {
+    await updateScreen(id, patch);
+    refresh();
+  };
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -74,7 +77,7 @@ function Screens() {
                           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="Actions"><MoreHorizontal /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => setEditing(s)}>Gérer / renommer</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => { set((st) => ({ ...st, screens: st.screens.filter((x) => x.id !== s.id) })); toast.success("TV supprimée"); }}>Supprimer</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={async () => { await deleteScreen(s.id); refresh(); toast.success("TV supprimée"); }}>Supprimer</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -86,15 +89,16 @@ function Screens() {
           </Card>
         </>
       )}
-      <AddDialog open={adding} onOpenChange={setAdding} onAdd={(name, code, groupId) => {
-        set((s) => ({ ...s, screens: [...s.screens, { id: uid(), name, pairingCode: code, groupId, status: "pending", lastSeen: null, playlistId: null }] }));
+      <AddDialog open={adding} onOpenChange={setAdding} onAdd={async (name, code, groupId) => {
+        await addScreen(name, code, groupId);
+        refresh();
         toast.success("TV ajoutée — en attente de connexion de l'appareil");
       }} />
       {editing && (
         <Dialog open onOpenChange={() => setEditing(null)}>
           <DialogContent>
             <DialogHeader><DialogTitle>Gérer la TV</DialogTitle></DialogHeader>
-            <EditForm screen={editing} onSave={(p) => { update(editing.id, p); setEditing(null); toast.success("TV mise à jour"); }} />
+            <EditForm screen={editing} onSave={async (p) => { await update(editing.id, p); setEditing(null); toast.success("TV mise à jour"); }} />
           </DialogContent>
         </Dialog>
       )}

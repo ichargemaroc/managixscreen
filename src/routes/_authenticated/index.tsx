@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({ meta: [
     { title: "Tableau de bord — ScreenFlow" },
     { name: "description", content: "Vue d'ensemble de vos écrans, médias et playlists." },

@@ -49,7 +49,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
-          <p className="px-2 pb-2 text-xs text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">Mode local · données non sauvegardées</p>
+          <p className="px-2 pb-2 text-xs text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">Données sauvegardées dans le cloud</p>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>

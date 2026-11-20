@@ -9,82 +9,98 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as GroupsRouteImport } from './routes/groups'
-import { Route as MediaRouteImport } from './routes/media'
-import { Route as PlaylistsRouteImport } from './routes/playlists'
-import { Route as ScheduleRouteImport } from './routes/schedule'
-import { Route as ScreensRouteImport } from './routes/screens'
-import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated/groups'
+import { Route as AuthenticatedMediaRouteImport } from './routes/_authenticated/media'
+import { Route as AuthenticatedPlaylistsRouteImport } from './routes/_authenticated/playlists'
+import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
+import { Route as AuthenticatedScreensRouteImport } from './routes/_authenticated/screens'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 
-const IndexRoute = IndexRouteImport.update({
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const GroupsRoute = GroupsRouteImport.update({
+const AuthenticatedGroupsRoute = AuthenticatedGroupsRouteImport.update({
   id: '/groups',
   path: '/groups',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const MediaRoute = MediaRouteImport.update({
+const AuthenticatedMediaRoute = AuthenticatedMediaRouteImport.update({
   id: '/media',
   path: '/media',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const PlaylistsRoute = PlaylistsRouteImport.update({
+const AuthenticatedPlaylistsRoute = AuthenticatedPlaylistsRouteImport.update({
   id: '/playlists',
   path: '/playlists',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ScheduleRoute = ScheduleRouteImport.update({
+const AuthenticatedScheduleRoute = AuthenticatedScheduleRouteImport.update({
   id: '/schedule',
   path: '/schedule',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ScreensRoute = ScreensRouteImport.update({
+const AuthenticatedScreensRoute = AuthenticatedScreensRouteImport.update({
   id: '/screens',
   path: '/screens',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const SettingsRoute = SettingsRouteImport.update({
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/groups': typeof GroupsRoute
-  '/media': typeof MediaRoute
-  '/playlists': typeof PlaylistsRoute
-  '/schedule': typeof ScheduleRoute
-  '/screens': typeof ScreensRoute
-  '/settings': typeof SettingsRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/auth': typeof AuthRoute
+  '/groups': typeof AuthenticatedGroupsRoute
+  '/media': typeof AuthenticatedMediaRoute
+  '/playlists': typeof AuthenticatedPlaylistsRoute
+  '/schedule': typeof AuthenticatedScheduleRoute
+  '/screens': typeof AuthenticatedScreensRoute
+  '/settings': typeof AuthenticatedSettingsRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/groups': typeof GroupsRoute
-  '/media': typeof MediaRoute
-  '/playlists': typeof PlaylistsRoute
-  '/schedule': typeof ScheduleRoute
-  '/screens': typeof ScreensRoute
-  '/settings': typeof SettingsRoute
+  '/auth': typeof AuthRoute
+  '/groups': typeof AuthenticatedGroupsRoute
+  '/media': typeof AuthenticatedMediaRoute
+  '/playlists': typeof AuthenticatedPlaylistsRoute
+  '/schedule': typeof AuthenticatedScheduleRoute
+  '/screens': typeof AuthenticatedScreensRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/groups': typeof GroupsRoute
-  '/media': typeof MediaRoute
-  '/playlists': typeof PlaylistsRoute
-  '/schedule': typeof ScheduleRoute
-  '/screens': typeof ScreensRoute
-  '/settings': typeof SettingsRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/groups': typeof AuthenticatedGroupsRoute
+  '/_authenticated/media': typeof AuthenticatedMediaRoute
+  '/_authenticated/playlists': typeof AuthenticatedPlaylistsRoute
+  '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
+  '/_authenticated/screens': typeof AuthenticatedScreensRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
     | '/groups'
     | '/media'
     | '/playlists'
@@ -93,96 +109,126 @@ export interface FileRouteTypes {
     | '/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
+    | '/auth'
     | '/groups'
     | '/media'
     | '/playlists'
     | '/schedule'
     | '/screens'
     | '/settings'
+    | '/'
   id:
     | '__root__'
-    | '/'
-    | '/groups'
-    | '/media'
-    | '/playlists'
-    | '/schedule'
-    | '/screens'
-    | '/settings'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/groups'
+    | '/_authenticated/media'
+    | '/_authenticated/playlists'
+    | '/_authenticated/schedule'
+    | '/_authenticated/screens'
+    | '/_authenticated/settings'
+    | '/_authenticated/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  GroupsRoute: typeof GroupsRoute
-  MediaRoute: typeof MediaRoute
-  PlaylistsRoute: typeof PlaylistsRoute
-  ScheduleRoute: typeof ScheduleRoute
-  ScreensRoute: typeof ScreensRoute
-  SettingsRoute: typeof SettingsRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/groups': {
-      id: '/groups'
+    '/_authenticated/groups': {
+      id: '/_authenticated/groups'
       path: '/groups'
       fullPath: '/groups'
-      preLoaderRoute: typeof GroupsRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedGroupsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/media': {
-      id: '/media'
+    '/_authenticated/media': {
+      id: '/_authenticated/media'
       path: '/media'
       fullPath: '/media'
-      preLoaderRoute: typeof MediaRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedMediaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/playlists': {
-      id: '/playlists'
+    '/_authenticated/playlists': {
+      id: '/_authenticated/playlists'
       path: '/playlists'
       fullPath: '/playlists'
-      preLoaderRoute: typeof PlaylistsRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedPlaylistsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/schedule': {
-      id: '/schedule'
+    '/_authenticated/schedule': {
+      id: '/_authenticated/schedule'
       path: '/schedule'
       fullPath: '/schedule'
-      preLoaderRoute: typeof ScheduleRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedScheduleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/screens': {
-      id: '/screens'
+    '/_authenticated/screens': {
+      id: '/_authenticated/screens'
       path: '/screens'
       fullPath: '/screens'
-      preLoaderRoute: typeof ScreensRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedScreensRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/settings': {
-      id: '/settings'
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
       path: '/settings'
       fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedGroupsRoute: typeof AuthenticatedGroupsRoute
+  AuthenticatedMediaRoute: typeof AuthenticatedMediaRoute
+  AuthenticatedPlaylistsRoute: typeof AuthenticatedPlaylistsRoute
+  AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
+  AuthenticatedScreensRoute: typeof AuthenticatedScreensRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedGroupsRoute: AuthenticatedGroupsRoute,
+  AuthenticatedMediaRoute: AuthenticatedMediaRoute,
+  AuthenticatedPlaylistsRoute: AuthenticatedPlaylistsRoute,
+  AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
+  AuthenticatedScreensRoute: AuthenticatedScreensRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  GroupsRoute: GroupsRoute,
-  MediaRoute: MediaRoute,
-  PlaylistsRoute: PlaylistsRoute,
-  ScheduleRoute: ScheduleRoute,
-  ScreensRoute: ScreensRoute,
-  SettingsRoute: SettingsRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

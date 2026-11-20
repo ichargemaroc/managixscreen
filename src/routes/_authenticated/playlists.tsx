@@ -8,9 +8,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useStore, uid, formatDuration, type Playlist } from "@/lib/store";
+import { useStore, formatDuration, createPlaylist, renamePlaylist, deletePlaylist, savePlaylistItems, assignPlaylist, type Playlist, type PlaylistItem } from "@/lib/store";
 
-export const Route = createFileRoute("/playlists")({
+export const Route = createFileRoute("/_authenticated/playlists")({
   head: () => ({ meta: [
     { title: "Playlists — ScreenFlow" },
     { name: "description", content: "Composez vos playlists et affectez-les à vos écrans." },
@@ -21,12 +21,13 @@ export const Route = createFileRoute("/playlists")({
 });
 
 function Playlists() {
-  const { playlists, media, set } = useStore();
+  const { playlists, media, refresh } = useStore();
   const [openId, setOpenId] = useState<string | null>(null);
   const open = playlists.find((p) => p.id === openId);
-  const create = () => {
-    const p: Playlist = { id: uid(), name: `Nouvelle playlist ${playlists.length + 1}`, items: [], createdAt: new Date().toISOString() };
-    set((s) => ({ ...s, playlists: [...s.playlists, p] })); setOpenId(p.id);
+  const create = async () => {
+    const id = await createPlaylist(`Nouvelle playlist ${playlists.length + 1}`);
+    refresh();
+    setOpenId(id);
   };
   if (open) return <Editor playlist={open} onBack={() => setOpenId(null)} />;
   return (
@@ -53,30 +54,47 @@ function Playlists() {
 }
 
 function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }) {
-  const { media, screens, groups, set } = useStore();
+  const { media, screens, groups, refresh } = useStore();
   const [drag, setDrag] = useState<number | null>(null);
   const [target, setTarget] = useState("");
-  const save = (patch: Partial<Playlist>) => set((s) => ({ ...s, playlists: s.playlists.map((p) => (p.id === playlist.id ? { ...p, ...patch } : p)) }));
-  const add = (mediaId: string) => { const m = media.find((x) => x.id === mediaId)!; save({ items: [...playlist.items, { id: uid(), mediaId, duration: m.type === "video" ? Math.round(m.duration ?? 10) : 10 }] }); };
-  const move = (from: number, to: number) => { const items = [...playlist.items]; const [x] = items.splice(from, 1); if (x) items.splice(to, 0, x); save({ items }); };
-  const assign = () => {
-    const [type, id] = target.split(":");
-    set((s) => ({ ...s, screens: s.screens.map((sc) => ((type === "screen" ? sc.id === id : sc.groupId === id) ? { ...sc, playlistId: playlist.id } : sc)) }));
+  const [items, setItems] = useState<PlaylistItem[]>(playlist.items);
+  const persist = async (next: PlaylistItem[]) => {
+    setItems(next);
+    await savePlaylistItems(playlist.id, next.map((it) => ({ mediaId: it.mediaId, duration: it.duration })));
+    refresh();
+  };
+  const add = (mediaId: string) => {
+    const m = media.find((x) => x.id === mediaId)!;
+    void persist([...items, { id: crypto.randomUUID(), mediaId, duration: m.type === "video" ? Math.round(m.duration ?? 10) : 10 }]);
+  };
+  const move = (from: number, to: number) => {
+    const next = [...items]; const [x] = next.splice(from, 1); if (x) next.splice(to, 0, x);
+    void persist(next);
+  };
+  const assign = async () => {
+    const [type, id] = target.split(":") as ["screen" | "group", string];
+    await assignPlaylist(playlist.id, type, id);
+    refresh();
     toast.success("Playlist affectée");
+  };
+  const remove = async () => {
+    await deletePlaylist(playlist.id);
+    refresh();
+    onBack();
   };
   return (
     <div className="mx-auto max-w-7xl">
       <Button variant="ghost" size="sm" className="mb-4" onClick={onBack}><ArrowLeft /> Playlists</Button>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Input className="max-w-md font-display text-xl font-semibold" value={playlist.name} onChange={(e) => save({ name: e.target.value })} />
-        <Button variant="outline" className="text-destructive" onClick={() => { set((s) => ({ ...s, playlists: s.playlists.filter((p) => p.id !== playlist.id), schedules: s.schedules.filter((x) => x.playlistId !== playlist.id), screens: s.screens.map((sc) => (sc.playlistId === playlist.id ? { ...sc, playlistId: null } : sc)) })); onBack(); }}><Trash2 /> Supprimer</Button>
+        <Input className="max-w-md font-display text-xl font-semibold" value={playlist.name} onChange={(e) => { void renamePlaylist(playlist.id, e.target.value); refresh(); }} />
+        <Button variant="outline" className="text-destructive" onClick={() => void remove()}><Trash2 /> Supprimer</Button>
       </div>
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <Card><CardContent className="p-4">
           <h2 className="mb-3 text-sm font-semibold">Ordre de diffusion</h2>
-          {playlist.items.length === 0 ? <p className="py-10 text-center text-sm text-muted-foreground">Ajoutez des médias depuis la colonne de droite.</p> : (
+          {items.length === 0 ? <p className="py-10 text-center text-sm text-muted-foreground">Ajoutez des médias depuis la colonne de droite.</p> : (
             <ul className="space-y-2">
-              {playlist.items.map((it, i) => {
+              {items.map((it, i) => {
                 const m = media.find((x) => x.id === it.mediaId); if (!m) return null;
                 return (
                   <li key={it.id} draggable onDragStart={() => setDrag(i)} onDragOver={(e) => e.preventDefault()} onDrop={() => { if (drag !== null && drag !== i) move(drag, i); setDrag(null); }}
@@ -85,9 +103,9 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
                     <div className="h-10 w-16 overflow-hidden rounded bg-muted">{m.type === "image" ? <img src={m.url} alt="" className="size-full object-cover" /> : <video src={m.url} muted className="size-full object-cover" />}</div>
                     <span className="min-w-0 flex-1 truncate text-sm">{m.name}</span>
                     {m.type === "image" ? (
-                      <div className="flex items-center gap-1"><Input type="number" min={1} className="h-8 w-16" value={it.duration} onChange={(e) => save({ items: playlist.items.map((x) => (x.id === it.id ? { ...x, duration: Math.max(1, Number(e.target.value) || 1) } : x)) })} /><span className="text-xs text-muted-foreground">s</span></div>
+                      <div className="flex items-center gap-1"><Input type="number" min={1} className="h-8 w-16" value={it.duration} onChange={(e) => void persist(items.map((x) => (x.id === it.id ? { ...x, duration: Math.max(1, Number(e.target.value) || 1) } : x)))} /><span className="text-xs text-muted-foreground">s</span></div>
                     ) : <span className="text-xs text-muted-foreground">{formatDuration(m.duration)}</span>}
-                    <Button variant="ghost" size="icon" aria-label="Retirer" onClick={() => save({ items: playlist.items.filter((x) => x.id !== it.id) })}><Trash2 /></Button>
+                    <Button variant="ghost" size="icon" aria-label="Retirer" onClick={() => void persist(items.filter((x) => x.id !== it.id))}><Trash2 /></Button>
                   </li>
                 );
               })}
@@ -104,7 +122,7 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
                 {groups.map((g) => <SelectItem key={g.id} value={`group:${g.id}`}>Groupe · {g.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button className="w-full" disabled={!target} onClick={assign}>Affecter la playlist</Button>
+            <Button className="w-full" disabled={!target} onClick={() => void assign()}>Affecter la playlist</Button>
           </CardContent></Card>
           <Card><CardContent className="p-4">
             <Label className="mb-3 block">Bibliothèque</Label>

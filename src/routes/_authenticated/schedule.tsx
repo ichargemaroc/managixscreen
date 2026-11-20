@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useStore, uid } from "@/lib/store";
+import { useStore, addSchedule, deleteSchedule } from "@/lib/store";
 
-export const Route = createFileRoute("/schedule")({
+export const Route = createFileRoute("/_authenticated/schedule")({
   head: () => ({ meta: [
     { title: "Programmation — ScreenFlow" },
     { name: "description", content: "Programmez vos playlists par date et horaire." },
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/schedule")({
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
 function SchedulePage() {
-  const { schedules, playlists, screens, groups, set } = useStore();
+  const { schedules, playlists, screens, groups, refresh } = useStore();
   const [open, setOpen] = useState(false);
   const today = new Date().toISOString().slice(0, 10);
   const [f, setF] = useState({ playlistId: "", target: "", startDate: today, endDate: today, startTime: "08:00", endTime: "20:00", days: [0, 1, 2, 3, 4] });
@@ -48,7 +48,7 @@ function SchedulePage() {
                       <p className="truncate">{playlists.find((p) => p.id === s.playlistId)?.name}</p>
                       <p className="truncate opacity-70">{targetName(s.targetType, s.targetId)}</p>
                       <p className="opacity-70">{s.startDate} → {s.endDate}</p>
-                      <button className="mt-1 hidden text-destructive group-hover:inline-flex" aria-label="Supprimer" onClick={() => set((st) => ({ ...st, schedules: st.schedules.filter((x) => x.id !== s.id) }))}><Trash2 className="size-3" /></button>
+                      <button className="mt-1 hidden text-destructive group-hover:inline-flex" aria-label="Supprimer" onClick={async () => { await deleteSchedule(s.id); refresh(); }}><Trash2 className="size-3" /></button>
                     </div>
                   ))}
                 </div>
@@ -84,9 +84,10 @@ function SchedulePage() {
               ))}
             </div>
           </div>
-          <DialogFooter><Button disabled={!valid} onClick={() => {
+          <DialogFooter><Button disabled={!valid} onClick={async () => {
             const [targetType, targetId] = f.target.split(":") as ["screen" | "group", string];
-            set((s) => ({ ...s, schedules: [...s.schedules, { id: uid(), playlistId: f.playlistId, targetType, targetId, startDate: f.startDate, endDate: f.endDate, startTime: f.startTime, endTime: f.endTime, days: f.days }] }));
+            await addSchedule({ playlistId: f.playlistId, targetType, targetId, startDate: f.startDate, endDate: f.endDate, startTime: f.startTime, endTime: f.endTime, days: f.days });
+            refresh();
             setOpen(false);
           }}>Enregistrer</Button></DialogFooter>
         </DialogContent>

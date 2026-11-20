@@ -7,9 +7,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useStore, uid } from "@/lib/store";
+import { useStore, addGroup, deleteGroup } from "@/lib/store";
 
-export const Route = createFileRoute("/groups")({
+export const Route = createFileRoute("/_authenticated/groups")({
   head: () => ({ meta: [
     { title: "Groupes — ScreenFlow" },
     { name: "description", content: "Organisez vos écrans par groupes et par lieux." },
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/groups")({
 });
 
 function GroupsPage() {
-  const { groups, screens, set } = useStore();
+  const { groups, screens, refresh } = useStore();
   const [open, setOpen] = useState(false); const [name, setName] = useState(""); const [loc, setLoc] = useState("");
   return (
     <div className="mx-auto max-w-7xl">
@@ -36,7 +36,7 @@ function GroupsPage() {
                 {g.location && <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-3" />{g.location}</p>}
                 <p className="mt-3 text-sm">{screens.filter((s) => s.groupId === g.id).length} écran(s)</p>
               </div>
-              <Button variant="ghost" size="icon" aria-label="Supprimer" onClick={() => set((s) => ({ ...s, groups: s.groups.filter((x) => x.id !== g.id), screens: s.screens.map((sc) => (sc.groupId === g.id ? { ...sc, groupId: null } : sc)), schedules: s.schedules.filter((x) => !(x.targetType === "group" && x.targetId === g.id)) }))}><Trash2 /></Button>
+              <Button variant="ghost" size="icon" aria-label="Supprimer" onClick={async () => { await deleteGroup(g.id); refresh(); }}><Trash2 /></Button>
             </CardContent></Card>
           ))}
         </div>
@@ -48,7 +48,7 @@ function GroupsPage() {
             <div className="space-y-2"><Label>Nom</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex. Vitrines" /></div>
             <div className="space-y-2"><Label>Lieu</Label><Input value={loc} onChange={(e) => setLoc(e.target.value)} placeholder="Ex. Paris — Rivoli" /></div>
           </div>
-          <DialogFooter><Button disabled={!name.trim()} onClick={() => { set((s) => ({ ...s, groups: [...s.groups, { id: uid(), name: name.trim(), location: loc.trim() }] })); setName(""); setLoc(""); setOpen(false); }}>Créer</Button></DialogFooter>
+          <DialogFooter><Button disabled={!name.trim()} onClick={async () => { await addGroup(name.trim(), loc.trim()); refresh(); setName(""); setLoc(""); setOpen(false); }}>Créer</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
