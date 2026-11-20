@@ -6,16 +6,22 @@ async function vault() {
   const { Capacitor, registerPlugin } = await import("@capacitor/core");
   return Capacitor.isNativePlatform() ? registerPlugin<NativeCredentialVault>("DeviceVault") : null;
 }
+// A failing or hung native vault falls back to WebView storage so pairing can still proceed.
+function limit<T>(task: Promise<T>) { return Promise.race([task, new Promise<never>((_, reject) => setTimeout(() => reject(new Error("vault timeout")), 4000))]); }
 export async function readCredentials(): Promise<Credentials | null> {
-  const native = await vault();
-  const value = native ? (await native.read()).value : localStorage.getItem(credentialKey);
+  const native = await vault().catch(() => null);
+  let value: string | null | undefined = null;
+  if (native) { try { value = (await limit(native.read())).value; } catch { value = null; } }
+  value ||= localStorage.getItem(credentialKey);
   if (!value) return null;
   try { return credentialsSchema.parse(JSON.parse(value)); } catch { return null; }
 }
 export async function saveCredentials(value: Credentials | null) {
-  const native = await vault();
-  if (native) { if (value) await native.write({ value: JSON.stringify(value) }); else await native.clear(); }
-  else if (value) localStorage.setItem(credentialKey, JSON.stringify(value)); else localStorage.removeItem(credentialKey);
+  const native = await vault().catch(() => null);
+  if (native) {
+    try { if (value) await limit(native.write({ value: JSON.stringify(value) })); else await limit(native.clear()); localStorage.removeItem(credentialKey); return; } catch { /* fall back below */ }
+  }
+  if (value) localStorage.setItem(credentialKey, JSON.stringify(value)); else localStorage.removeItem(credentialKey);
 }
 export async function subscribeNetwork(callback: (online: boolean) => void) {
   const { Capacitor } = await import("@capacitor/core");

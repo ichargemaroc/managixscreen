@@ -24,7 +24,7 @@ export async function deviceApi(operation: string, credentials: Credentials | nu
     if (!configured) throw new Error("L’adresse du serveur n’a pas été configurée pour Android.");
     const response = await CapacitorHttp.post({ url: url.toString(), headers, data: body, connectTimeout: 15000, readTimeout: 15000 });
     if (response.status < 200 || response.status >= 300) throw new DeviceApiError(response.status);
-    return response.data as unknown;
+    return (typeof response.data === "string" ? JSON.parse(response.data) : response.data) as unknown;
   }
   const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(body), cache: "no-store", signal: AbortSignal.timeout(15000) });
   if (!response.ok) throw new DeviceApiError(response.status);
