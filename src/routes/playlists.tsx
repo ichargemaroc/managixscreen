@@ -108,7 +108,7 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
           </CardContent></Card>
           <Card><CardContent className="p-4">
             <Label className="mb-3 block">Bibliothèque</Label>
-            {media.length === 0 ? <p className="text-sm text-muted-foreground">Importez d'abord des médias dans Media Library.</p> : (
+            {media.length === 0 ? <p className="text-sm text-muted-foreground">Importez d'abord des médias dans la Médiathèque.</p> : (
               <ul className="max-h-96 space-y-1 overflow-y-auto">
                 {media.map((m) => (
                   <li key={m.id}><button onClick={() => add(m.id)} className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-muted">
