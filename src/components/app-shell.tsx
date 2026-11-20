@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, FolderTree, Settings } from "lucide-react";
 import markAsset from "@/assets/screenflow-mark.png.asset.json";
 import {
@@ -18,10 +18,12 @@ const nav = [
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const [menuPinned, setMenuPinned] = useState(false);
+  const [menuHovered, setMenuHovered] = useState(false);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const current = nav.find((n) => (n.url === "/" ? path === "/" : path.startsWith(n.url)));
   return (
-    <SidebarProvider defaultOpen={false} className="console-shell bg-sidebar pt-20">
+    <SidebarProvider open={menuPinned || menuHovered} onOpenChange={setMenuPinned} className="console-shell bg-sidebar pt-20">
       <header className="fixed inset-x-0 top-0 z-20 flex h-20 items-center justify-between bg-sidebar px-5 md:px-8">
         <Link to="/" className="flex items-center gap-3" aria-label="ScreenFlow — Tableau de bord">
           <img src={markAsset.url} alt="" className="size-8 shrink-0" />
@@ -29,7 +31,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Link>
         <SidebarTrigger aria-label="Ouvrir ou fermer le menu" title="Ouvrir ou fermer le menu" className="size-10" />
       </header>
-      <Sidebar collapsible="icon">
+      <Sidebar collapsible="icon"
+        onPointerEnter={(event) => { if (event.pointerType === "mouse") setMenuHovered(true); }}
+        onPointerLeave={(event) => { if (event.pointerType === "mouse") setMenuHovered(false); }}>
         <SidebarHeader className="md:hidden">
           <div className="flex h-16 items-center gap-3 px-3">
             <img src={markAsset.url} alt="" className="size-8 shrink-0" />
