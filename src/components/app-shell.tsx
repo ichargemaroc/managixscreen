@@ -22,9 +22,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [menuHovered, setMenuHovered] = useState(false);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const current = nav.find((n) => (n.url === "/" ? path === "/" : path.startsWith(n.url)));
-  useEffect(() => {
+  const closeMenu = () => {
     setMenuPinned(false);
     setMenuHovered(false);
+  };
+  useEffect(() => {
+    closeMenu();
   }, [path]);
   return (
     <SidebarProvider open={menuPinned || menuHovered} onOpenChange={setMenuPinned} className="console-shell bg-sidebar pt-20">
@@ -51,7 +54,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {nav.map((item) => (
                   <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton asChild isActive={current?.url === item.url} tooltip={item.title}>
-                      <Link to={item.url} aria-label={item.title} aria-current={current?.url === item.url ? "page" : undefined}>
+                      <Link to={item.url} onClick={closeMenu} aria-label={item.title} aria-current={current?.url === item.url ? "page" : undefined}>
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>
