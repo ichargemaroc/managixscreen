@@ -30,6 +30,8 @@
  */
 
 @theme inline {
+  --color-player-background: var(--player-background);
+  --color-player-foreground: var(--player-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -77,6 +79,8 @@
 }
 
 :root {
+  --player-background: oklch(0.14 0.006 240);
+  --player-foreground: oklch(0.97 0.004 240);
   --radius: 0.6rem;
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --background: oklch(0.985 0.004 240);
@@ -164,3 +168,28 @@
   }
   h1, h2, h3 { font-family: "Sora", var(--font-sans); letter-spacing: -0.02em; }
 }
+
+.tv-player { --background: var(--player-background); --foreground: var(--player-foreground); --muted-foreground: oklch(0.72 0.009 240); --accent: oklch(0.25 0.01 240); --accent-foreground: var(--player-foreground); position: fixed; inset: 0; z-index: 40; overflow: hidden; background: var(--player-background); color: var(--player-foreground); letter-spacing: 0; }
+.tv-player h1 { font-size: 40px; line-height: 1.2; letter-spacing: 0; }
+.tv-enrollment { height: 100%; display: flex; flex-direction: column; padding: 40px 56px; }
+.tv-brand { display: flex; align-items: center; gap: 14px; font-family: var(--font-display); font-size: 24px; font-weight: 600; }
+.tv-brand > svg { width: 36px; height: 36px; color: var(--primary); }
+.tv-brand small { display: block; margin-top: 4px; font-family: var(--font-sans); font-size: 11px; color: var(--muted-foreground); }
+.tv-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; text-align: center; min-height: 0; }
+.tv-display-icon { width: 76px; height: 76px; stroke-width: 1; color: var(--primary); }
+.tv-eyebrow { font-size: 12px; color: var(--muted-foreground); }
+.tv-code { display: grid; grid-template-columns: repeat(6, minmax(0, 72px)); gap: 12px; width: min(100%, 492px); font-size: 48px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tv-code span { border-bottom: 2px solid var(--primary); padding: 6px 0 12px; }
+.tv-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; font-size: 12px; color: var(--muted-foreground); }
+.tv-footer span:first-child { display: flex; gap: 10px; align-items: center; }
+.tv-footer svg { width: 18px; height: 18px; }
+.tv-error { color: var(--warning); font-size: 14px; max-width: 600px; }
+.tv-stage { width: 100%; height: 100%; }
+.tv-stage img, .tv-stage video { width: 100%; height: 100%; object-fit: contain; }
+.tv-controls { position: absolute; bottom: 24px; left: 24px; right: 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; background: var(--player-background); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; }
+.tv-controls > span { display: flex; align-items: center; gap: 12px; }
+.tv-controls > div { display: flex; gap: 8px; }
+.tv-menu { position: absolute; right: 20px; bottom: 20px; opacity: .25; }
+.tv-menu:focus-visible { opacity: 1; }
+.tv-player button:focus-visible { outline: 3px solid var(--primary); outline-offset: 5px; }
+@media (max-width: 640px), (max-height: 500px) { .tv-enrollment { padding: 24px; } .tv-player h1 { font-size: 28px; } .tv-center { gap: 18px; } .tv-display-icon { width: 48px; height: 48px; } .tv-code { font-size: 36px; gap: 8px; max-width: 340px; } .tv-footer { font-size: 10px; } .tv-controls { left: 12px; right: 12px; bottom: 12px; } }

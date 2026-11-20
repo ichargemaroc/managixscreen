@@ -1,0 +1,40 @@
+name: Build Android TV player
+on:
+  workflow_dispatch:
+    inputs:
+      api_origin:
+        description: "Published HTTPS application origin (without /player)"
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.4"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v3
+      - run: bun install --frozen-lockfile
+      - name: Validate server address
+        env:
+          PLAYER_ORIGIN: ${{ inputs.api_origin }}
+        run: node -e 'const u=new URL(process.env.PLAYER_ORIGIN);if(u.protocol!=="https:"||u.pathname!=="/"||u.search||u.hash||u.username||u.password)throw Error("HTTPS origin required")'
+      - run: bun run player:build
+        env:
+          VITE_PLAYER_API_ORIGIN: ${{ inputs.api_origin }}
+      - run: bun run android:prepare
+      - run: bun run android:sync
+      - run: chmod +x android/gradlew && cd android && ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenflow-tv-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

@@ -1,5 +1,12 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Lecteur TV web et préparation Android
+- [x] Lecteur public séparé /player, jumelage réel et synchronisation
+- [x] Images, vidéos, cache local et reprise hors connexion, commandes et télécommande
+- [x] Modules Android, configuration Capacitor et workflow GitHub Actions préparés ; APK non compilé
+- [x] 36 tests réussis ; jumelage web réel, photo, MP4, coupure réseau, reprise et commande confirmée dans l’administration
+- [x] Limites documentées : tests Android, signature et lancement kiosk au boot restent à réaliser ; démarrage navigateur à froid hors réseau non garanti
+
 ## Communication du futur lecteur Android
 - [x] Télémétrie authentifiée, manifeste de contenu et liens privés temporaires
 - [x] File de commandes, lecture et accusés de réception isolés par appareil
