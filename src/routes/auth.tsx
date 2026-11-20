@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { Cast } from "lucide-react";
 import { toast } from "sonner";
+import logoAsset from "@/assets/screenflow-logo.png.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { LovableMark } from "@lovable.dev/cloud-auth-js/react";
@@ -81,10 +81,8 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="items-center text-center">
-          <div className="mb-2 flex size-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Cast className="size-5" />
-          </div>
-          <CardTitle className="font-display text-2xl">ScreenFlow</CardTitle>
+          <img src={logoAsset.url} alt="Screenflow" className="mb-2 h-12 w-auto" />
+          <CardTitle className="sr-only">Screenflow</CardTitle>
           <CardDescription>
             {mode === "login" ? "Connectez-vous pour gérer vos écrans." : "Créez votre compte ScreenFlow."}
           </CardDescription>

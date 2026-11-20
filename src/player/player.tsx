@@ -6,6 +6,7 @@ import { contentSchema, credentialsSchema, commandsSchema, deviceApi, DeviceApiE
 import { enterPlayerMode, keepAwake, readCredentials, saveCredentials, subscribeNetwork } from "./platform";
 import { QRCodeSVG } from "qrcode.react";
 import { pairingUrl } from "@/lib/qr-pairing";
+import markAsset from "@/assets/screenflow-mark.png.asset.json";
 
 export function TVPlayer() {
   const [identity, setIdentity] = useState<Credentials | null>(null);
@@ -143,7 +144,7 @@ export function TVPlayer() {
     {phase === "playing" && source && item ? <div className="tv-stage">
       {item.media.type === "image" ? <img src={source} alt={item.media.name} /> : <video ref={video} src={source} autoPlay muted playsInline loop={items.length === 1} onPlaying={() => { playback.current = "playing"; }} onEnded={() => setIndex((value) => nextItem(value, items.length))} onError={() => { playback.current = "error"; setError("Format vidéo non pris en charge par cet appareil."); setTimeout(() => setIndex((value) => nextItem(value, items.length)), 3000); }} />}
     </div> : <div className="tv-enrollment">
-      <header className="tv-brand"><Cast aria-hidden="true" /><span>ScreenFlow <small>TV PLAYER</small></span></header>
+      <header className="tv-brand"><img src={markAsset.url} alt="" className="tv-brand-mark" /><span>ScreenFlow <small>TV PLAYER</small></span></header>
       <div className="tv-center">
         {!qrUrl && <Monitor className="tv-display-icon" aria-hidden="true" />}
         <p className="tv-eyebrow">{phase === "playing" ? "APPAREIL JUMELÉ" : "CONNEXION DE L’ÉCRAN"}</p>

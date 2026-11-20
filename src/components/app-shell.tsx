@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, FolderTree, Settings, Cast } from "lucide-react";
+import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, FolderTree, Settings } from "lucide-react";
+import markAsset from "@/assets/screenflow-mark.png.asset.json";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SidebarInset,
@@ -24,9 +25,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex items-center gap-2 px-2 py-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-              <Cast className="size-4" />
-            </div>
+            <img src={markAsset.url} alt="" className="size-8 shrink-0 rounded-md" />
             <span className="font-display text-lg font-semibold text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden">ScreenFlow</span>
           </div>
         </SidebarHeader>
