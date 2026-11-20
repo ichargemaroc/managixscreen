@@ -38,3 +38,4 @@ use the editor.
 - Device enrollment and heartbeat use token-scoped public server routes; web claims/revocations use authenticated server functions and owner-scoped transactional RPCs to keep the native device protocol separate from user access.
 - Store only device token hashes in a service-only table; revoke credentials on screen deletion so orphaned devices cannot reconnect.
 - Persist custom abuse counters in PostgreSQL and fail closed on limit errors; global caps protect enrollment when trusted edge IP identity is absent.
+- Recover stale module-import failures with at most one automatic reload per minute per tab; manual retry reloads the document because router invalidation cannot replace failed module imports.
