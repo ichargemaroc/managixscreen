@@ -179,7 +179,7 @@
 :where(.console-shell, [data-mobile="true"]) [data-sidebar="menu-button"][data-active="true"] { background: var(--sidebar-accent); color: var(--sidebar-accent-foreground); }
 :where(.console-shell, [data-mobile="true"]) [data-sidebar="menu-button"]:hover:not([data-active="true"]) { background: var(--secondary); color: var(--sidebar-foreground); }
 .console-shell [data-collapsible="icon"] [data-sidebar="group"] { padding: 12px; }
-.console-shell [data-collapsible="icon"] [data-sidebar="menu-button"] { width: 56px !important; height: 56px !important; padding: 16px !important; justify-content: center; border-radius: 20px; }
+.console-shell.console-shell [data-variant="sidebar"][data-collapsible="icon"] [data-sidebar="menu-button"] { width: 56px !important; height: 56px !important; padding: 16px !important; justify-content: center; border-radius: 20px; }
 .console-shell [data-collapsible="icon"] [data-sidebar="menu-button"] > span { display: none; }
 .console-shell [data-slot="card"] { box-shadow: none; }
 
