@@ -2,6 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import logoAsset from "@/assets/screenflow-logo.png.asset.json";
+import markAsset from "@/assets/screenflow-mark.png.asset.json";
+import { ArrowRight } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { LovableMark } from "@lovable.dev/cloud-auth-js/react";
@@ -45,6 +48,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [connecting, setConnecting] = useState(Boolean(pairCode));
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -77,17 +81,39 @@ function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-sidebar">
-      <header className="flex h-20 shrink-0 items-center px-6 sm:px-10">
+    <div className="flex min-h-screen flex-col bg-background">
+      <header className="flex h-20 shrink-0 items-center bg-sidebar px-6 sm:px-10">
         <img src={logoAsset.url} alt="Screenflow" className="h-10 w-auto max-w-full object-contain" />
       </header>
-      <main className="flex flex-1 items-center justify-center px-5 py-10 sm:py-16">
-      <div className="w-full max-w-md">
+      <main>
+        <section className="welcome-intro relative mx-auto max-w-7xl px-6 sm:px-12">
+          <img src={markAsset.url} alt="" className="welcome-mark" />
+          <div className="relative z-10 max-w-3xl">
+            <h1 className="welcome-title font-bold">ScreenFlow</h1>
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">Gérez vos téléviseurs Android à distance. Rassemblez vos photos et vidéos, composez vos playlists et diffusez vos contenus sur les écrans de votre entreprise.</p>
+            <div className="mt-10 flex flex-wrap gap-4">
+              <Button size="lg" onClick={() => { setMode("login"); setConnecting(true); }}>Se connecter <ArrowRight /></Button>
+              <Button size="lg" variant="ghost" onClick={() => { setMode("signup"); setConnecting(true); }}>Créer un compte</Button>
+            </div>
+          </div>
+        </section>
+        <section className="border-t bg-sidebar px-6 py-10 sm:px-12">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
+            <h2 className="text-xl font-medium">Vos écrans, au même endroit.</h2>
+            <p className="text-sm text-muted-foreground">TV Android · Photos et vidéos · Playlists</p>
+          </div>
+        </section>
+      </main>
+      <Dialog open={connecting} onOpenChange={setConnecting}>
+      <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-md">
+      <div className="w-full">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-normal">{mode === "login" ? "Connexion" : "Créer un compte"}</h1>
-          <p className="mt-3 text-sm text-muted-foreground">
+          <DialogHeader>
+          <DialogTitle className="text-center text-2xl font-normal">{mode === "login" ? "Connexion" : "Créer un compte"}</DialogTitle>
+          <DialogDescription className="mt-3 text-center">
             {mode === "login" ? "Connectez-vous pour gérer vos écrans." : "Créez votre compte ScreenFlow."}
-          </p>
+          </DialogDescription>
+          </DialogHeader>
         </div>
         <div className="space-y-5">
           <div className="grid gap-2">
@@ -123,7 +149,8 @@ function AuthPage() {
           </p>
         </div>
       </div>
-      </main>
+      </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -183,6 +183,13 @@
 .console-shell [data-collapsible="icon"] [data-sidebar="menu-button"] > span { display: none; }
 .console-shell [data-slot="card"] { box-shadow: none; }
 
+.welcome-intro { min-height: min(720px, calc(100svh - 150px)); display: flex; align-items: center; padding-block: 80px; }
+.welcome-title { font-size: 72px; line-height: 1.12; letter-spacing: 0; }
+.welcome-mark { position: absolute; width: 240px; height: 240px; object-fit: contain; right: 48px; top: 50%; transform: translateY(-50%); }
+@media (min-width: 1024px) { .welcome-intro > div { padding-right: 40px; max-width: calc(100% - 300px); } }
+@media (max-width: 1023px) { .welcome-mark { width: 150px; height: 150px; right: 32px; top: 42px; transform: none; } .welcome-intro { padding-top: 220px; padding-bottom: 64px; } .welcome-title { font-size: 56px; } }
+@media (max-width: 640px) { .welcome-intro { padding-top: 150px; padding-bottom: 48px; min-height: calc(100svh - 145px); } .welcome-mark { width: 100px; height: 100px; right: 24px; top: 24px; } .welcome-title { font-size: 44px; } }
+
 .tv-player { --background: var(--player-background); --foreground: var(--player-foreground); --muted-foreground: oklch(0.72 0.009 240); --accent: oklch(0.25 0.01 240); --accent-foreground: var(--player-foreground); position: fixed; inset: 0; z-index: 40; overflow: hidden; background: var(--player-background); color: var(--player-foreground); letter-spacing: 0; }
 .tv-player h1 { font-size: 40px; line-height: 1.2; letter-spacing: 0; }
 .tv-enrollment { height: 100%; display: flex; flex-direction: column; padding: 40px 56px; overflow-y: auto; }
