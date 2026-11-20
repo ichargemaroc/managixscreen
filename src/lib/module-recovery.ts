@@ -26,7 +26,8 @@ export const moduleRecoveryBootstrap = `(() => {
     show();
   };
   window.addEventListener("unhandledrejection", e => { if (matches(e.reason)) recover(); });
-  window.addEventListener("vite:preloadError", e => { if (matches(e.payload)) recover(); });
+  // Vite otherwise rethrows the failed import after recovery, blanking the route.
+  window.addEventListener("vite:preloadError", e => { if (matches(e.payload)) { e.preventDefault(); recover(); } });
   window.addEventListener("error", e => {
     const script = e.target;
     if (matches(e.error || e.message) || script instanceof HTMLScriptElement && script.type === "module") recover();

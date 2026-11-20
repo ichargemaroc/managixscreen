@@ -2,6 +2,15 @@ import { describe, expect, it, vi } from "vitest";
 import { recoverModuleLoad, moduleRecoveryBootstrap } from "@/lib/module-recovery";
 
 describe("Module loading recovery", () => {
+  it("cancels Vite's rethrow for a failed lazy route import", () => {
+    sessionStorage.setItem("screenflow-module-recovery", String(Date.now()));
+    window.eval(moduleRecoveryBootstrap);
+    const event = new Event("vite:preloadError", { cancelable: true });
+    Object.assign(event, { payload: new TypeError("Importing a module script failed.") });
+    window.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+    document.getElementById("module-startup-recovery")?.remove(); sessionStorage.clear();
+  });
   it("handles failed entry modules before React can mount without a reload loop", () => {
     sessionStorage.setItem("screenflow-module-recovery", String(Date.now()));
     window.eval(moduleRecoveryBootstrap);
