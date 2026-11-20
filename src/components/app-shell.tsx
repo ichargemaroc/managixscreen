@@ -4,7 +4,7 @@ import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, FolderTree, 
 import markAsset from "@/assets/screenflow-mark.png.asset.json";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SidebarInset,
+  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SidebarInset, useSidebar,
 } from "@/components/ui/sidebar";
 
 const nav = [
@@ -16,6 +16,36 @@ const nav = [
   { title: "Groupes", url: "/groups", icon: FolderTree },
   { title: "Paramètres", url: "/settings", icon: Settings },
 ] as const;
+
+function NavLinks({ currentUrl, onNavigate }: { currentUrl: string | undefined; onNavigate: () => void }) {
+  const { setOpenMobile } = useSidebar();
+  const handleClick = () => {
+    setOpenMobile(false);
+    onNavigate();
+  };
+  return (
+    <SidebarMenu className="gap-2">
+      {nav.map((item) => (
+        <SidebarMenuItem key={item.url}>
+          <SidebarMenuButton asChild isActive={currentUrl === item.url} tooltip={item.title}>
+            <Link to={item.url} onClick={handleClick} aria-label={item.title} aria-current={currentUrl === item.url ? "page" : undefined}>
+              <item.icon />
+              <span>{item.title}</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
+  );
+}
+
+function CloseMobileMenuOnNavigate({ path }: { path: string }) {
+  const { setOpenMobile } = useSidebar();
+  useEffect(() => {
+    setOpenMobile(false);
+  }, [path, setOpenMobile]);
+  return null;
+}
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [menuPinned, setMenuPinned] = useState(false);
@@ -50,18 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <SidebarContent>
           <SidebarGroup className="px-3 pt-4">
             <SidebarGroupContent>
-              <SidebarMenu className="gap-2">
-                {nav.map((item) => (
-                  <SidebarMenuItem key={item.url}>
-                    <SidebarMenuButton asChild isActive={current?.url === item.url} tooltip={item.title}>
-                      <Link to={item.url} onClick={closeMenu} aria-label={item.title} aria-current={current?.url === item.url ? "page" : undefined}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
+              <NavLinks currentUrl={current?.url} onNavigate={closeMenu} />
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
@@ -69,6 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <p className="px-5 pb-4 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">ScreenFlow · Affichage dynamique</p>
         </SidebarFooter>
       </Sidebar>
+      <CloseMobileMenuOnNavigate path={path} />
       <SidebarInset className="min-w-0 md:rounded-tl-3xl">
         <div className="flex-1 p-5 md:px-10 md:py-8">{children}</div>
       </SidebarInset>
