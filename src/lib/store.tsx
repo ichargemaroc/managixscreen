@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { mediaKind, screenStatus } from "@/lib/signage-rules";
 import { Button } from "@/components/ui/button";
 import { claimScreen, revokeScreen } from "@/lib/pairing.functions";
+import { enqueueCommand } from "@/lib/player.functions";
+import type { deviceCommand } from "@/lib/player-protocol";
+import type { z } from "zod";
 
 // Données ScreenFlow lues depuis Lovable Cloud. Les pages utilisent useStore()
 // et les actions ci-dessous ; la synchronisation temps réel des écrans est
@@ -13,7 +16,9 @@ export type Group = { id: string; name: string; location: string; screenIds: str
 export type Screen = {
   id: string; name: string; pairingCode: string; groupId: string | null;
   status: "online" | "offline" | "pending"; lastSeen: string | null; playlistId: string | null; location: string; deviceId: string | null; revoked: boolean;
+  playerVersion: string | null; lastSyncAt: string | null; deviceInfo: unknown; playbackStatus: unknown;
 };
+export type DeviceCommand = { id: string; screenId: string; command: z.infer<typeof deviceCommand>; status: string; createdAt: string; deliveredAt: string | null; acknowledgedAt: string | null; expiresAt: string; error: string | null };
 export type Media = { id: string; name: string; type: "image" | "video"; size: number; duration: number | null; url: string; path: string; createdAt: string };
 export type PlaylistItem = { id: string; mediaId: string; duration: number };
 export type Playlist = { id: string; name: string; description: string; items: PlaylistItem[]; createdAt: string };
@@ -22,12 +27,12 @@ export type Schedule = {
   startDate: string; endDate: string; startTime: string; endTime: string; days: number[];
 };
 
-type State = { groups: Group[]; screens: Screen[]; media: Media[]; playlists: Playlist[]; schedules: Schedule[] };
+type State = { groups: Group[]; screens: Screen[]; media: Media[]; playlists: Playlist[]; schedules: Schedule[]; commands: DeviceCommand[] };
 type Ctx = State & { loading: boolean; refresh: () => void };
 
 const StoreCtx = createContext<Ctx | null>(null);
 
-const EMPTY: State = { groups: [], screens: [], media: [], playlists: [], schedules: [] };
+const EMPTY: State = { groups: [], screens: [], media: [], playlists: [], schedules: [], commands: [] };
 
 async function signedUrl(path: string) {
   const { data, error } = await supabase.storage.from("media").createSignedUrl(path, 60 * 60);
@@ -36,7 +41,7 @@ async function signedUrl(path: string) {
 }
 
 async function fetchAll(): Promise<State> {
-  const [groups, screens, media, playlists, items, schedules, members, sessions] = await Promise.all([
+  const [groups, screens, media, playlists, items, schedules, members, sessions, telemetry, commands] = await Promise.all([
     supabase.from("groups").select("*").order("created_at"),
     supabase.from("screens").select("*").order("created_at"),
     supabase.from("media").select("*").order("created_at", { ascending: false }),
@@ -45,8 +50,10 @@ async function fetchAll(): Promise<State> {
     supabase.from("schedules").select("*").order("created_at"),
     supabase.from("screen_group_members").select("*"),
     supabase.from("pairing_sessions").select("screen_id, device_id, status"),
+    supabase.from("device_telemetry").select("*"),
+    supabase.from("device_commands").select("*").order("created_at", { ascending: false }).limit(200),
   ]);
-  for (const r of [groups, screens, media, playlists, items, schedules, members, sessions]) {
+  for (const r of [groups, screens, media, playlists, items, schedules, members, sessions, telemetry, commands]) {
     if (r.error) throw r.error;
   }
   const mediaRows = await Promise.all(
@@ -68,7 +75,12 @@ async function fetchAll(): Promise<State> {
       status: sessions.data?.some((p) => p.screen_id === s.id && p.status === "revoked") ? "offline" : screenStatus(s.status, s.last_seen), lastSeen: s.last_seen, playlistId: s.playlist_id, location: s.location,
       deviceId: sessions.data?.find((p) => p.screen_id === s.id)?.device_id ?? null,
       revoked: sessions.data?.some((p) => p.screen_id === s.id && p.status === "revoked") ?? false,
+      playerVersion: telemetry.data?.find((t) => sessions.data?.some((p) => p.screen_id === s.id && p.device_id === t.device_id))?.player_version ?? null,
+      lastSyncAt: telemetry.data?.find((t) => sessions.data?.some((p) => p.screen_id === s.id && p.device_id === t.device_id))?.last_sync_at ?? null,
+      deviceInfo: telemetry.data?.find((t) => sessions.data?.some((p) => p.screen_id === s.id && p.device_id === t.device_id))?.device_info ?? {},
+      playbackStatus: telemetry.data?.find((t) => sessions.data?.some((p) => p.screen_id === s.id && p.device_id === t.device_id))?.playback_status ?? {},
     })),
+    commands: (commands.data ?? []).map((c) => ({ id: c.id, screenId: c.screen_id, command: c.command as DeviceCommand["command"], status: c.status, createdAt: c.created_at, deliveredAt: c.delivered_at, acknowledgedAt: c.acknowledged_at, expiresAt: c.expires_at, error: c.error_message })),
     media: mediaRows,
     playlists: (playlists.data ?? []).map((p) => ({ id: p.id, name: p.name, description: p.description, items: itemsByPlaylist.get(p.id) ?? [], createdAt: p.created_at })),
     schedules: (schedules.data ?? []).map((s) => ({
@@ -109,6 +121,10 @@ export async function addScreen(name: string, pairingCode: string, groupId: stri
 
 export async function revokeDeviceAccess(screenId: string) {
   await revokeScreen({ data: { screenId } });
+}
+
+export async function sendDeviceCommand(screenId: string, command: DeviceCommand["command"]) {
+  return enqueueCommand({ data: { screenId, command } });
 }
 
 export async function updateScreen(id: string, patch: { name?: string; groupId?: string | null; playlistId?: string | null; location?: string }) {

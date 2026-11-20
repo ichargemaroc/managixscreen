@@ -39,3 +39,6 @@ use the editor.
 - Store only device token hashes in a service-only table; revoke credentials on screen deletion so orphaned devices cannot reconnect.
 - Persist custom abuse counters in PostgreSQL and fail closed on limit errors; global caps protect enrollment when trusted edge IP identity is absent.
 - Recover stale module-import failures with at most one automatic reload per minute per tab; manual retry reloads the document because router invalidation cannot replace failed module imports.
+- Device telemetry and commands use dedicated owner-readable tables with service-only transactional RPCs; device APIs revalidate token hashes and pairing inside each RPC to isolate content and acknowledgements.
+- Content manifests expose only the assigned playlist and one-hour signed media URLs; successful manifest retrieval records synchronization without implying download, playback, or connectivity.
+- Command delivery is at-least-once until acknowledgement or expiry; native players must deduplicate command IDs before executing destructive actions.

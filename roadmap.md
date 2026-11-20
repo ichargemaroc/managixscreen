@@ -1,5 +1,12 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Communication du futur lecteur Android
+- [x] Télémétrie authentifiée, manifeste de contenu et liens privés temporaires
+- [x] File de commandes, lecture et accusés de réception isolés par appareil
+- [x] Affectation et suivi dans les détails d’écran, documentation du protocole
+- [x] 31 tests réussis et pages connectées vérifiées sans simuler de TV ; appels anonymes refusés
+- [x] Limite explicitée : aucun appareil jumelé disponible pour vérifier l’affectation, le téléchargement et l’exécution de bout en bout ; lecteur Android à développer et mise à jour à publier
+
 ## Jumelage sécurisé
 - [x] Sessions expirant en 10 minutes et identité secrète par appareil
 - [x] Réclamation atomique, révocation et heartbeat vérifié

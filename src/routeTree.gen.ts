@@ -19,9 +19,12 @@ import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedScreensRouteImport } from './routes/_authenticated/screens'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedScreensScreenIdRouteImport } from './routes/_authenticated/screens_.$screenId'
+import { Route as ApiPublicDevicesCommandsRouteImport } from './routes/api/public/devices/commands'
+import { Route as ApiPublicDevicesContentRouteImport } from './routes/api/public/devices/content'
 import { Route as ApiPublicDevicesHeartbeatRouteImport } from './routes/api/public/devices/heartbeat'
 import { Route as ApiPublicDevicesRequestRouteImport } from './routes/api/public/devices/request'
 import { Route as ApiPublicDevicesStatusRouteImport } from './routes/api/public/devices/status'
+import { Route as ApiPublicDevicesCommandsAckRouteImport } from './routes/api/public/devices/commands/ack'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -73,6 +76,17 @@ const AuthenticatedScreensScreenIdRoute =
     path: '/screens/$screenId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicDevicesCommandsRoute =
+  ApiPublicDevicesCommandsRouteImport.update({
+    id: '/api/public/devices/commands',
+    path: '/api/public/devices/commands',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicDevicesContentRoute = ApiPublicDevicesContentRouteImport.update({
+  id: '/api/public/devices/content',
+  path: '/api/public/devices/content',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicDevicesHeartbeatRoute =
   ApiPublicDevicesHeartbeatRouteImport.update({
     id: '/api/public/devices/heartbeat',
@@ -89,6 +103,12 @@ const ApiPublicDevicesStatusRoute = ApiPublicDevicesStatusRouteImport.update({
   path: '/api/public/devices/status',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicDevicesCommandsAckRoute =
+  ApiPublicDevicesCommandsAckRouteImport.update({
+    id: '/ack',
+    path: '/ack',
+    getParentRoute: () => ApiPublicDevicesCommandsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -100,9 +120,12 @@ export interface FileRoutesByFullPath {
   '/screens': typeof AuthenticatedScreensRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/screens/$screenId': typeof AuthenticatedScreensScreenIdRoute
+  '/api/public/devices/commands': typeof ApiPublicDevicesCommandsRouteWithChildren
+  '/api/public/devices/content': typeof ApiPublicDevicesContentRoute
   '/api/public/devices/heartbeat': typeof ApiPublicDevicesHeartbeatRoute
   '/api/public/devices/request': typeof ApiPublicDevicesRequestRoute
   '/api/public/devices/status': typeof ApiPublicDevicesStatusRoute
+  '/api/public/devices/commands/ack': typeof ApiPublicDevicesCommandsAckRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -114,9 +137,12 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/': typeof AuthenticatedIndexRoute
   '/screens/$screenId': typeof AuthenticatedScreensScreenIdRoute
+  '/api/public/devices/commands': typeof ApiPublicDevicesCommandsRouteWithChildren
+  '/api/public/devices/content': typeof ApiPublicDevicesContentRoute
   '/api/public/devices/heartbeat': typeof ApiPublicDevicesHeartbeatRoute
   '/api/public/devices/request': typeof ApiPublicDevicesRequestRoute
   '/api/public/devices/status': typeof ApiPublicDevicesStatusRoute
+  '/api/public/devices/commands/ack': typeof ApiPublicDevicesCommandsAckRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -130,9 +156,12 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/screens_/$screenId': typeof AuthenticatedScreensScreenIdRoute
+  '/api/public/devices/commands': typeof ApiPublicDevicesCommandsRouteWithChildren
+  '/api/public/devices/content': typeof ApiPublicDevicesContentRoute
   '/api/public/devices/heartbeat': typeof ApiPublicDevicesHeartbeatRoute
   '/api/public/devices/request': typeof ApiPublicDevicesRequestRoute
   '/api/public/devices/status': typeof ApiPublicDevicesStatusRoute
+  '/api/public/devices/commands/ack': typeof ApiPublicDevicesCommandsAckRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -146,9 +175,12 @@ export interface FileRouteTypes {
     | '/screens'
     | '/settings'
     | '/screens/$screenId'
+    | '/api/public/devices/commands'
+    | '/api/public/devices/content'
     | '/api/public/devices/heartbeat'
     | '/api/public/devices/request'
     | '/api/public/devices/status'
+    | '/api/public/devices/commands/ack'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -160,9 +192,12 @@ export interface FileRouteTypes {
     | '/settings'
     | '/'
     | '/screens/$screenId'
+    | '/api/public/devices/commands'
+    | '/api/public/devices/content'
     | '/api/public/devices/heartbeat'
     | '/api/public/devices/request'
     | '/api/public/devices/status'
+    | '/api/public/devices/commands/ack'
   id:
     | '__root__'
     | '/_authenticated'
@@ -175,14 +210,19 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/'
     | '/_authenticated/screens_/$screenId'
+    | '/api/public/devices/commands'
+    | '/api/public/devices/content'
     | '/api/public/devices/heartbeat'
     | '/api/public/devices/request'
     | '/api/public/devices/status'
+    | '/api/public/devices/commands/ack'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicDevicesCommandsRoute: typeof ApiPublicDevicesCommandsRouteWithChildren
+  ApiPublicDevicesContentRoute: typeof ApiPublicDevicesContentRoute
   ApiPublicDevicesHeartbeatRoute: typeof ApiPublicDevicesHeartbeatRoute
   ApiPublicDevicesRequestRoute: typeof ApiPublicDevicesRequestRoute
   ApiPublicDevicesStatusRoute: typeof ApiPublicDevicesStatusRoute
@@ -260,6 +300,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedScreensScreenIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/devices/commands': {
+      id: '/api/public/devices/commands'
+      path: '/api/public/devices/commands'
+      fullPath: '/api/public/devices/commands'
+      preLoaderRoute: typeof ApiPublicDevicesCommandsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/devices/content': {
+      id: '/api/public/devices/content'
+      path: '/api/public/devices/content'
+      fullPath: '/api/public/devices/content'
+      preLoaderRoute: typeof ApiPublicDevicesContentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/devices/heartbeat': {
       id: '/api/public/devices/heartbeat'
       path: '/api/public/devices/heartbeat'
@@ -280,6 +334,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/devices/status'
       preLoaderRoute: typeof ApiPublicDevicesStatusRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/public/devices/commands/ack': {
+      id: '/api/public/devices/commands/ack'
+      path: '/ack'
+      fullPath: '/api/public/devices/commands/ack'
+      preLoaderRoute: typeof ApiPublicDevicesCommandsAckRouteImport
+      parentRoute: typeof ApiPublicDevicesCommandsRoute
     }
   }
 }
@@ -309,9 +370,25 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ApiPublicDevicesCommandsRouteChildren {
+  ApiPublicDevicesCommandsAckRoute: typeof ApiPublicDevicesCommandsAckRoute
+}
+
+const ApiPublicDevicesCommandsRouteChildren: ApiPublicDevicesCommandsRouteChildren =
+  {
+    ApiPublicDevicesCommandsAckRoute: ApiPublicDevicesCommandsAckRoute,
+  }
+
+const ApiPublicDevicesCommandsRouteWithChildren =
+  ApiPublicDevicesCommandsRoute._addFileChildren(
+    ApiPublicDevicesCommandsRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicDevicesCommandsRoute: ApiPublicDevicesCommandsRouteWithChildren,
+  ApiPublicDevicesContentRoute: ApiPublicDevicesContentRoute,
   ApiPublicDevicesHeartbeatRoute: ApiPublicDevicesHeartbeatRoute,
   ApiPublicDevicesRequestRoute: ApiPublicDevicesRequestRoute,
   ApiPublicDevicesStatusRoute: ApiPublicDevicesStatusRoute,

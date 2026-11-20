@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      device_commands: {
+        Row: {
+          acknowledged_at: string | null
+          command: string
+          created_at: string
+          delivered_at: string | null
+          device_id: string
+          error_message: string | null
+          expires_at: string
+          id: string
+          screen_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          command: string
+          created_at?: string
+          delivered_at?: string | null
+          device_id: string
+          error_message?: string | null
+          expires_at?: string
+          id?: string
+          screen_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          command?: string
+          created_at?: string
+          delivered_at?: string | null
+          device_id?: string
+          error_message?: string | null
+          expires_at?: string
+          id?: string
+          screen_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_commands_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "pairing_sessions"
+            referencedColumns: ["device_id"]
+          },
+          {
+            foreignKeyName: "device_commands_screen_id_fkey"
+            columns: ["screen_id"]
+            isOneToOne: false
+            referencedRelation: "screens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_credentials: {
         Row: {
           device_id: string
@@ -72,6 +129,41 @@ export type Database = {
           window_start?: string
         }
         Relationships: []
+      }
+      device_telemetry: {
+        Row: {
+          device_id: string
+          device_info: Json
+          last_sync_at: string | null
+          playback_status: Json
+          player_version: string | null
+          updated_at: string
+        }
+        Insert: {
+          device_id: string
+          device_info?: Json
+          last_sync_at?: string | null
+          playback_status?: Json
+          player_version?: string | null
+          updated_at?: string
+        }
+        Update: {
+          device_id?: string
+          device_info?: Json
+          last_sync_at?: string | null
+          playback_status?: Json
+          player_version?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_telemetry_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: true
+            referencedRelation: "pairing_sessions"
+            referencedColumns: ["device_id"]
+          },
+        ]
       }
       groups: {
         Row: {
@@ -410,6 +502,7 @@ export type Database = {
       }
       screens: {
         Row: {
+          assignment_updated_at: string
           created_at: string
           current_playlist_id: string | null
           group_id: string | null
@@ -423,6 +516,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assignment_updated_at?: string
           created_at?: string
           current_playlist_id?: string | null
           group_id?: string | null
@@ -436,6 +530,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assignment_updated_at?: string
           created_at?: string
           current_playlist_id?: string | null
           group_id?: string | null
@@ -522,8 +617,42 @@ export type Database = {
         Args: { p_key: string; p_max: number; p_seconds: number }
         Returns: boolean
       }
+      device_ack_command: {
+        Args: {
+          p_command: string
+          p_device: string
+          p_error?: string
+          p_hash: string
+          p_status: string
+        }
+        Returns: boolean
+      }
+      device_content: {
+        Args: { p_device: string; p_hash: string }
+        Returns: Json
+      }
       device_heartbeat: {
         Args: { p_device: string; p_hash: string }
+        Returns: string
+      }
+      device_poll_commands: {
+        Args: { p_device: string; p_hash: string }
+        Returns: Json
+      }
+      device_record_sync: {
+        Args: { p_device: string; p_hash: string }
+        Returns: string
+      }
+      device_report: {
+        Args: { p_device: string; p_hash: string; p_report: Json }
+        Returns: string
+      }
+      device_screen: {
+        Args: { p_device: string; p_hash: string }
+        Returns: string
+      }
+      enqueue_device_command: {
+        Args: { p_command: string; p_screen: string }
         Returns: string
       }
       register_pairing_session: {

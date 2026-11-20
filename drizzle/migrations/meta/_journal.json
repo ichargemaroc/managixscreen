@@ -43,6 +43,20 @@
       "when": 1795144158019,
       "tag": "0005_optional_pairing_group",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795144644465,
+      "tag": "0006_device_content_telemetry_and_commands",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795144843322,
+      "tag": "0007_restrict_device_table_grants",
+      "breakpoints": true
     }
   ]
 }

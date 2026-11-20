@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { effectivePairingStatus, generateDeviceToken, generatePairingCode, hashDeviceToken, PAIRING_LIFETIME_SECONDS } from "@/lib/device-protocol";
+import { deviceIdentity, deviceReport, commandAck, manifestSchema } from "@/lib/player-protocol";
 
-const identity = z.object({ device_id: z.string().uuid() }).strict();
 const registration = z.object({ device_name: z.string().trim().max(120).default("Android TV"), device_metadata: z.record(z.string(), z.union([z.string().max(200), z.number(), z.boolean()])).default({}) }).strict();
 
-export async function handleDeviceRequest(request: Request, operation: "request" | "status" | "heartbeat") {
+export async function handleDeviceRequest(request: Request, operation: "request" | "status" | "heartbeat" | "content" | "commands" | "ack") {
   const reply = (value: unknown, status = 200) => Response.json(value, { status, headers: { "Cache-Control": "no-store" } });
   try {
     if (!request.headers.get("content-type")?.includes("application/json")) return reply({ error: "JSON requis" }, 415);
@@ -34,7 +34,8 @@ export async function handleDeviceRequest(request: Request, operation: "request"
       }
       return reply({ error: "Réessayez ultérieurement." }, 503);
     }
-    const input = identity.parse(JSON.parse(body));
+    const parsedBody: unknown = JSON.parse(body);
+    const input = operation === "heartbeat" ? deviceReport.parse(parsedBody) : operation === "ack" ? commandAck.parse(parsedBody) : deviceIdentity.parse(parsedBody);
     const token = request.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
     if (!/^[a-f0-9]{64}$/.test(token)) return reply({ error: "Appareil non autorisé" }, 401);
     const hash = await hashDeviceToken(token);
@@ -45,9 +46,42 @@ export async function handleDeviceRequest(request: Request, operation: "request"
     const { data: allowed, error: limitError } = await supabaseAdmin.rpc("consume_device_limit", { p_key: `device:${input.device_id}`, p_max: 30, p_seconds: 60 });
     if (limitError || !allowed) return reply({ error: "Trop de demandes. Réessayez dans une minute." }, 429);
     if (operation === "heartbeat") {
-      const { data, error } = await supabaseAdmin.rpc("device_heartbeat", { p_device: input.device_id, p_hash: hash });
+      const { device_id, ...report } = deviceReport.parse(parsedBody);
+      const { data, error } = await supabaseAdmin.rpc("device_report", { p_device: device_id, p_hash: hash, p_report: report });
       if (error) return reply({ error: "Appareil non autorisé" }, 401);
       return reply({ last_seen: data, status: "online" });
+    }
+    if (operation === "content") {
+      const { data, error } = await supabaseAdmin.rpc("device_content", { p_device: input.device_id, p_hash: hash });
+      if (error) return reply({ error: "Appareil non autorisé" }, 401);
+      const manifest = manifestSchema.parse(data);
+      const items = await Promise.all((manifest.playlist?.items ?? []).map(async ({ media, ...item }) => {
+        const { path, ...metadata } = media;
+        const { data: url, error: urlError } = await supabaseAdmin.storage.from("media").createSignedUrl(path, 3600);
+        if (urlError || !url?.signedUrl) throw new Error("Media unavailable");
+        // The backend request host may be internal in drafts. Downloads must use the browser-facing host.
+        const publicHost = import.meta.env['VITE_SUPABASE_URL'];
+        if (!publicHost) throw new Error("Storage unavailable");
+        const download = new URL(url.signedUrl);
+        const publicUrl = new URL(publicHost);
+        download.protocol = publicUrl.protocol; download.host = publicUrl.host;
+        return { ...item, media: { ...metadata, download_url: download.toString() } };
+      }));
+      const { data: synced, error: syncError } = await supabaseAdmin.rpc("device_record_sync", { p_device: input.device_id, p_hash: hash });
+      if (syncError) return reply({ error: "Appareil non autorisé" }, 401);
+      return reply({ ...manifest, playlist: manifest.playlist ? { ...manifest.playlist, items } : null, last_sync_at: synced, download_urls_expire_in: 3600 });
+    }
+    if (operation === "commands") {
+      const { data, error } = await supabaseAdmin.rpc("device_poll_commands", { p_device: input.device_id, p_hash: hash });
+      if (error) return reply({ error: "Appareil non autorisé" }, 401);
+      return reply({ commands: data });
+    }
+    if (operation === "ack") {
+      const ack = commandAck.parse(parsedBody);
+      const { data, error } = await supabaseAdmin.rpc("device_ack_command", { p_device: input.device_id, p_hash: hash, p_command: ack.command_id, p_status: ack.status, ...(ack.error ? { p_error: ack.error } : {}) });
+      if (error) return reply({ error: "Appareil non autorisé" }, 401);
+      if (!data) return reply({ error: "Commande indisponible ou état incompatible" }, 409);
+      return reply({ acknowledged: true });
     }
     const { data: session } = await supabaseAdmin.from("pairing_sessions").select("status, expires_at, screen_id").eq("device_id", input.device_id).maybeSingle();
     if (!session) return reply({ error: "Appareil non autorisé" }, 401);
