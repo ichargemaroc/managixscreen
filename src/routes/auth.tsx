@@ -7,7 +7,6 @@ import { ArrowRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { LovableMark } from "@lovable.dev/cloud-auth-js/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -75,7 +74,7 @@ function AuthPage() {
     }
   }
 
-  async function oauth(provider: "google" | "lovable") {
+  async function oauth(provider: "google") {
     const result = await lovable.auth.signInWithOAuth(provider, { redirect_uri: pairCode ? pairingUrl(window.location.origin, pairCode) : window.location.origin });
     if (result.error) toast.error("La connexion a échoué, réessayez.");
   }
@@ -119,9 +118,6 @@ function AuthPage() {
           <div className="grid gap-2">
             <Button type="button" variant="outline" onClick={() => void oauth("google")}>
               <GoogleLogo /> Continuer avec Google
-            </Button>
-            <Button type="button" variant="outline" onClick={() => void oauth("lovable")}>
-              <LovableMark /> Continuer avec Lovable
             </Button>
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
