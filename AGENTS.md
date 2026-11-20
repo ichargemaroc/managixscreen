@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+- App data lives in `src/lib/store.tsx` (in-memory, typed like future Cloud tables); pages only use `useStore()` so the backend can be swapped in one place.
+- App shell (sidebar + header) is in `src/components/app-shell.tsx`, rendered from `__root.tsx`; each nav item has its own route file.
