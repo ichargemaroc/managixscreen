@@ -13,6 +13,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as PairRouteImport } from './routes/pair'
 import { Route as PlayerRouteImport } from './routes/player'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated/groups'
 import { Route as AuthenticatedMediaRouteImport } from './routes/_authenticated/media'
@@ -45,6 +46,11 @@ const PairRoute = PairRouteImport.update({
 const PlayerRoute = PlayerRouteImport.update({
   id: '/player',
   path: '/player',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/pair': typeof PairRoute
   '/player': typeof PlayerRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/groups': typeof AuthenticatedGroupsRoute
   '/media': typeof AuthenticatedMediaRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
@@ -145,6 +152,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/pair': typeof PairRoute
   '/player': typeof PlayerRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/groups': typeof AuthenticatedGroupsRoute
   '/media': typeof AuthenticatedMediaRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
@@ -166,6 +174,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/pair': typeof PairRoute
   '/player': typeof PlayerRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/groups': typeof AuthenticatedGroupsRoute
   '/_authenticated/media': typeof AuthenticatedMediaRoute
   '/_authenticated/playlists': typeof AuthenticatedPlaylistsRoute
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/pair'
     | '/player'
+    | '/reset-password'
     | '/groups'
     | '/media'
     | '/playlists'
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/pair'
     | '/player'
+    | '/reset-password'
     | '/groups'
     | '/media'
     | '/playlists'
@@ -226,6 +237,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/pair'
     | '/player'
+    | '/reset-password'
     | '/_authenticated/groups'
     | '/_authenticated/media'
     | '/_authenticated/playlists'
@@ -247,6 +259,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PairRoute: typeof PairRoute
   PlayerRoute: typeof PlayerRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicDevicesCommandsRoute: typeof ApiPublicDevicesCommandsRouteWithChildren
   ApiPublicDevicesContentRoute: typeof ApiPublicDevicesContentRoute
   ApiPublicDevicesHeartbeatRoute: typeof ApiPublicDevicesHeartbeatRoute
@@ -282,6 +295,13 @@ declare module '@tanstack/react-router' {
       path: '/player'
       fullPath: '/player'
       preLoaderRoute: typeof PlayerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/': {
@@ -429,6 +449,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PairRoute: PairRoute,
   PlayerRoute: PlayerRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicDevicesCommandsRoute: ApiPublicDevicesCommandsRouteWithChildren,
   ApiPublicDevicesContentRoute: ApiPublicDevicesContentRoute,
   ApiPublicDevicesHeartbeatRoute: ApiPublicDevicesHeartbeatRoute,

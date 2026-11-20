@@ -42,7 +42,7 @@ function GoogleLogo() {
 function AuthPage() {
   const navigate = useNavigate();
   const { pairCode } = Route.useSearch();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -53,7 +53,12 @@ function AuthPage() {
     e.preventDefault();
     setBusy(true);
     try {
-      if (mode === "login") {
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
+        if (error) throw error;
+        toast.success("Lien envoyé — vérifiez votre e-mail pour réinitialiser votre mot de passe.");
+        setMode("login");
+      } else if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         if (pairCode) await navigate({ to: "/pair", search: { code: pairCode } });
@@ -108,40 +113,51 @@ function AuthPage() {
       <div className="w-full">
         <div className="mb-8 text-center">
           <DialogHeader>
-          <DialogTitle className="text-center text-2xl font-normal">{mode === "login" ? "Connexion" : "Créer un compte"}</DialogTitle>
+          <DialogTitle className="text-center text-2xl font-normal">{mode === "login" ? "Connexion" : mode === "signup" ? "Créer un compte" : "Mot de passe oublié"}</DialogTitle>
           <DialogDescription className="mt-3 text-center">
-            {mode === "login" ? "Connectez-vous pour gérer vos écrans." : "Créez votre compte ScreenFlow."}
+            {mode === "login" ? "Connectez-vous pour gérer vos écrans." : mode === "signup" ? "Créez votre compte ScreenFlow." : "Saisissez votre e-mail pour recevoir un lien de réinitialisation."}
           </DialogDescription>
           </DialogHeader>
         </div>
         <div className="space-y-5">
-          <div className="grid gap-2">
-            <Button type="button" variant="outline" onClick={() => void oauth("google")}>
-              <GoogleLogo /> Continuer avec Google
-            </Button>
-          </div>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" /> ou <span className="h-px flex-1 bg-border" />
-          </div>
+          {mode !== "forgot" && <>
+            <div className="grid gap-2">
+              <Button type="button" variant="outline" onClick={() => void oauth("google")}>
+                <GoogleLogo /> Continuer avec Google
+              </Button>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="h-px flex-1 bg-border" /> ou <span className="h-px flex-1 bg-border" />
+            </div>
+          </>}
           <form onSubmit={submit} className="space-y-5 [&_input]:h-12 [&_input]:bg-background [&_input]:shadow-none">
             {mode === "signup" && <div className="space-y-2"><Label htmlFor="full-name">Nom complet</Label><Input id="full-name" required value={fullName} onChange={(e) => setFullName(e.target.value)} /></div>}
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
               <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vous@entreprise.com" />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
+            {mode !== "forgot" && <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Mot de passe</Label>
+                {mode === "login" && <Button variant="link" type="button" className="h-auto px-0 text-xs" onClick={() => setMode("forgot")}>Mot de passe oublié ?</Button>}
+              </div>
               <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6 caractères minimum" />
-            </div>
+            </div>}
             <Button className="w-full" size="lg" disabled={busy}>
-              {mode === "login" ? "Se connecter" : "Créer mon compte"}
+              {mode === "login" ? "Se connecter" : mode === "signup" ? "Créer mon compte" : "Envoyer le lien"}
             </Button>
           </form>
           <p className="text-center text-sm text-muted-foreground">
-            {mode === "login" ? "Pas encore de compte ?" : "Déjà inscrit ?"}{" "}
-            <Button variant="link" type="button" className="px-0" onClick={() => setMode(mode === "login" ? "signup" : "login")}>
-              {mode === "login" ? "Créer un compte" : "Se connecter"}
-            </Button>
+            {mode === "forgot" ? (
+              <Button variant="link" type="button" className="px-0" onClick={() => setMode("login")}>Retour à la connexion</Button>
+            ) : (
+              <>
+                {mode === "login" ? "Pas encore de compte ?" : "Déjà inscrit ?"}{" "}
+                <Button variant="link" type="button" className="px-0" onClick={() => setMode(mode === "login" ? "signup" : "login")}>
+                  {mode === "login" ? "Créer un compte" : "Se connecter"}
+                </Button>
+              </>
+            )}
           </p>
         </div>
       </div>
