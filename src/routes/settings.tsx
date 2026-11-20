@@ -8,9 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [
-    { title: "Settings — ScreenFlow" },
+    { title: "Paramètres — ScreenFlow" },
     { name: "description", content: "Profil, utilisateurs et configuration du compte." },
-    { property: "og:title", content: "Settings — ScreenFlow" },
+    { property: "og:title", content: "Paramètres — ScreenFlow" },
     { property: "og:description", content: "Profil, utilisateurs et configuration du compte." },
   ] }),
   component: SettingsPage,

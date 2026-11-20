@@ -7,9 +7,9 @@ import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [
-    { title: "Dashboard — ScreenFlow" },
+    { title: "Tableau de bord — ScreenFlow" },
     { name: "description", content: "Vue d'ensemble de vos écrans, médias et playlists." },
-    { property: "og:title", content: "Dashboard — ScreenFlow" },
+    { property: "og:title", content: "Tableau de bord — ScreenFlow" },
     { property: "og:description", content: "Vue d'ensemble de vos écrans, médias et playlists." },
   ] }),
   component: Dashboard,

@@ -12,9 +12,9 @@ import { useStore, uid, formatBytes, formatDuration, type Media } from "@/lib/st
 
 export const Route = createFileRoute("/media")({
   head: () => ({ meta: [
-    { title: "Media Library — ScreenFlow" },
+    { title: "Médiathèque — ScreenFlow" },
     { name: "description", content: "Importez et organisez vos photos et vidéos." },
-    { property: "og:title", content: "Media Library — ScreenFlow" },
+    { property: "og:title", content: "Médiathèque — ScreenFlow" },
     { property: "og:description", content: "Importez et organisez vos photos et vidéos." },
   ] }),
   component: MediaPage,

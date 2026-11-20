@@ -11,9 +11,9 @@ import { useStore, uid } from "@/lib/store";
 
 export const Route = createFileRoute("/groups")({
   head: () => ({ meta: [
-    { title: "Groups — ScreenFlow" },
+    { title: "Groupes — ScreenFlow" },
     { name: "description", content: "Organisez vos écrans par groupes et par lieux." },
-    { property: "og:title", content: "Groups — ScreenFlow" },
+    { property: "og:title", content: "Groupes — ScreenFlow" },
     { property: "og:description", content: "Organisez vos écrans par groupes et par lieux." },
   ] }),
   component: GroupsPage,

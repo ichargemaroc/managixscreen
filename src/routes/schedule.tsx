@@ -12,9 +12,9 @@ import { useStore, uid } from "@/lib/store";
 
 export const Route = createFileRoute("/schedule")({
   head: () => ({ meta: [
-    { title: "Schedule — ScreenFlow" },
+    { title: "Programmation — ScreenFlow" },
     { name: "description", content: "Programmez vos playlists par date et horaire." },
-    { property: "og:title", content: "Schedule — ScreenFlow" },
+    { property: "og:title", content: "Programmation — ScreenFlow" },
     { property: "og:description", content: "Programmez vos playlists par date et horaire." },
   ] }),
   component: SchedulePage,

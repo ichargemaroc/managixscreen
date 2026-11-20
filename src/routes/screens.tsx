@@ -16,9 +16,9 @@ import { useStore, uid, isValidPairingCode, type Screen } from "@/lib/store";
 
 export const Route = createFileRoute("/screens")({
   head: () => ({ meta: [
-    { title: "Screens — ScreenFlow" },
+    { title: "Écrans — ScreenFlow" },
     { name: "description", content: "Ajoutez, organisez et gérez vos TV Android." },
-    { property: "og:title", content: "Screens — ScreenFlow" },
+    { property: "og:title", content: "Écrans — ScreenFlow" },
     { property: "og:description", content: "Ajoutez, organisez et gérez vos TV Android." },
   ] }),
   component: Screens,
