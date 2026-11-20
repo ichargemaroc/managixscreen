@@ -21,7 +21,12 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-      - uses: android-actions/setup-android@v3
+      - name: Set up Android SDK (Capacitor 8)
+        uses: android-actions/setup-android@v3
+        with:
+          # Override the action's obsolete default: tools platform-tools.
+          packages: 'platform-tools platforms;android-36 build-tools;35.0.0'
+          accept-android-sdk-licenses: true
       - run: bun install --frozen-lockfile
       - name: Validate server address
         env:

@@ -1,5 +1,9 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Correction installation SDK Android TV
+- [x] Remplacer les packages SDK obsolètes ; SDK 36, build-tools 35.0.0 et Java 21 vérifiés avec Capacitor 8 / Gradle 8.14.3 / AGP 8.13
+- [x] YAML validé avec actionlint ; lancement manuel, api_origin et Artifact APK conservés ; nouvelle exécution GitHub non lancée
+
 ## Style Google Play Console
 - [x] Harmoniser les couleurs, la typographie, le menu et les boutons avec la capture fournie
 - [x] Adapter la connexion et le tableau de bord ; navigation connectée vérifiée sur les sept pages, ordinateur et téléphone sans erreur
