@@ -30,5 +30,8 @@ use the editor.
 <!-- LOVABLE:END -->
 
 ## Project rules
-- App data lives in `src/lib/store.tsx` (in-memory, typed like future Cloud tables); pages only use `useStore()` so the backend can be swapped in one place.
+- App data and Cloud writes live in `src/lib/store.tsx`; pages consume `useStore()` and its exported actions to keep data access centralized.
 - App shell (sidebar + header) is in `src/components/app-shell.tsx`, rendered from `__root.tsx`; each nav item has its own route file.
+- Preserve legacy database fields through generated aliases and an RLS-aware group view so deployed clients remain compatible.
+- Replace playlist items through the owner-scoped transactional RPC so failed writes never erase existing content.
+- Keep device status heartbeat-derived and prohibit ordinary account writes to status timestamps to avoid simulated connectivity.

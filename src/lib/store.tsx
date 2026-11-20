@@ -1,19 +1,21 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { mediaKind, screenStatus } from "@/lib/signage-rules";
+import { Button } from "@/components/ui/button";
 
 // Données ScreenFlow lues depuis Lovable Cloud. Les pages utilisent useStore()
 // et les actions ci-dessous ; la synchronisation temps réel des écrans est
 // branchée dans RealtimeSync (src/components/realtime-sync.tsx).
 
-export type Group = { id: string; name: string; location: string };
+export type Group = { id: string; name: string; location: string; screenIds: string[] };
 export type Screen = {
   id: string; name: string; pairingCode: string; groupId: string | null;
-  status: "online" | "offline" | "pending"; lastSeen: string | null; playlistId: string | null;
+  status: "online" | "offline" | "pending"; lastSeen: string | null; playlistId: string | null; location: string;
 };
 export type Media = { id: string; name: string; type: "image" | "video"; size: number; duration: number | null; url: string; path: string; createdAt: string };
 export type PlaylistItem = { id: string; mediaId: string; duration: number };
-export type Playlist = { id: string; name: string; items: PlaylistItem[]; createdAt: string };
+export type Playlist = { id: string; name: string; description: string; items: PlaylistItem[]; createdAt: string };
 export type Schedule = {
   id: string; playlistId: string; targetType: "screen" | "group"; targetId: string;
   startDate: string; endDate: string; startTime: string; endTime: string; days: number[];
@@ -27,20 +29,22 @@ const StoreCtx = createContext<Ctx | null>(null);
 const EMPTY: State = { groups: [], screens: [], media: [], playlists: [], schedules: [] };
 
 async function signedUrl(path: string) {
-  const { data } = await supabase.storage.from("media").createSignedUrl(path, 60 * 60);
+  const { data, error } = await supabase.storage.from("media").createSignedUrl(path, 60 * 60);
+  if (error) throw error;
   return data?.signedUrl ?? "";
 }
 
 async function fetchAll(): Promise<State> {
-  const [groups, screens, media, playlists, items, schedules] = await Promise.all([
+  const [groups, screens, media, playlists, items, schedules, members] = await Promise.all([
     supabase.from("groups").select("*").order("created_at"),
     supabase.from("screens").select("*").order("created_at"),
     supabase.from("media").select("*").order("created_at", { ascending: false }),
     supabase.from("playlists").select("*").order("created_at"),
     supabase.from("playlist_items").select("*").order("position"),
     supabase.from("schedules").select("*").order("created_at"),
+    supabase.from("screen_group_members").select("*"),
   ]);
-  for (const r of [groups, screens, media, playlists, items, schedules]) {
+  for (const r of [groups, screens, media, playlists, items, schedules, members]) {
     if (r.error) throw r.error;
   }
   const mediaRows = await Promise.all(
@@ -56,13 +60,13 @@ async function fetchAll(): Promise<State> {
     itemsByPlaylist.set(it.playlist_id, list);
   }
   return {
-    groups: (groups.data ?? []).map((g) => ({ id: g.id, name: g.name, location: g.location })),
+    groups: (groups.data ?? []).map((g) => ({ id: g.id, name: g.name, location: g.location, screenIds: (members.data ?? []).filter((m) => m.group_id === g.id).map((m) => m.screen_id) })),
     screens: (screens.data ?? []).map((s) => ({
       id: s.id, name: s.name, pairingCode: s.pairing_code, groupId: s.group_id,
-      status: s.status as Screen["status"], lastSeen: s.last_seen, playlistId: s.playlist_id,
+      status: screenStatus(s.status, s.last_seen), lastSeen: s.last_seen, playlistId: s.playlist_id, location: s.location,
     })),
     media: mediaRows,
-    playlists: (playlists.data ?? []).map((p) => ({ id: p.id, name: p.name, items: itemsByPlaylist.get(p.id) ?? [], createdAt: p.created_at })),
+    playlists: (playlists.data ?? []).map((p) => ({ id: p.id, name: p.name, description: p.description, items: itemsByPlaylist.get(p.id) ?? [], createdAt: p.created_at })),
     schedules: (schedules.data ?? []).map((s) => ({
       id: s.id, playlistId: s.playlist_id, targetType: s.target_type as "screen" | "group", targetId: s.target_id,
       startDate: s.start_date, endDate: s.end_date, startTime: s.start_time.slice(0, 5), endTime: s.end_time.slice(0, 5), days: s.days,
@@ -72,13 +76,13 @@ async function fetchAll(): Promise<State> {
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ["screenflow"], queryFn: fetchAll });
+  const { data, isLoading, error, refetch } = useQuery({ queryKey: ["screenflow"], queryFn: fetchAll, refetchInterval: 60_000 });
   const value = useMemo<Ctx>(() => ({
     ...(data ?? EMPTY),
     loading: isLoading,
     refresh: () => { void queryClient.invalidateQueries({ queryKey: ["screenflow"] }); },
   }), [data, isLoading, queryClient]);
-  return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
+  return <StoreCtx.Provider value={value}>{error ? <div role="alert" className="p-8 text-center"><p>Les données n’ont pas pu être chargées.</p><Button className="mt-4" onClick={() => void refetch()}>Réessayer</Button></div> : isLoading ? <p role="status" className="p-8 text-center text-muted-foreground">Chargement…</p> : children}</StoreCtx.Provider>;
 }
 
 export function useStore() {
@@ -100,8 +104,9 @@ export async function addScreen(name: string, pairingCode: string, groupId: stri
   if (error) throw error;
 }
 
-export async function updateScreen(id: string, patch: { name?: string; groupId?: string | null; playlistId?: string | null }) {
-  const row: { name?: string; group_id?: string | null; playlist_id?: string | null } = {};
+export async function updateScreen(id: string, patch: { name?: string; groupId?: string | null; playlistId?: string | null; location?: string }) {
+  const row: { name?: string; group_id?: string | null; playlist_id?: string | null; location?: string } = {};
+  if (patch.location !== undefined) row.location = patch.location;
   if (patch.name !== undefined) row.name = patch.name;
   if (patch.groupId !== undefined) row.group_id = patch.groupId;
   if (patch.playlistId !== undefined) row.playlist_id = patch.playlistId;
@@ -124,18 +129,44 @@ export async function deleteGroup(id: string) {
   if (error) throw error;
 }
 
+export async function updateGroup(id: string, name: string, location: string) {
+  const { error } = await supabase.from("groups").update({ name, location }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function setGroupMember(groupId: string, screenId: string, included: boolean) {
+  const { error } = included
+    ? await supabase.from("screen_group_members").upsert({ group_id: groupId, screen_id: screenId }, { onConflict: "group_id,screen_id" })
+    : await supabase.from("screen_group_members").delete().eq("group_id", groupId).eq("screen_id", screenId);
+  if (error) throw error;
+  if (!included) {
+    const { error: unlinkError } = await supabase.from("screens").update({ group_id: null }).eq("id", screenId).eq("group_id", groupId);
+    if (unlinkError) throw unlinkError;
+  }
+}
+
 export async function addMedia(file: File, type: "image" | "video", duration: number | null) {
+  if (mediaKind(file.type) !== type) throw new Error("Format de média non pris en charge");
   const uidValue = await userId();
   const path = `${uidValue}/${crypto.randomUUID()}-${file.name}`;
   const { error: upErr } = await supabase.storage.from("media").upload(path, file);
   if (upErr) throw upErr;
   const { error } = await supabase.from("media").insert({ user_id: uidValue, name: file.name, type, size: file.size, duration, path });
-  if (error) throw error;
+  if (error) {
+    await supabase.storage.from("media").remove([path]);
+    throw error;
+  }
 }
 
 export async function deleteMedia(m: Media) {
-  await supabase.storage.from("media").remove([m.path]);
+  const { error: storageError } = await supabase.storage.from("media").remove([m.path]);
+  if (storageError) throw storageError;
   const { error } = await supabase.from("media").delete().eq("id", m.id);
+  if (error) throw error;
+}
+
+export async function renameMedia(id: string, name: string) {
+  const { error } = await supabase.from("media").update({ name }).eq("id", id);
   if (error) throw error;
 }
 
@@ -145,40 +176,42 @@ export async function createPlaylist(name: string) {
   return data.id as string;
 }
 
-export async function renamePlaylist(id: string, name: string) {
-  const { error } = await supabase.from("playlists").update({ name }).eq("id", id);
+export async function renamePlaylist(id: string, name: string, description?: string) {
+  const { error } = await supabase.from("playlists").update({ name, ...(description === undefined ? {} : { description }) }).eq("id", id);
   if (error) throw error;
 }
 
 export async function deletePlaylist(id: string) {
-  await supabase.from("screens").update({ playlist_id: null }).eq("playlist_id", id);
   const { error } = await supabase.from("playlists").delete().eq("id", id);
   if (error) throw error;
 }
 
 // Remplace tout le contenu d'une playlist (ordre + durées) en une opération.
 export async function savePlaylistItems(playlistId: string, items: { mediaId: string; duration: number }[]) {
-  const { error: delErr } = await supabase.from("playlist_items").delete().eq("playlist_id", playlistId);
-  if (delErr) throw delErr;
-  if (items.length) {
-    const { error } = await supabase.from("playlist_items").insert(
-      items.map((it, i) => ({ playlist_id: playlistId, media_id: it.mediaId, duration: it.duration, position: i })),
-    );
-    if (error) throw error;
-  }
-}
-
-export async function assignPlaylist(playlistId: string, targetType: "screen" | "group", targetId: string) {
-  const q = supabase.from("screens").update({ playlist_id: playlistId });
-  const { error } = targetType === "screen" ? await q.eq("id", targetId) : await q.eq("group_id", targetId);
+  const { error } = await supabase.rpc("replace_playlist_items", { p_playlist_id: playlistId, p_items: items });
   if (error) throw error;
 }
 
-export async function addSchedule(s: Omit<Schedule, "id">) {
-  const { error } = await supabase.from("schedules").insert({
+export async function assignPlaylist(playlistId: string, targetType: "screen" | "group", targetId: string) {
+  let ids = [targetId];
+  if (targetType === "group") {
+    const { data, error } = await supabase.from("screen_group_members").select("screen_id").eq("group_id", targetId);
+    if (error) throw error;
+    ids = (data ?? []).map((m) => m.screen_id);
+    if (!ids.length) throw new Error("Ce groupe ne contient aucun écran");
+  }
+  const { error } = await supabase.from("screens").update({ playlist_id: playlistId }).in("id", ids);
+  if (error) throw error;
+}
+
+export async function addSchedule(s: Omit<Schedule, "id">, id?: string) {
+  const row = {
     user_id: await userId(), playlist_id: s.playlistId, target_type: s.targetType, target_id: s.targetId,
     start_date: s.startDate, end_date: s.endDate, start_time: s.startTime, end_time: s.endTime, days: s.days,
-  });
+    start_datetime: new Date(`${s.startDate}T${s.startTime}`).toISOString(),
+    end_datetime: new Date(`${s.endDate}T${s.endTime}`).toISOString(),
+  };
+  const { error } = id ? await supabase.from("schedules").update(row).eq("id", id) : await supabase.from("schedules").insert(row);
   if (error) throw error;
 }
 

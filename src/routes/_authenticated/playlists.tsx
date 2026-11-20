@@ -12,6 +12,8 @@ import { useStore, formatDuration, createPlaylist, renamePlaylist, deletePlaylis
 
 export const Route = createFileRoute("/_authenticated/playlists")({
   head: () => ({ meta: [
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
     { title: "Playlists — ScreenFlow" },
     { name: "description", content: "Composez vos playlists et affectez-les à vos écrans." },
     { property: "og:title", content: "Playlists — ScreenFlow" },
@@ -57,14 +59,21 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
   const { media, screens, groups, refresh } = useStore();
   const [drag, setDrag] = useState<number | null>(null);
   const [target, setTarget] = useState("");
+  const [name, setName] = useState(playlist.name);
+  const [description, setDescription] = useState(playlist.description);
+  const [busy, setBusy] = useState(false);
   const [items, setItems] = useState<PlaylistItem[]>(playlist.items);
   const persist = async (next: PlaylistItem[]) => {
-    setItems(next);
-    await savePlaylistItems(playlist.id, next.map((it) => ({ mediaId: it.mediaId, duration: it.duration })));
-    refresh();
+    if (busy) return;
+    setBusy(true);
+    try {
+      await savePlaylistItems(playlist.id, next.map((it) => ({ mediaId: it.mediaId, duration: it.duration })));
+      setItems(next); refresh();
+    } catch { toast.error("La playlist n’a pas pu être enregistrée"); } finally { setBusy(false); }
   };
   const add = (mediaId: string) => {
-    const m = media.find((x) => x.id === mediaId)!;
+    const m = media.find((x) => x.id === mediaId);
+    if (!m) return;
     void persist([...items, { id: crypto.randomUUID(), mediaId, duration: m.type === "video" ? Math.round(m.duration ?? 10) : 10 }]);
   };
   const move = (from: number, to: number) => {
@@ -86,9 +95,10 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
     <div className="mx-auto max-w-7xl">
       <Button variant="ghost" size="sm" className="mb-4" onClick={onBack}><ArrowLeft /> Playlists</Button>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Input className="max-w-md font-display text-xl font-semibold" value={playlist.name} onChange={(e) => { void renamePlaylist(playlist.id, e.target.value); refresh(); }} />
+        <Input className="max-w-md font-display text-xl font-semibold" aria-label="Nom de la playlist" value={name} onChange={(e) => setName(e.target.value)} />
         <Button variant="outline" className="text-destructive" onClick={() => void remove()}><Trash2 /> Supprimer</Button>
       </div>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row"><Input aria-label="Description de la playlist" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} /><Button disabled={!name.trim()} onClick={async () => { try { await renamePlaylist(playlist.id, name.trim(), description); refresh(); toast.success("Playlist enregistrée"); } catch { toast.error("L’enregistrement a échoué"); } }}>Enregistrer</Button></div>
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <Card><CardContent className="p-4">
           <h2 className="mb-3 text-sm font-semibold">Ordre de diffusion</h2>
@@ -122,16 +132,16 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
                 {groups.map((g) => <SelectItem key={g.id} value={`group:${g.id}`}>Groupe · {g.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button className="w-full" disabled={!target} onClick={() => void assign()}>Affecter la playlist</Button>
+            <Button className="w-full" disabled={!target} onClick={() => { void assign().catch((error) => toast.error(error instanceof Error ? error.message : "L’affectation a échoué")); }}>Affecter la playlist</Button>
           </CardContent></Card>
           <Card><CardContent className="p-4">
             <Label className="mb-3 block">Bibliothèque</Label>
             {media.length === 0 ? <p className="text-sm text-muted-foreground">Importez d'abord des médias dans la Médiathèque.</p> : (
               <ul className="max-h-96 space-y-1 overflow-y-auto">
                 {media.map((m) => (
-                  <li key={m.id}><button onClick={() => add(m.id)} className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-muted">
+                  <li key={m.id}><Button variant="ghost" disabled={busy} onClick={() => add(m.id)} className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-muted">
                     {m.type === "video" ? <Film className="size-4 text-primary" /> : <Plus className="size-4 text-primary" />}<span className="truncate">{m.name}</span>
-                  </button></li>
+                  </Button></li>
                 ))}
               </ul>
             )}

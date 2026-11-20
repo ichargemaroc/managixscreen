@@ -7,6 +7,8 @@ import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({ meta: [
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
     { title: "Tableau de bord — ScreenFlow" },
     { name: "description", content: "Vue d'ensemble de vos écrans, médias et playlists." },
     { property: "og:title", content: "Tableau de bord — ScreenFlow" },
@@ -26,7 +28,7 @@ function Dashboard() {
     { label: "Vidéos", value: media.filter((m) => m.type === "video").length, icon: Film },
     { label: "Playlists actives", value: playlists.filter((p) => activeIds.has(p.id)).length, icon: ListVideo },
   ];
-  const recent = [...screens].filter((s) => s.lastSeen).sort((a, b) => (b.lastSeen! > a.lastSeen! ? 1 : -1)).slice(0, 5);
+  const recent = [...screens].filter((s) => s.lastSeen).sort((a, b) => (b.lastSeen ?? "").localeCompare(a.lastSeen ?? "")).slice(0, 5);
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader title="Tableau de bord" description="État de votre réseau d'affichage en un coup d'œil." />

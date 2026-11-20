@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { CalendarClock, Plus, Trash2 } from "lucide-react";
+import { CalendarClock, Plus, Trash2, Pencil } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,10 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 import { useStore, addSchedule, deleteSchedule } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/schedule")({
   head: () => ({ meta: [
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
     { title: "Programmation — ScreenFlow" },
     { name: "description", content: "Programmez vos playlists par date et horaire." },
     { property: "og:title", content: "Programmation — ScreenFlow" },
@@ -24,6 +27,7 @@ const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
 function SchedulePage() {
   const { schedules, playlists, screens, groups, refresh } = useStore();
+  const [editingId, setEditingId] = useState<string | undefined>();
   const [open, setOpen] = useState(false);
   const today = new Date().toISOString().slice(0, 10);
   const [f, setF] = useState({ playlistId: "", target: "", startDate: today, endDate: today, startTime: "08:00", endTime: "20:00", days: [0, 1, 2, 3, 4] });
@@ -32,7 +36,7 @@ function SchedulePage() {
 
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader title="Programmation" description="Calendrier de diffusion de vos playlists." action={<Button onClick={() => setOpen(true)} disabled={!playlists.length}><Plus /> Programmer</Button>} />
+      <PageHeader title="Programmation" description="Calendrier de diffusion de vos playlists." action={<Button onClick={() => { setEditingId(undefined); setOpen(true); }} disabled={!playlists.length}><Plus /> Programmer</Button>} />
       {schedules.length === 0 ? (
         <EmptyState icon={CalendarClock} title="Aucune programmation" text={playlists.length ? "Planifiez une playlist sur une période, des jours et une plage horaire." : "Créez d'abord une playlist pour pouvoir la programmer."} />
       ) : (
@@ -48,7 +52,8 @@ function SchedulePage() {
                       <p className="truncate">{playlists.find((p) => p.id === s.playlistId)?.name}</p>
                       <p className="truncate opacity-70">{targetName(s.targetType, s.targetId)}</p>
                       <p className="opacity-70">{s.startDate} → {s.endDate}</p>
-                      <button className="mt-1 hidden text-destructive group-hover:inline-flex" aria-label="Supprimer" onClick={async () => { await deleteSchedule(s.id); refresh(); }}><Trash2 className="size-3" /></button>
+                      <Button variant="ghost" size="icon" aria-label="Modifier" onClick={() => { setEditingId(s.id); setF({ playlistId: s.playlistId, target: `${s.targetType}:${s.targetId}`, startDate: s.startDate, endDate: s.endDate, startTime: s.startTime, endTime: s.endTime, days: s.days }); setOpen(true); }}><Pencil className="size-3" /></Button>
+                      <Button variant="ghost" size="icon" className="text-destructive" aria-label="Supprimer" onClick={async () => { await deleteSchedule(s.id); refresh(); }}><Trash2 className="size-3" /></Button>
                     </div>
                   ))}
                 </div>
@@ -59,7 +64,7 @@ function SchedulePage() {
       )}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Nouvelle programmation</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingId ? "Modifier la programmation" : "Nouvelle programmation"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2"><Label>Playlist</Label>
               <Select value={f.playlistId} onValueChange={(v) => setF({ ...f, playlistId: v })}><SelectTrigger><SelectValue placeholder="Choisir…" /></SelectTrigger>
@@ -86,9 +91,9 @@ function SchedulePage() {
           </div>
           <DialogFooter><Button disabled={!valid} onClick={async () => {
             const [targetType, targetId] = f.target.split(":") as ["screen" | "group", string];
-            await addSchedule({ playlistId: f.playlistId, targetType, targetId, startDate: f.startDate, endDate: f.endDate, startTime: f.startTime, endTime: f.endTime, days: f.days });
+            try { await addSchedule({ playlistId: f.playlistId, targetType, targetId, startDate: f.startDate, endDate: f.endDate, startTime: f.startTime, endTime: f.endTime, days: f.days }, editingId);
             refresh();
-            setOpen(false);
+            setOpen(false); } catch { toast.error("La programmation n’a pas pu être enregistrée"); }
           }}>Enregistrer</Button></DialogFooter>
         </DialogContent>
       </Dialog>

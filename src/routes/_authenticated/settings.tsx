@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
     { title: "Paramètres — ScreenFlow" },
     { name: "description", content: "Profil, utilisateurs et configuration du compte." },
     { property: "og:title", content: "Paramètres — ScreenFlow" },
@@ -22,6 +25,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 function SettingsPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [org, setOrg] = useState("");
@@ -45,7 +49,7 @@ function SettingsPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { error } = await supabase.from("profiles").update({ full_name: fullName, org_name: org }).eq("id", user.id);
+      const { error } = await supabase.from("profiles").upsert({ id: user.id, full_name: fullName, org_name: org, email: user.email ?? null });
       if (error) throw error;
       toast.success("Profil enregistré");
     } catch {
@@ -56,8 +60,10 @@ function SettingsPage() {
   }
 
   async function signOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
     await supabase.auth.signOut();
-    navigate({ to: "/auth" });
+    await navigate({ to: "/auth", replace: true });
   }
 
   return (

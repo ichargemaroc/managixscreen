@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Image as ImageIcon, Upload, Trash2, Film } from "lucide-react";
+import { Image as ImageIcon, Upload, Trash2, Film, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,13 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useStore, formatBytes, formatDuration, addMedia, deleteMedia, type Media } from "@/lib/store";
+import { mediaKind } from "@/lib/signage-rules";
+import { useStore, formatBytes, formatDuration, addMedia, deleteMedia, renameMedia, type Media } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/media")({
   head: () => ({ meta: [
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
     { title: "Médiathèque — ScreenFlow" },
     { name: "description", content: "Importez et organisez vos photos et vidéos." },
     { property: "og:title", content: "Médiathèque — ScreenFlow" },
@@ -31,6 +34,8 @@ function MediaPage() {
   const { media, refresh } = useStore();
   const input = useRef<HTMLInputElement>(null);
   const [tab, setTab] = useState("all"); const [q, setQ] = useState(""); const [preview, setPreview] = useState<Media | null>(null);
+  const [renaming, setRenaming] = useState<Media | null>(null);
+  const [name, setName] = useState("");
   const [uploading, setUploading] = useState(false);
   const list = media.filter((m) => (tab === "all" || m.type === tab) && m.name.toLowerCase().includes(q.toLowerCase()));
 
@@ -40,8 +45,8 @@ function MediaPage() {
     let added = 0;
     try {
       for (const f of Array.from(files)) {
-        const type = f.type.startsWith("video/") ? "video" : f.type.startsWith("image/") ? "image" : null;
-        if (!type) continue;
+        const type = mediaKind(f.type);
+        if (!type) { toast.error(`Format non pris en charge : ${f.name}`); continue; }
         let duration: number | null = null;
         if (type === "video") {
           const url = URL.createObjectURL(f);
@@ -54,6 +59,7 @@ function MediaPage() {
       refresh();
       if (added) toast.success(`${added} média(s) ajouté(s)`);
     } catch {
+      refresh();
       toast.error("L'import a échoué, réessayez.");
     } finally {
       setUploading(false);
@@ -90,13 +96,15 @@ function MediaPage() {
                     <p className="truncate text-sm font-medium">{m.name}</p>
                     <p className="text-xs text-muted-foreground">{m.type === "image" ? "Photo" : "Vidéo"} · {formatBytes(m.size)}{m.type === "video" ? ` · ${formatDuration(m.duration)}` : ""}</p>
                   </div>
-                  <Button variant="ghost" size="icon" aria-label="Supprimer" onClick={async () => { await deleteMedia(m); refresh(); toast.success("Média supprimé"); }}><Trash2 /></Button>
+                  <div className="flex flex-col"><Button variant="ghost" size="icon" aria-label="Renommer" onClick={() => { setRenaming(m); setName(m.name); }}><Pencil /></Button>
+                  <Button variant="ghost" size="icon" aria-label="Supprimer" onClick={async () => { await deleteMedia(m); refresh(); toast.success("Média supprimé"); }}><Trash2 /></Button></div>
                 </div>
               </Card>
             ))}
           </div>
         </>
       )}
+      <Dialog open={!!renaming} onOpenChange={() => setRenaming(null)}><DialogContent><DialogHeader><DialogTitle>Renommer le média</DialogTitle></DialogHeader><Input aria-label="Nom du média" value={name} onChange={(e) => setName(e.target.value)} /><Button disabled={!name.trim()} onClick={async () => { if (!renaming) return; try { await renameMedia(renaming.id, name.trim()); refresh(); setRenaming(null); } catch { toast.error("Le renommage a échoué"); } }}>Enregistrer</Button></DialogContent></Dialog>
       <Dialog open={!!preview} onOpenChange={() => setPreview(null)}>
         <DialogContent className="max-w-3xl">
           <DialogHeader><DialogTitle className="truncate">{preview?.name}</DialogTitle></DialogHeader>

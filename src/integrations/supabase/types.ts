@@ -42,6 +42,9 @@ export type Database = {
         Row: {
           created_at: string
           duration: number | null
+          file_path: string | null
+          file_size: number | null
+          file_type: string | null
           id: string
           name: string
           path: string
@@ -52,6 +55,9 @@ export type Database = {
         Insert: {
           created_at?: string
           duration?: number | null
+          file_path?: string | null
+          file_size?: number | null
+          file_type?: string | null
           id?: string
           name: string
           path: string
@@ -62,6 +68,9 @@ export type Database = {
         Update: {
           created_at?: string
           duration?: number | null
+          file_path?: string | null
+          file_size?: number | null
+          file_type?: string | null
           id?: string
           name?: string
           path?: string
@@ -73,6 +82,7 @@ export type Database = {
       }
       playlist_items: {
         Row: {
+          created_at: string
           duration: number
           id: string
           media_id: string
@@ -80,6 +90,7 @@ export type Database = {
           position: number
         }
         Insert: {
+          created_at?: string
           duration?: number
           id?: string
           media_id: string
@@ -87,6 +98,7 @@ export type Database = {
           position?: number
         }
         Update: {
+          created_at?: string
           duration?: number
           id?: string
           media_id?: string
@@ -113,20 +125,26 @@ export type Database = {
       playlists: {
         Row: {
           created_at: string
+          description: string
           id: string
           name: string
+          updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          description?: string
           id?: string
           name: string
+          updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          description?: string
           id?: string
           name?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -134,18 +152,21 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          email: string | null
           full_name: string | null
           id: string
           org_name: string | null
         }
         Insert: {
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id: string
           org_name?: string | null
         }
         Update: {
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id?: string
           org_name?: string | null
@@ -157,10 +178,14 @@ export type Database = {
           created_at: string
           days: number[]
           end_date: string
+          end_datetime: string | null
           end_time: string
+          group_id: string | null
           id: string
           playlist_id: string
+          screen_id: string | null
           start_date: string
+          start_datetime: string | null
           start_time: string
           target_id: string
           target_type: string
@@ -170,10 +195,14 @@ export type Database = {
           created_at?: string
           days?: number[]
           end_date: string
+          end_datetime?: string | null
           end_time: string
+          group_id?: string | null
           id?: string
           playlist_id: string
+          screen_id?: string | null
           start_date: string
+          start_datetime?: string | null
           start_time: string
           target_id: string
           target_type: string
@@ -183,10 +212,14 @@ export type Database = {
           created_at?: string
           days?: number[]
           end_date?: string
+          end_datetime?: string | null
           end_time?: string
+          group_id?: string | null
           id?: string
           playlist_id?: string
+          screen_id?: string | null
           start_date?: string
+          start_datetime?: string | null
           start_time?: string
           target_id?: string
           target_type?: string
@@ -194,10 +227,74 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "schedules_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedules_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "screen_groups"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "schedules_playlist_id_fkey"
             columns: ["playlist_id"]
             isOneToOne: false
             referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedules_screen_id_fkey"
+            columns: ["screen_id"]
+            isOneToOne: false
+            referencedRelation: "screens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      screen_group_members: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          screen_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          screen_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          screen_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "screen_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "screen_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "screen_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "screen_group_members_screen_id_fkey"
+            columns: ["screen_id"]
+            isOneToOne: false
+            referencedRelation: "screens"
             referencedColumns: ["id"]
           },
         ]
@@ -205,9 +302,11 @@ export type Database = {
       screens: {
         Row: {
           created_at: string
+          current_playlist_id: string | null
           group_id: string | null
           id: string
           last_seen: string | null
+          location: string
           name: string
           pairing_code: string
           playlist_id: string | null
@@ -216,9 +315,11 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          current_playlist_id?: string | null
           group_id?: string | null
           id?: string
           last_seen?: string | null
+          location?: string
           name: string
           pairing_code: string
           playlist_id?: string | null
@@ -227,9 +328,11 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          current_playlist_id?: string | null
           group_id?: string | null
           id?: string
           last_seen?: string | null
+          location?: string
           name?: string
           pairing_code?: string
           playlist_id?: string | null
@@ -245,6 +348,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "screens_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "screen_groups"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "screens_playlist_id_fkey"
             columns: ["playlist_id"]
             isOneToOne: false
@@ -255,10 +365,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      screen_groups: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          location: string | null
+          name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          location?: string | null
+          name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          location?: string | null
+          name?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      replace_playlist_items: {
+        Args: { p_items: Json; p_playlist_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

@@ -16,6 +16,8 @@ import { useStore, isValidPairingCode, addScreen, updateScreen, deleteScreen, ty
 
 export const Route = createFileRoute("/_authenticated/screens")({
   head: () => ({ meta: [
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
     { title: "Écrans — ScreenFlow" },
     { name: "description", content: "Ajoutez, organisez et gérez vos TV Android." },
     { property: "og:title", content: "Écrans — ScreenFlow" },
@@ -42,7 +44,7 @@ function Screens() {
       <PageHeader title="Écrans" description="Vos téléviseurs Android jumelés à ScreenFlow."
         action={<Button onClick={() => setAdding(true)}><Plus /> Ajouter une TV</Button>} />
       {screens.length === 0 ? (
-        <EmptyState icon={Monitor} title="Aucune TV jumelée" text="Lancez l'app ScreenFlow sur votre TV Android, puis saisissez le code à 6 chiffres affiché."
+        <EmptyState icon={Monitor} title="Aucune TV jumelée" text="Enregistrez une TV en attente de connexion."
           action={<Button onClick={() => setAdding(true)}><Plus /> Ajouter une TV</Button>} />
       ) : (
         <>
@@ -69,7 +71,7 @@ function Screens() {
                     <TableRow key={s.id}>
                       <TableCell className="font-medium">{s.name}<div className="text-xs text-muted-foreground">Code {s.pairingCode}</div></TableCell>
                       <TableCell><StatusBadge status={s.status} /></TableCell>
-                      <TableCell>{g ? `${g.name}${g.location ? ` · ${g.location}` : ""}` : "—"}</TableCell>
+                      <TableCell>{[g?.name, s.location || g?.location].filter(Boolean).join(" · ") || "—"}</TableCell>
                       <TableCell className="text-muted-foreground">{s.lastSeen ? new Date(s.lastSeen).toLocaleString("fr-FR") : "Jamais"}</TableCell>
                       <TableCell>{playlists.find((p) => p.id === s.playlistId)?.name ?? "—"}</TableCell>
                       <TableCell className="text-right">
@@ -119,15 +121,16 @@ function GroupSelect({ value, onChange }: { value: string | null; onChange: (v: 
   );
 }
 
-function AddDialog({ open, onOpenChange, onAdd }: { open: boolean; onOpenChange: (o: boolean) => void; onAdd: (n: string, c: string, g: string | null) => void }) {
+function AddDialog({ open, onOpenChange, onAdd }: { open: boolean; onOpenChange: (o: boolean) => void; onAdd: (n: string, c: string, g: string | null) => Promise<void> }) {
   const [code, setCode] = useState(""); const [name, setName] = useState(""); const [group, setGroup] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const ok = isValidPairingCode(code) && name.trim().length > 0;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Ajouter une TV</DialogTitle>
-          <DialogDescription>Saisissez le code à 6 chiffres affiché sur l'écran de la TV.</DialogDescription>
+          <DialogDescription>Code de référence à 6 chiffres. La connexion de l’appareil reste en attente.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="flex justify-center">
@@ -139,7 +142,7 @@ function AddDialog({ open, onOpenChange, onAdd }: { open: boolean; onOpenChange:
           <div className="space-y-2"><Label>Groupe</Label><GroupSelect value={group} onChange={setGroup} /></div>
         </div>
         <DialogFooter>
-          <Button disabled={!ok} onClick={() => { onAdd(name.trim(), code, group); setCode(""); setName(""); setGroup(null); onOpenChange(false); }}>Jumeler</Button>
+          <Button disabled={!ok || busy} onClick={async () => { setBusy(true); try { await onAdd(name.trim(), code, group); setCode(""); setName(""); setGroup(null); onOpenChange(false); } catch { toast.error("La TV n’a pas pu être enregistrée"); } finally { setBusy(false); } }}>Enregistrer</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -148,10 +151,12 @@ function AddDialog({ open, onOpenChange, onAdd }: { open: boolean; onOpenChange:
 
 function EditForm({ screen, onSave }: { screen: Screen; onSave: (p: Partial<Screen>) => void }) {
   const { playlists } = useStore();
+  const [location, setLocation] = useState(screen.location);
   const [name, setName] = useState(screen.name); const [group, setGroup] = useState(screen.groupId); const [pl, setPl] = useState(screen.playlistId);
   return (
     <div className="space-y-4">
       <div className="space-y-2"><Label>Nom</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+      <div className="space-y-2"><Label>Lieu</Label><Input value={location} onChange={(e) => setLocation(e.target.value)} /></div>
       <div className="space-y-2"><Label>Groupe</Label><GroupSelect value={group} onChange={setGroup} /></div>
       <div className="space-y-2"><Label>Playlist affectée</Label>
         <Select value={pl ?? NONE} onValueChange={(v) => setPl(v === NONE ? null : v)}>
@@ -159,7 +164,7 @@ function EditForm({ screen, onSave }: { screen: Screen; onSave: (p: Partial<Scre
           <SelectContent><SelectItem value={NONE}>Aucune</SelectItem>{playlists.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
         </Select>
       </div>
-      <DialogFooter><Button disabled={!name.trim()} onClick={() => onSave({ name: name.trim(), groupId: group, playlistId: pl })}>Enregistrer</Button></DialogFooter>
+      <DialogFooter><Button disabled={!name.trim()} onClick={() => onSave({ name: name.trim(), groupId: group, playlistId: pl, location })}>Enregistrer</Button></DialogFooter>
     </div>
   );
 }

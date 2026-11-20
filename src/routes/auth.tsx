@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Cast } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
     { title: "Connexion — ScreenFlow" },
     { name: "description", content: "Connectez-vous à ScreenFlow pour gérer vos écrans." },
     { property: "og:title", content: "Connexion — ScreenFlow" },
@@ -34,11 +36,12 @@ function GoogleLogo() {
 function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup">("login");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
-  async function submit(e: React.FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
@@ -50,7 +53,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: { emailRedirectTo: window.location.origin, data: { full_name: fullName.trim() } },
         });
         if (error) throw error;
         toast.success("Compte créé — vérifiez votre e-mail pour confirmer l'inscription.");
@@ -92,6 +95,7 @@ function AuthPage() {
             <span className="h-px flex-1 bg-border" /> ou <span className="h-px flex-1 bg-border" />
           </div>
           <form onSubmit={submit} className="space-y-3">
+            {mode === "signup" && <div className="space-y-2"><Label htmlFor="full-name">Nom complet</Label><Input id="full-name" required value={fullName} onChange={(e) => setFullName(e.target.value)} /></div>}
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
               <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vous@entreprise.com" />
@@ -106,9 +110,9 @@ function AuthPage() {
           </form>
           <p className="text-center text-sm text-muted-foreground">
             {mode === "login" ? "Pas encore de compte ?" : "Déjà inscrit ?"}{" "}
-            <button type="button" className="font-medium text-primary underline-offset-4 hover:underline" onClick={() => setMode(mode === "login" ? "signup" : "login")}>
+            <Button variant="link" type="button" className="px-0" onClick={() => setMode(mode === "login" ? "signup" : "login")}>
               {mode === "login" ? "Créer un compte" : "Se connecter"}
-            </button>
+            </Button>
           </p>
         </CardContent>
       </Card>
