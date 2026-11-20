@@ -22,7 +22,13 @@ export async function deviceApi(operation: string, credentials: Credentials | nu
   const { Capacitor, CapacitorHttp } = await import("@capacitor/core");
   if (Capacitor.isNativePlatform()) {
     if (!configured) throw new Error("L’adresse du serveur n’a pas été configurée pour Android.");
-    const response = await CapacitorHttp.post({ url: url.toString(), headers, data: body, connectTimeout: 15000, readTimeout: 15000 });
+    let response;
+    try {
+      response = await CapacitorHttp.post({ url: url.toString(), headers, data: body, connectTimeout: 15000, readTimeout: 15000 });
+    } catch (e) {
+      const detail = e instanceof Error && e.message ? e.message : "réseau injoignable";
+      throw new Error(`Connexion impossible vers ${url.hostname} : ${detail}`);
+    }
     if (response.status < 200 || response.status >= 300) throw new DeviceApiError(response.status);
     return (typeof response.data === "string" ? JSON.parse(response.data) : response.data) as unknown;
   }
