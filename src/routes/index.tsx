@@ -29,7 +29,7 @@ function Dashboard() {
   const recent = [...screens].filter((s) => s.lastSeen).sort((a, b) => (b.lastSeen! > a.lastSeen! ? 1 : -1)).slice(0, 5);
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader title="Dashboard" description="État de votre réseau d'affichage en un coup d'œil." />
+      <PageHeader title="Tableau de bord" description="État de votre réseau d'affichage en un coup d'œil." />
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
         {stats.map((s) => (
           <Card key={s.label}>

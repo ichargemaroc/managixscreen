@@ -36,7 +36,7 @@ function Screens() {
 
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader title="Screens" description="Vos téléviseurs Android jumelés à ScreenFlow."
+      <PageHeader title="Écrans" description="Vos téléviseurs Android jumelés à ScreenFlow."
         action={<Button onClick={() => setAdding(true)}><Plus /> Ajouter une TV</Button>} />
       {screens.length === 0 ? (
         <EmptyState icon={Monitor} title="Aucune TV jumelée" text="Lancez l'app ScreenFlow sur votre TV Android, puis saisissez le code à 6 chiffres affiché."

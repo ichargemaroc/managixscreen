@@ -32,7 +32,7 @@ function SchedulePage() {
 
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader title="Schedule" description="Calendrier de diffusion de vos playlists." action={<Button onClick={() => setOpen(true)} disabled={!playlists.length}><Plus /> Programmer</Button>} />
+      <PageHeader title="Programmation" description="Calendrier de diffusion de vos playlists." action={<Button onClick={() => setOpen(true)} disabled={!playlists.length}><Plus /> Programmer</Button>} />
       {schedules.length === 0 ? (
         <EmptyState icon={CalendarClock} title="Aucune programmation" text={playlists.length ? "Planifiez une playlist sur une période, des jours et une plage horaire." : "Créez d'abord une playlist pour pouvoir la programmer."} />
       ) : (

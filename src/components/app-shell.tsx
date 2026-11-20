@@ -7,13 +7,13 @@ import {
 } from "@/components/ui/sidebar";
 
 const nav = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Screens", url: "/screens", icon: Monitor },
-  { title: "Media Library", url: "/media", icon: Image },
+  { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
+  { title: "Écrans", url: "/screens", icon: Monitor },
+  { title: "Médiathèque", url: "/media", icon: Image },
   { title: "Playlists", url: "/playlists", icon: ListVideo },
-  { title: "Schedule", url: "/schedule", icon: CalendarClock },
-  { title: "Groups", url: "/groups", icon: FolderTree },
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Programmation", url: "/schedule", icon: CalendarClock },
+  { title: "Groupes", url: "/groups", icon: FolderTree },
+  { title: "Paramètres", url: "/settings", icon: Settings },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {

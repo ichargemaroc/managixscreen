@@ -48,7 +48,7 @@ function MediaPage() {
 
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader title="Media Library" description="Photos et vidéos disponibles pour vos playlists."
+      <PageHeader title="Médiathèque" description="Photos et vidéos disponibles pour vos playlists."
         action={<Button onClick={() => input.current?.click()}><Upload /> Importer</Button>} />
       <input ref={input} type="file" accept="image/*,video/*" multiple hidden onChange={(e) => { onFiles(e.target.files); e.target.value = ""; }} />
       {media.length === 0 ? (

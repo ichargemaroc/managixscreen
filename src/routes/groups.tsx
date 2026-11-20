@@ -24,7 +24,7 @@ function GroupsPage() {
   const [open, setOpen] = useState(false); const [name, setName] = useState(""); const [loc, setLoc] = useState("");
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader title="Groups" description="Regroupez vos écrans par zone, magasin ou usage." action={<Button onClick={() => setOpen(true)}><Plus /> Nouveau groupe</Button>} />
+      <PageHeader title="Groupes" description="Regroupez vos écrans par zone, magasin ou usage." action={<Button onClick={() => setOpen(true)}><Plus /> Nouveau groupe</Button>} />
       {groups.length === 0 ? (
         <EmptyState icon={FolderTree} title="Aucun groupe" text="Créez des groupes pour diffuser une playlist sur plusieurs écrans à la fois." action={<Button onClick={() => setOpen(true)}><Plus /> Créer un groupe</Button>} />
       ) : (

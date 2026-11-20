@@ -21,7 +21,7 @@ const soon = "Disponible après l'activation des comptes utilisateurs.";
 function SettingsPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader title="Settings" description="Profil, équipe et compte." />
+      <PageHeader title="Paramètres" description="Profil, équipe et compte." />
       <Tabs defaultValue="profile">
         <TabsList><TabsTrigger value="profile">Profil</TabsTrigger><TabsTrigger value="users">Utilisateurs</TabsTrigger><TabsTrigger value="account">Compte</TabsTrigger></TabsList>
         <TabsContent value="profile"><Card><CardHeader><CardTitle>Profil</CardTitle><CardDescription>{soon}</CardDescription></CardHeader>
