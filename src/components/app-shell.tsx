@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, FolderTree, Settings } from "lucide-react";
 import markAsset from "@/assets/screenflow-mark.png.asset.json";
 import {
@@ -22,6 +22,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [menuHovered, setMenuHovered] = useState(false);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const current = nav.find((n) => (n.url === "/" ? path === "/" : path.startsWith(n.url)));
+  useEffect(() => {
+    setMenuPinned(false);
+    setMenuHovered(false);
+  }, [path]);
   return (
     <SidebarProvider open={menuPinned || menuHovered} onOpenChange={setMenuPinned} className="console-shell bg-sidebar pt-20">
       <header className="fixed inset-x-0 top-0 z-20 flex h-20 items-center justify-between bg-sidebar px-5 md:px-8">
