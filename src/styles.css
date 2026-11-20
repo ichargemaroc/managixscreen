@@ -191,5 +191,8 @@
 .tv-controls > div { display: flex; gap: 8px; }
 .tv-menu { position: absolute; right: 20px; bottom: 20px; opacity: .25; }
 .tv-menu:focus-visible { opacity: 1; }
+#module-startup-recovery { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 24px; text-align: center; background: var(--background); color: var(--foreground); }
+#module-startup-recovery h1 { font-size: 24px; letter-spacing: 0; }
+#module-startup-recovery button { padding: 12px 24px; border-radius: 6px; background: var(--primary); color: var(--primary-foreground); cursor: pointer; }
 .tv-player button:focus-visible { outline: 3px solid var(--primary); outline-offset: 5px; }
 @media (max-width: 640px), (max-height: 500px) { .tv-enrollment { padding: 24px; } .tv-player h1 { font-size: 28px; } .tv-center { gap: 18px; } .tv-display-icon { width: 48px; height: 48px; } .tv-code { font-size: 36px; gap: 8px; max-width: 340px; } .tv-footer { font-size: 10px; } .tv-controls { left: 12px; right: 12px; bottom: 12px; } }

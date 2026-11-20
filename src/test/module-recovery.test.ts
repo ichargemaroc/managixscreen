@@ -1,7 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
-import { recoverModuleLoad } from "@/lib/module-recovery";
+import { recoverModuleLoad, moduleRecoveryBootstrap } from "@/lib/module-recovery";
 
 describe("Module loading recovery", () => {
+  it("handles failed entry modules before React can mount without a reload loop", () => {
+    sessionStorage.setItem("screenflow-module-recovery", String(Date.now()));
+    window.eval(moduleRecoveryBootstrap);
+    const script = document.createElement("script"); script.type = "module"; document.body.append(script);
+    script.dispatchEvent(new Event("error"));
+    expect(document.getElementById("module-startup-recovery")).not.toBeNull();
+    expect(Number(sessionStorage.getItem("screenflow-module-recovery"))).toBeGreaterThan(Date.now() - 60000);
+    script.remove(); document.getElementById("module-startup-recovery")?.remove(); sessionStorage.clear();
+  });
   it("reloads once on Safari module import failures", () => {
     const values = new Map<string, string>();
     const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };

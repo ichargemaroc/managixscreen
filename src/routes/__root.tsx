@@ -15,7 +15,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
-import { isModuleLoadFailure, recoverModuleLoad } from "@/lib/module-recovery";
+import { isModuleLoadFailure, recoverModuleLoad, moduleRecoveryBootstrap } from "@/lib/module-recovery";
 
 function NotFoundComponent() {
   return (
@@ -118,6 +118,7 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="fr">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: moduleRecoveryBootstrap }} />
         <HeadContent />
       </head>
       <body>
