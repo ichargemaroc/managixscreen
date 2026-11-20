@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as PairRouteImport } from './routes/pair'
 import { Route as PlayerRouteImport } from './routes/player'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated/groups'
@@ -34,6 +35,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PairRoute = PairRouteImport.update({
+  id: '/pair',
+  path: '/pair',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlayerRoute = PlayerRouteImport.update({
@@ -119,6 +125,7 @@ const ApiPublicDevicesCommandsAckRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
+  '/pair': typeof PairRoute
   '/player': typeof PlayerRoute
   '/groups': typeof AuthenticatedGroupsRoute
   '/media': typeof AuthenticatedMediaRoute
@@ -136,6 +143,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
+  '/pair': typeof PairRoute
   '/player': typeof PlayerRoute
   '/groups': typeof AuthenticatedGroupsRoute
   '/media': typeof AuthenticatedMediaRoute
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/pair': typeof PairRoute
   '/player': typeof PlayerRoute
   '/_authenticated/groups': typeof AuthenticatedGroupsRoute
   '/_authenticated/media': typeof AuthenticatedMediaRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/pair'
     | '/player'
     | '/groups'
     | '/media'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
+    | '/pair'
     | '/player'
     | '/groups'
     | '/media'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/auth'
+    | '/pair'
     | '/player'
     | '/_authenticated/groups'
     | '/_authenticated/media'
@@ -233,6 +245,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  PairRoute: typeof PairRoute
   PlayerRoute: typeof PlayerRoute
   ApiPublicDevicesCommandsRoute: typeof ApiPublicDevicesCommandsRouteWithChildren
   ApiPublicDevicesContentRoute: typeof ApiPublicDevicesContentRoute
@@ -255,6 +268,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pair': {
+      id: '/pair'
+      path: '/pair'
+      fullPath: '/pair'
+      preLoaderRoute: typeof PairRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/player': {
@@ -407,6 +427,7 @@ const ApiPublicDevicesCommandsRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  PairRoute: PairRoute,
   PlayerRoute: PlayerRoute,
   ApiPublicDevicesCommandsRoute: ApiPublicDevicesCommandsRouteWithChildren,
   ApiPublicDevicesContentRoute: ApiPublicDevicesContentRoute,

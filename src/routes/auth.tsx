@@ -9,8 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { pairingCode, pairingUrl } from "@/lib/qr-pairing";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>): { pairCode?: string } => {
+    const code = pairingCode(search['pairCode']);
+    return code ? { pairCode: code } : {};
+  },
   head: () => ({ meta: [
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
@@ -35,6 +40,7 @@ function GoogleLogo() {
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { pairCode } = Route.useSearch();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -48,12 +54,13 @@ function AuthPage() {
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/" });
+        if (pairCode) await navigate({ to: "/pair", search: { code: pairCode } });
+        else await navigate({ to: "/" });
       } else {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin, data: { full_name: fullName.trim() } },
+          options: { emailRedirectTo: pairCode ? pairingUrl(window.location.origin, pairCode) : window.location.origin, data: { full_name: fullName.trim() } },
         });
         if (error) throw error;
         toast.success("Compte créé — vérifiez votre e-mail pour confirmer l'inscription.");
@@ -66,7 +73,7 @@ function AuthPage() {
   }
 
   async function oauth(provider: "google" | "lovable") {
-    const result = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin });
+    const result = await lovable.auth.signInWithOAuth(provider, { redirect_uri: pairCode ? pairingUrl(window.location.origin, pairCode) : window.location.origin });
     if (result.error) toast.error("La connexion a échoué, réessayez.");
   }
 

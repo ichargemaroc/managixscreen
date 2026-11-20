@@ -1,5 +1,10 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Appairage QR code
+- [x] QR code local sur le lecteur, lien public sans identité secrète
+- [x] Connexion et confirmation de jumelage sur téléphone
+- [x] QR décodé, jumelage réel confirmé sur téléphone et lecteur, 9 tests réussis ; OAuth externe et caméra physique non testés
+
 ## Lecteur TV web et préparation Android
 - [x] Lecteur public séparé /player, jumelage réel et synchronisation
 - [x] Images, vidéos, cache local et reprise hors connexion, commandes et télécommande
