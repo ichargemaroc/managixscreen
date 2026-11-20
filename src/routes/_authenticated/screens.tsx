@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Monitor, Plus, MoreHorizontal } from "lucide-react";
+import { Monitor, Plus, MoreHorizontal, ScanLine } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, EmptyState, StatusBadge } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useStore, isValidPairingCode, addScreen, updateScreen, deleteScreen, type Screen } from "@/lib/store";
+import { PairingScanner } from "@/components/pairing-scanner";
 
 export const Route = createFileRoute("/_authenticated/screens")({
   head: () => ({ meta: [
@@ -127,15 +128,17 @@ function AddDialog({ open, onOpenChange, onAdd }: { open: boolean; onOpenChange:
   const [busy, setBusy] = useState(false);
   const [location, setLocation] = useState("");
   const [error, setError] = useState("");
+  const [scanning, setScanning] = useState(false);
   const ok = isValidPairingCode(code) && name.trim().length > 0;
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={(value) => { setScanning(false); onOpenChange(value); }}>
+      <DialogContent className="max-h-[90svh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Ajouter une TV</DialogTitle>
           <DialogDescription>Saisissez le code du lecteur TV. Il est valable 10 minutes et utilisable une seule fois.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
+          {scanning ? <PairingScanner onCode={(value) => { setCode(value); setScanning(false); setError(""); toast.success("QR code reconnu"); }} onClose={() => setScanning(false)} /> : <Button type="button" variant="secondary" className="w-full" onClick={() => setScanning(true)}><ScanLine /> Scanner le QR code de la TV</Button>}
           <div className="flex justify-center">
             <InputOTP maxLength={6} value={code} onChange={(v) => setCode(v.replace(/\D/g, ""))}>
               <InputOTPGroup>{[0, 1, 2, 3, 4, 5].map((i) => <InputOTPSlot key={i} index={i} />)}</InputOTPGroup>

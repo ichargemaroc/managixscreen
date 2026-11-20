@@ -11,3 +11,16 @@ export function pairingUrl(origin: string, code: string) {
   url.searchParams.set("code", code);
   return url.toString();
 }
+
+export function scannedPairingCode(value: string): string | undefined {
+  const direct = pairingCode(value.trim());
+  if (direct) return direct;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" && !(url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname))) return undefined;
+    if (url.pathname !== "/pair") return undefined;
+    return pairingCode(url.searchParams.get("code"));
+  } catch {
+    return undefined;
+  }
+}

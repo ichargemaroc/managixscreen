@@ -34,6 +34,7 @@ use the editor.
 - App data and Cloud writes live in `src/lib/store.tsx`; pages consume `useStore()` and its exported actions to keep data access centralized.
 - Media object keys use generated identifiers and safe extensions, while original names remain in metadata, because storage rejects Unicode keys.
 - Pairing QR codes encode only the expiring pairing code on the public /pair page; explicit authenticated confirmation reuses the existing claim action and never exposes device credentials.
+- In-app QR scanning loads the camera decoder only in the browser, extracts a pairing code without following scanned URLs, and fills the existing claim form so confirmation and owner validation remain unchanged.
 - App shell (sidebar + header) is in `src/components/app-shell.tsx`, rendered from `__root.tsx`; each nav item has its own route file.
 - Preserve legacy database fields through generated aliases and an RLS-aware group view so deployed clients remain compatible.
 - Replace playlist items through the owner-scoped transactional RPC so failed writes never erase existing content.

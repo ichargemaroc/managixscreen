@@ -5,6 +5,8 @@
 - [x] Adapter la connexion et le tableau de bord ; navigation connectée vérifiée sur les sept pages, ordinateur et téléphone sans erreur
 
 ## Appairage QR code
+- [x] Scan caméra et photo depuis Ajouter une TV, saisie manuelle conservée
+- [x] Lecture caméra de test et photo QR validées ; jumelage réel mobile, relecture après rechargement et lecteur connecté confirmés ; caméra physique du téléphone non testée
 - [x] QR code local sur le lecteur, lien public sans identité secrète
 - [x] Connexion et confirmation de jumelage sur téléphone
 - [x] QR décodé, jumelage réel confirmé sur téléphone et lecteur, 9 tests réussis ; OAuth externe et caméra physique non testés
