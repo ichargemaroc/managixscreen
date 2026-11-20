@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { mediaKind, screenStatus } from "@/lib/signage-rules";
 import { Button } from "@/components/ui/button";
+import { claimScreen, revokeScreen } from "@/lib/pairing.functions";
 
 // Données ScreenFlow lues depuis Lovable Cloud. Les pages utilisent useStore()
 // et les actions ci-dessous ; la synchronisation temps réel des écrans est
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button";
 export type Group = { id: string; name: string; location: string; screenIds: string[] };
 export type Screen = {
   id: string; name: string; pairingCode: string; groupId: string | null;
-  status: "online" | "offline" | "pending"; lastSeen: string | null; playlistId: string | null; location: string;
+  status: "online" | "offline" | "pending"; lastSeen: string | null; playlistId: string | null; location: string; deviceId: string | null; revoked: boolean;
 };
 export type Media = { id: string; name: string; type: "image" | "video"; size: number; duration: number | null; url: string; path: string; createdAt: string };
 export type PlaylistItem = { id: string; mediaId: string; duration: number };
@@ -35,7 +36,7 @@ async function signedUrl(path: string) {
 }
 
 async function fetchAll(): Promise<State> {
-  const [groups, screens, media, playlists, items, schedules, members] = await Promise.all([
+  const [groups, screens, media, playlists, items, schedules, members, sessions] = await Promise.all([
     supabase.from("groups").select("*").order("created_at"),
     supabase.from("screens").select("*").order("created_at"),
     supabase.from("media").select("*").order("created_at", { ascending: false }),
@@ -43,8 +44,9 @@ async function fetchAll(): Promise<State> {
     supabase.from("playlist_items").select("*").order("position"),
     supabase.from("schedules").select("*").order("created_at"),
     supabase.from("screen_group_members").select("*"),
+    supabase.from("pairing_sessions").select("screen_id, device_id, status"),
   ]);
-  for (const r of [groups, screens, media, playlists, items, schedules, members]) {
+  for (const r of [groups, screens, media, playlists, items, schedules, members, sessions]) {
     if (r.error) throw r.error;
   }
   const mediaRows = await Promise.all(
@@ -63,7 +65,9 @@ async function fetchAll(): Promise<State> {
     groups: (groups.data ?? []).map((g) => ({ id: g.id, name: g.name, location: g.location, screenIds: (members.data ?? []).filter((m) => m.group_id === g.id).map((m) => m.screen_id) })),
     screens: (screens.data ?? []).map((s) => ({
       id: s.id, name: s.name, pairingCode: s.pairing_code, groupId: s.group_id,
-      status: screenStatus(s.status, s.last_seen), lastSeen: s.last_seen, playlistId: s.playlist_id, location: s.location,
+      status: sessions.data?.some((p) => p.screen_id === s.id && p.status === "revoked") ? "offline" : screenStatus(s.status, s.last_seen), lastSeen: s.last_seen, playlistId: s.playlist_id, location: s.location,
+      deviceId: sessions.data?.find((p) => p.screen_id === s.id)?.device_id ?? null,
+      revoked: sessions.data?.some((p) => p.screen_id === s.id && p.status === "revoked") ?? false,
     })),
     media: mediaRows,
     playlists: (playlists.data ?? []).map((p) => ({ id: p.id, name: p.name, description: p.description, items: itemsByPlaylist.get(p.id) ?? [], createdAt: p.created_at })),
@@ -99,9 +103,12 @@ async function userId() {
   return data.user.id;
 }
 
-export async function addScreen(name: string, pairingCode: string, groupId: string | null) {
-  const { error } = await supabase.from("screens").insert({ user_id: await userId(), name, pairing_code: pairingCode, group_id: groupId, status: "pending" });
-  if (error) throw error;
+export async function addScreen(name: string, pairingCode: string, groupId: string | null, location = "") {
+  return claimScreen({ data: { code: pairingCode, name, groupId, location } });
+}
+
+export async function revokeDeviceAccess(screenId: string) {
+  await revokeScreen({ data: { screenId } });
 }
 
 export async function updateScreen(id: string, patch: { name?: string; groupId?: string | null; playlistId?: string | null; location?: string }) {

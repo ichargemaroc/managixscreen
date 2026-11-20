@@ -18,6 +18,10 @@ import { Route as AuthenticatedPlaylistsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedScreensRouteImport } from './routes/_authenticated/screens'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedScreensScreenIdRouteImport } from './routes/_authenticated/screens_.$screenId'
+import { Route as ApiPublicDevicesHeartbeatRouteImport } from './routes/api/public/devices/heartbeat'
+import { Route as ApiPublicDevicesRequestRouteImport } from './routes/api/public/devices/request'
+import { Route as ApiPublicDevicesStatusRouteImport } from './routes/api/public/devices/status'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -63,6 +67,28 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedScreensScreenIdRoute =
+  AuthenticatedScreensScreenIdRouteImport.update({
+    id: '/screens_/$screenId',
+    path: '/screens/$screenId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const ApiPublicDevicesHeartbeatRoute =
+  ApiPublicDevicesHeartbeatRouteImport.update({
+    id: '/api/public/devices/heartbeat',
+    path: '/api/public/devices/heartbeat',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicDevicesRequestRoute = ApiPublicDevicesRequestRouteImport.update({
+  id: '/api/public/devices/request',
+  path: '/api/public/devices/request',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicDevicesStatusRoute = ApiPublicDevicesStatusRouteImport.update({
+  id: '/api/public/devices/status',
+  path: '/api/public/devices/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -73,6 +99,10 @@ export interface FileRoutesByFullPath {
   '/schedule': typeof AuthenticatedScheduleRoute
   '/screens': typeof AuthenticatedScreensRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/screens/$screenId': typeof AuthenticatedScreensScreenIdRoute
+  '/api/public/devices/heartbeat': typeof ApiPublicDevicesHeartbeatRoute
+  '/api/public/devices/request': typeof ApiPublicDevicesRequestRoute
+  '/api/public/devices/status': typeof ApiPublicDevicesStatusRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -83,6 +113,10 @@ export interface FileRoutesByTo {
   '/screens': typeof AuthenticatedScreensRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/': typeof AuthenticatedIndexRoute
+  '/screens/$screenId': typeof AuthenticatedScreensScreenIdRoute
+  '/api/public/devices/heartbeat': typeof ApiPublicDevicesHeartbeatRoute
+  '/api/public/devices/request': typeof ApiPublicDevicesRequestRoute
+  '/api/public/devices/status': typeof ApiPublicDevicesStatusRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,6 +129,10 @@ export interface FileRoutesById {
   '/_authenticated/screens': typeof AuthenticatedScreensRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/screens_/$screenId': typeof AuthenticatedScreensScreenIdRoute
+  '/api/public/devices/heartbeat': typeof ApiPublicDevicesHeartbeatRoute
+  '/api/public/devices/request': typeof ApiPublicDevicesRequestRoute
+  '/api/public/devices/status': typeof ApiPublicDevicesStatusRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +145,10 @@ export interface FileRouteTypes {
     | '/schedule'
     | '/screens'
     | '/settings'
+    | '/screens/$screenId'
+    | '/api/public/devices/heartbeat'
+    | '/api/public/devices/request'
+    | '/api/public/devices/status'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -117,6 +159,10 @@ export interface FileRouteTypes {
     | '/screens'
     | '/settings'
     | '/'
+    | '/screens/$screenId'
+    | '/api/public/devices/heartbeat'
+    | '/api/public/devices/request'
+    | '/api/public/devices/status'
   id:
     | '__root__'
     | '/_authenticated'
@@ -128,11 +174,18 @@ export interface FileRouteTypes {
     | '/_authenticated/screens'
     | '/_authenticated/settings'
     | '/_authenticated/'
+    | '/_authenticated/screens_/$screenId'
+    | '/api/public/devices/heartbeat'
+    | '/api/public/devices/request'
+    | '/api/public/devices/status'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicDevicesHeartbeatRoute: typeof ApiPublicDevicesHeartbeatRoute
+  ApiPublicDevicesRequestRoute: typeof ApiPublicDevicesRequestRoute
+  ApiPublicDevicesStatusRoute: typeof ApiPublicDevicesStatusRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -200,6 +253,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/screens_/$screenId': {
+      id: '/_authenticated/screens_/$screenId'
+      path: '/screens/$screenId'
+      fullPath: '/screens/$screenId'
+      preLoaderRoute: typeof AuthenticatedScreensScreenIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/devices/heartbeat': {
+      id: '/api/public/devices/heartbeat'
+      path: '/api/public/devices/heartbeat'
+      fullPath: '/api/public/devices/heartbeat'
+      preLoaderRoute: typeof ApiPublicDevicesHeartbeatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/devices/request': {
+      id: '/api/public/devices/request'
+      path: '/api/public/devices/request'
+      fullPath: '/api/public/devices/request'
+      preLoaderRoute: typeof ApiPublicDevicesRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/devices/status': {
+      id: '/api/public/devices/status'
+      path: '/api/public/devices/status'
+      fullPath: '/api/public/devices/status'
+      preLoaderRoute: typeof ApiPublicDevicesStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -211,6 +292,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedScreensRoute: typeof AuthenticatedScreensRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedScreensScreenIdRoute: typeof AuthenticatedScreensScreenIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -221,6 +303,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedScreensRoute: AuthenticatedScreensRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedScreensScreenIdRoute: AuthenticatedScreensScreenIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -229,6 +312,9 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicDevicesHeartbeatRoute: ApiPublicDevicesHeartbeatRoute,
+  ApiPublicDevicesRequestRoute: ApiPublicDevicesRequestRoute,
+  ApiPublicDevicesStatusRoute: ApiPublicDevicesStatusRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

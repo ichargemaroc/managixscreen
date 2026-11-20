@@ -14,6 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      device_credentials: {
+        Row: {
+          device_id: string
+          revoked_at: string | null
+          token_hash: string
+        }
+        Insert: {
+          device_id: string
+          revoked_at?: string | null
+          token_hash: string
+        }
+        Update: {
+          device_id?: string
+          revoked_at?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_credentials_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: true
+            referencedRelation: "pairing_sessions"
+            referencedColumns: ["device_id"]
+          },
+        ]
+      }
+      device_pairing_config: {
+        Row: {
+          enabled: boolean
+          id: boolean
+        }
+        Insert: {
+          enabled?: boolean
+          id?: boolean
+        }
+        Update: {
+          enabled?: boolean
+          id?: boolean
+        }
+        Relationships: []
+      }
+      device_request_limits: {
+        Row: {
+          attempts: number
+          key: string
+          window_start: string
+        }
+        Insert: {
+          attempts?: number
+          key: string
+          window_start?: string
+        }
+        Update: {
+          attempts?: number
+          key?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       groups: {
         Row: {
           created_at: string
@@ -79,6 +138,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      pairing_sessions: {
+        Row: {
+          created_at: string
+          device_id: string
+          device_metadata: Json
+          device_name: string
+          expires_at: string
+          id: string
+          paired_at: string | null
+          pairing_code: string
+          screen_id: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          device_metadata?: Json
+          device_name?: string
+          expires_at?: string
+          id?: string
+          paired_at?: string | null
+          pairing_code: string
+          screen_id?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          device_metadata?: Json
+          device_name?: string
+          expires_at?: string
+          id?: string
+          paired_at?: string | null
+          pairing_code?: string
+          screen_id?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pairing_sessions_screen_id_fkey"
+            columns: ["screen_id"]
+            isOneToOne: false
+            referencedRelation: "screens"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       playlist_items: {
         Row: {
@@ -391,10 +500,48 @@ export type Database = {
       }
     }
     Functions: {
+      claim_pairing_code: {
+        Args: {
+          p_code: string
+          p_group?: string
+          p_location: string
+          p_name: string
+        }
+        Returns: string
+      }
+      claim_pairing_code_internal: {
+        Args: {
+          p_code: string
+          p_group: string
+          p_location: string
+          p_name: string
+        }
+        Returns: string
+      }
+      consume_device_limit: {
+        Args: { p_key: string; p_max: number; p_seconds: number }
+        Returns: boolean
+      }
+      device_heartbeat: {
+        Args: { p_device: string; p_hash: string }
+        Returns: string
+      }
+      register_pairing_session: {
+        Args: {
+          p_code: string
+          p_device_id: string
+          p_hash: string
+          p_id: string
+          p_metadata: Json
+          p_name: string
+        }
+        Returns: undefined
+      }
       replace_playlist_items: {
         Args: { p_items: Json; p_playlist_id: string }
         Returns: undefined
       }
+      revoke_screen_device: { Args: { p_screen: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

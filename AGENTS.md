@@ -35,3 +35,6 @@ use the editor.
 - Preserve legacy database fields through generated aliases and an RLS-aware group view so deployed clients remain compatible.
 - Replace playlist items through the owner-scoped transactional RPC so failed writes never erase existing content.
 - Keep device status heartbeat-derived and prohibit ordinary account writes to status timestamps to avoid simulated connectivity.
+- Device enrollment and heartbeat use token-scoped public server routes; web claims/revocations use authenticated server functions and owner-scoped transactional RPCs to keep the native device protocol separate from user access.
+- Store only device token hashes in a service-only table; revoke credentials on screen deletion so orphaned devices cannot reconnect.
+- Persist custom abuse counters in PostgreSQL and fail closed on limit errors; global caps protect enrollment when trusted edge IP identity is absent.

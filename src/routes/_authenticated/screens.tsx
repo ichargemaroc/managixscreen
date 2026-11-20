@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Monitor, Plus, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
@@ -41,10 +41,10 @@ function Screens() {
 
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader title="Écrans" description="Vos téléviseurs Android jumelés à ScreenFlow."
+      <PageHeader title="Écrans" description="Vos téléviseurs Android et leur connexion à ScreenFlow."
         action={<Button onClick={() => setAdding(true)}><Plus /> Ajouter une TV</Button>} />
       {screens.length === 0 ? (
-        <EmptyState icon={Monitor} title="Aucune TV jumelée" text="Enregistrez une TV en attente de connexion."
+        <EmptyState icon={Monitor} title="Aucune TV jumelée" text="Le lecteur Android TV n’est pas encore disponible. Aucun appareil n’est connecté."
           action={<Button onClick={() => setAdding(true)}><Plus /> Ajouter une TV</Button>} />
       ) : (
         <>
@@ -69,7 +69,7 @@ function Screens() {
                   const g = groups.find((x) => x.id === s.groupId);
                   return (
                     <TableRow key={s.id}>
-                      <TableCell className="font-medium">{s.name}<div className="text-xs text-muted-foreground">Code {s.pairingCode}</div></TableCell>
+                      <TableCell className="font-medium"><Link to="/screens/$screenId" params={{ screenId: s.id }} className="hover:underline">{s.name}</Link><div className="text-xs text-muted-foreground">{s.revoked ? "Accès révoqué" : s.deviceId ? "Jumelé" : "Non jumelé"}</div></TableCell>
                       <TableCell><StatusBadge status={s.status} /></TableCell>
                       <TableCell>{[g?.name, s.location || g?.location].filter(Boolean).join(" · ") || "—"}</TableCell>
                       <TableCell className="text-muted-foreground">{s.lastSeen ? new Date(s.lastSeen).toLocaleString("fr-FR") : "Jamais"}</TableCell>
@@ -78,6 +78,7 @@ function Screens() {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="Actions"><MoreHorizontal /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild><Link to="/screens/$screenId" params={{ screenId: s.id }}>Détails / accès</Link></DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setEditing(s)}>Gérer / renommer</DropdownMenuItem>
                             <DropdownMenuItem className="text-destructive" onClick={async () => { await deleteScreen(s.id); refresh(); toast.success("TV supprimée"); }}>Supprimer</DropdownMenuItem>
                           </DropdownMenuContent>
@@ -91,10 +92,10 @@ function Screens() {
           </Card>
         </>
       )}
-      <AddDialog open={adding} onOpenChange={setAdding} onAdd={async (name, code, groupId) => {
-        await addScreen(name, code, groupId);
+      <AddDialog open={adding} onOpenChange={setAdding} onAdd={async (name, code, groupId, location) => {
+        await addScreen(name, code, groupId, location);
         refresh();
-        toast.success("TV ajoutée — en attente de connexion de l'appareil");
+        toast.success("TV jumelée — en attente de sa première connexion");
       }} />
       {editing && (
         <Dialog open onOpenChange={() => setEditing(null)}>
@@ -121,16 +122,18 @@ function GroupSelect({ value, onChange }: { value: string | null; onChange: (v: 
   );
 }
 
-function AddDialog({ open, onOpenChange, onAdd }: { open: boolean; onOpenChange: (o: boolean) => void; onAdd: (n: string, c: string, g: string | null) => Promise<void> }) {
+function AddDialog({ open, onOpenChange, onAdd }: { open: boolean; onOpenChange: (o: boolean) => void; onAdd: (n: string, c: string, g: string | null, location: string) => Promise<void> }) {
   const [code, setCode] = useState(""); const [name, setName] = useState(""); const [group, setGroup] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [location, setLocation] = useState("");
+  const [error, setError] = useState("");
   const ok = isValidPairingCode(code) && name.trim().length > 0;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Ajouter une TV</DialogTitle>
-          <DialogDescription>Code de référence à 6 chiffres. La connexion de l’appareil reste en attente.</DialogDescription>
+          <DialogDescription>Saisissez le code du lecteur TV. Il est valable 10 minutes et utilisable une seule fois.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="flex justify-center">
@@ -138,11 +141,13 @@ function AddDialog({ open, onOpenChange, onAdd }: { open: boolean; onOpenChange:
               <InputOTPGroup>{[0, 1, 2, 3, 4, 5].map((i) => <InputOTPSlot key={i} index={i} />)}</InputOTPGroup>
             </InputOTP>
           </div>
-          <div className="space-y-2"><Label>Nom de la TV</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex. Accueil — Hall principal" /></div>
+          <div className="space-y-2"><Label>Nom de la TV</Label><Input maxLength={120} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex. Accueil — Hall principal" /></div>
+          <div className="space-y-2"><Label>Lieu (facultatif)</Label><Input maxLength={240} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Ex. Casablanca — Accueil" /></div>
           <div className="space-y-2"><Label>Groupe</Label><GroupSelect value={group} onChange={setGroup} /></div>
         </div>
+        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         <DialogFooter>
-          <Button disabled={!ok || busy} onClick={async () => { setBusy(true); try { await onAdd(name.trim(), code, group); setCode(""); setName(""); setGroup(null); onOpenChange(false); } catch { toast.error("La TV n’a pas pu être enregistrée"); } finally { setBusy(false); } }}>Enregistrer</Button>
+          <Button disabled={!ok || busy} onClick={async () => { setBusy(true); setError(""); try { await onAdd(name.trim(), code, group, location.trim()); setCode(""); setName(""); setLocation(""); setGroup(null); onOpenChange(false); } catch (err) { const message = err instanceof Error ? err.message : "La TV n’a pas pu être jumelée"; setError(message); toast.error(message); } finally { setBusy(false); } }}>{busy ? "Vérification…" : "Jumeler"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

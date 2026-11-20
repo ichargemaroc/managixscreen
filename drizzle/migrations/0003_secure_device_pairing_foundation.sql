@@ -1,0 +1,52 @@
+CREATE TABLE public.device_pairing_config (id boolean PRIMARY KEY DEFAULT true, enabled boolean NOT NULL DEFAULT false);
+GRANT ALL ON public.device_pairing_config TO service_role;
+ALTER TABLE public.device_pairing_config ENABLE ROW LEVEL SECURITY;
+CREATE TABLE public.pairing_sessions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), pairing_code text NOT NULL UNIQUE, device_id uuid NOT NULL UNIQUE, device_name text NOT NULL DEFAULT '', device_metadata jsonb NOT NULL DEFAULT '{}', status text NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','paired','expired','revoked')), expires_at timestamptz NOT NULL DEFAULT (now()+interval '10 minutes'), user_id uuid, screen_id uuid REFERENCES public.screens(id) ON DELETE SET NULL, created_at timestamptz NOT NULL DEFAULT now(), paired_at timestamptz);
+GRANT SELECT ON public.pairing_sessions TO authenticated;
+GRANT ALL ON public.pairing_sessions TO service_role;
+ALTER TABLE public.pairing_sessions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Owners read claimed sessions" ON public.pairing_sessions FOR SELECT TO authenticated USING(user_id=auth.uid());
+CREATE TABLE public.device_credentials (device_id uuid PRIMARY KEY REFERENCES public.pairing_sessions(device_id) ON DELETE CASCADE, token_hash text NOT NULL UNIQUE, revoked_at timestamptz);
+GRANT ALL ON public.device_credentials TO service_role;
+ALTER TABLE public.device_credentials ENABLE ROW LEVEL SECURITY;
+CREATE FUNCTION public.validate_pairing_expiry() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ BEGIN IF NEW.expires_at > NEW.created_at+interval '10 minutes' OR NEW.expires_at <= NEW.created_at THEN RAISE EXCEPTION 'Invalid pairing expiry'; END IF; RETURN NEW; END; $$;
+CREATE TRIGGER validate_pairing_expiry BEFORE INSERT OR UPDATE ON public.pairing_sessions FOR EACH ROW EXECUTE FUNCTION public.validate_pairing_expiry();
+CREATE FUNCTION public.register_pairing_session(p_id uuid,p_code text,p_device_id uuid,p_name text,p_metadata jsonb,p_hash text) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN
+ IF NOT EXISTS(SELECT 1 FROM public.device_pairing_config WHERE id=true AND enabled) THEN RAISE EXCEPTION 'Pairing disabled'; END IF;
+ INSERT INTO public.pairing_sessions(id,pairing_code,device_id,device_name,device_metadata) VALUES(p_id,p_code,p_device_id,p_name,p_metadata);
+ INSERT INTO public.device_credentials(device_id,token_hash) VALUES(p_device_id,p_hash);
+ END; $$;
+REVOKE ALL ON FUNCTION public.register_pairing_session(uuid,text,uuid,text,jsonb,text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.register_pairing_session(uuid,text,uuid,text,jsonb,text) TO service_role;
+CREATE FUNCTION public.claim_pairing_code(p_code text,p_name text,p_location text,p_group uuid) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE ps public.pairing_sessions; sid uuid; BEGIN
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Unauthorized'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.device_pairing_config WHERE id=true AND enabled) THEN RAISE EXCEPTION 'Pairing disabled'; END IF;
+ IF p_code !~ '^\d{6}$' OR length(trim(p_name)) NOT BETWEEN 1 AND 120 OR length(p_location)>240 THEN RAISE EXCEPTION 'Invalid input'; END IF;
+ SELECT * INTO ps FROM public.pairing_sessions WHERE pairing_code=p_code FOR UPDATE;
+ IF NOT FOUND OR ps.status<>'pending' OR ps.expires_at<=now() THEN RAISE EXCEPTION 'Invalid or expired pairing code'; END IF;
+ IF EXISTS(SELECT 1 FROM public.device_credentials WHERE device_id=ps.device_id AND revoked_at IS NOT NULL) THEN RAISE EXCEPTION 'Invalid or expired pairing code'; END IF;
+ IF p_group IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.groups WHERE id=p_group AND user_id=auth.uid()) THEN RAISE EXCEPTION 'Invalid group'; END IF;
+ INSERT INTO public.screens(user_id,name,pairing_code,location,group_id,status) VALUES(auth.uid(),trim(p_name),p_code,p_location,p_group,'pending') RETURNING id INTO sid;
+ UPDATE public.pairing_sessions SET status='paired',user_id=auth.uid(),screen_id=sid,paired_at=now() WHERE id=ps.id;
+ RETURN sid; END; $$;
+REVOKE ALL ON FUNCTION public.claim_pairing_code(text,text,text,uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.claim_pairing_code(text,text,text,uuid) TO authenticated;
+CREATE FUNCTION public.revoke_screen_device(p_screen uuid) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN
+ PERFORM 1 FROM public.screens WHERE id=p_screen AND user_id=auth.uid() FOR UPDATE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'Forbidden'; END IF;
+ UPDATE public.device_credentials SET revoked_at=now() WHERE device_id IN(SELECT device_id FROM public.pairing_sessions WHERE screen_id=p_screen);
+ UPDATE public.pairing_sessions SET status='revoked' WHERE screen_id=p_screen;
+ END; $$;
+REVOKE ALL ON FUNCTION public.revoke_screen_device(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.revoke_screen_device(uuid) TO authenticated;
+CREATE FUNCTION public.device_heartbeat(p_device uuid,p_hash text) RETURNS timestamptz LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE sid uuid; seen timestamptz; BEGIN
+ SELECT p.screen_id INTO sid FROM public.pairing_sessions p JOIN public.device_credentials c ON c.device_id=p.device_id WHERE p.device_id=p_device AND c.token_hash=p_hash AND c.revoked_at IS NULL AND p.status='paired' FOR UPDATE OF c;
+ IF sid IS NULL THEN RAISE EXCEPTION 'Unauthorized device'; END IF;
+ UPDATE public.screens SET status='online',last_seen=now() WHERE id=sid RETURNING last_seen INTO seen;
+ IF seen IS NULL THEN RAISE EXCEPTION 'Unauthorized device'; END IF;
+ RETURN seen; END; $$;
+REVOKE ALL ON FUNCTION public.device_heartbeat(uuid,text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.device_heartbeat(uuid,text) TO service_role;
+REVOKE INSERT ON public.screens FROM authenticated;
+CREATE INDEX pairing_sessions_owner_idx ON public.pairing_sessions(user_id);
+CREATE INDEX pairing_sessions_screen_idx ON public.pairing_sessions(screen_id);
