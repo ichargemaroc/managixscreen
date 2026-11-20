@@ -32,11 +32,13 @@ export function TVPlayer() {
     let active = true; let stopNetwork: (() => void) | undefined; let stopAwake: (() => void) | undefined;
     void (async () => {
       try {
-        const stored = await readCredentials();
-        const cached = stored?.paired ? await readContent().catch(() => null) : null;
+        // Never stay on the boot screen: a hung native vault or storage falls back to a fresh start.
+        const timeout = <T,>(task: Promise<T>, fallback: T) => Promise.race([task.catch(() => fallback), new Promise<T>((r) => setTimeout(() => r(fallback), 5000))]);
+        const stored = await timeout(readCredentials(), null);
+        const cached = stored?.paired ? await timeout(readContent(), null) : null;
         if (!active) return;
         setNow(Date.now()); setIdentity(stored); setContent(cached); setPhase(stored?.paired ? "playing" : stored ? "pairing" : "ready");
-        stopNetwork = await subscribeNetwork(setOnline); stopAwake = await keepAwake();
+        void subscribeNetwork(setOnline).then((stop) => { if (active) stopNetwork = stop; else stop(); }).catch(() => {}); void keepAwake().then((stop) => { if (active) stopAwake = stop; else stop(); }).catch(() => {});
         void navigator.storage?.persist?.();
       } catch { if (active) { setError("Le stockage du lecteur est indisponible."); setPhase("ready"); } }
     })();
