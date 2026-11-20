@@ -8,7 +8,6 @@ import { LovableMark } from "@lovable.dev/cloud-auth-js/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { pairingCode, pairingUrl } from "@/lib/qr-pairing";
 
 export const Route = createFileRoute("/auth")({
@@ -78,16 +77,19 @@ function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="items-center text-center">
-          <img src={logoAsset.url} alt="Screenflow" className="mb-2 h-12 w-auto" />
-          <CardTitle className="sr-only">Screenflow</CardTitle>
-          <CardDescription>
+    <div className="flex min-h-screen flex-col bg-sidebar">
+      <header className="flex h-20 shrink-0 items-center px-6 sm:px-10">
+        <img src={logoAsset.url} alt="Screenflow" className="h-10 w-auto max-w-full object-contain" />
+      </header>
+      <main className="flex flex-1 items-center justify-center px-5 py-10 sm:py-16">
+      <div className="w-full max-w-md">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-normal">{mode === "login" ? "Connexion" : "Créer un compte"}</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
             {mode === "login" ? "Connectez-vous pour gérer vos écrans." : "Créez votre compte ScreenFlow."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </p>
+        </div>
+        <div className="space-y-5">
           <div className="grid gap-2">
             <Button type="button" variant="outline" onClick={() => void oauth("google")}>
               <GoogleLogo /> Continuer avec Google
@@ -99,7 +101,7 @@ function AuthPage() {
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="h-px flex-1 bg-border" /> ou <span className="h-px flex-1 bg-border" />
           </div>
-          <form onSubmit={submit} className="space-y-3">
+          <form onSubmit={submit} className="space-y-5 [&_input]:h-12 [&_input]:bg-background [&_input]:shadow-none">
             {mode === "signup" && <div className="space-y-2"><Label htmlFor="full-name">Nom complet</Label><Input id="full-name" required value={fullName} onChange={(e) => setFullName(e.target.value)} /></div>}
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
@@ -109,7 +111,7 @@ function AuthPage() {
               <Label htmlFor="password">Mot de passe</Label>
               <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6 caractères minimum" />
             </div>
-            <Button className="w-full" disabled={busy}>
+            <Button className="w-full" size="lg" disabled={busy}>
               {mode === "login" ? "Se connecter" : "Créer mon compte"}
             </Button>
           </form>
@@ -119,8 +121,9 @@ function AuthPage() {
               {mode === "login" ? "Créer un compte" : "Se connecter"}
             </Button>
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+      </main>
     </div>
   );
 }

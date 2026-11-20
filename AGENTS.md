@@ -30,6 +30,7 @@ use the editor.
 <!-- LOVABLE:END -->
 
 ## Project rules
+- Shared visual styles use semantic tokens in `src/styles.css`, common controls, and the app shell; keep player playback surfaces isolated so dashboard restyling never changes displayed media.
 - App data and Cloud writes live in `src/lib/store.tsx`; pages consume `useStore()` and its exported actions to keep data access centralized.
 - Media object keys use generated identifiers and safe extensions, while original names remain in metadata, because storage rejects Unicode keys.
 - Pairing QR codes encode only the expiring pairing code on the public /pair page; explicit authenticated confirmation reuses the existing claim action and never exposes device credentials.

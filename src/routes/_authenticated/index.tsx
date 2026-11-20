@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Monitor, Wifi, WifiOff, Image, Film, ListVideo } from "lucide-react";
 import { PageHeader, EmptyState, StatusBadge } from "@/components/app-shell";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
 
@@ -21,31 +20,28 @@ function Dashboard() {
   const { screens, media, playlists } = useStore();
   const activeIds = new Set(screens.map((s) => s.playlistId).filter(Boolean));
   const stats = [
-    { label: "TV totales", value: screens.length, icon: Monitor },
-    { label: "En ligne", value: screens.filter((s) => s.status === "online").length, icon: Wifi },
-    { label: "Hors ligne", value: screens.filter((s) => s.status !== "online").length, icon: WifiOff },
-    { label: "Photos", value: media.filter((m) => m.type === "image").length, icon: Image },
-    { label: "Vidéos", value: media.filter((m) => m.type === "video").length, icon: Film },
-    { label: "Playlists actives", value: playlists.filter((p) => activeIds.has(p.id)).length, icon: ListVideo },
+    { label: "TV totales", value: screens.length, icon: Monitor, tone: "bg-accent text-accent-foreground" },
+    { label: "En ligne", value: screens.filter((s) => s.status === "online").length, icon: Wifi, tone: "bg-success/15 text-success" },
+    { label: "Hors ligne", value: screens.filter((s) => s.status !== "online").length, icon: WifiOff, tone: "bg-muted text-muted-foreground" },
+    { label: "Photos", value: media.filter((m) => m.type === "image").length, icon: Image, tone: "bg-secondary text-secondary-foreground" },
+    { label: "Vidéos", value: media.filter((m) => m.type === "video").length, icon: Film, tone: "bg-warning/15 text-foreground" },
+    { label: "Playlists actives", value: playlists.filter((p) => activeIds.has(p.id)).length, icon: ListVideo, tone: "bg-accent text-accent-foreground" },
   ];
   const recent = [...screens].filter((s) => s.lastSeen).sort((a, b) => (b.lastSeen ?? "").localeCompare(a.lastSeen ?? "")).slice(0, 5);
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader title="Tableau de bord" description="État de votre réseau d'affichage en un coup d'œil." />
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+      <PageHeader title="Tableau de bord" description="État de votre réseau d'affichage en un coup d'œil." action={<Button asChild><Link to="/screens"><Monitor /> Gérer les écrans</Link></Button>} />
+      <div className="grid grid-cols-2 gap-x-6 gap-y-8 border-b pb-9 md:grid-cols-3 xl:grid-cols-6">
         {stats.map((s) => (
-          <Card key={s.label}>
-            <CardContent className="p-5">
-              <s.icon className="size-4 text-primary" />
-              <p className="mt-3 font-display text-3xl font-semibold">{s.value}</p>
-              <p className="text-xs text-muted-foreground">{s.label}</p>
-            </CardContent>
-          </Card>
+          <div key={s.label}>
+            <div className={`mb-4 flex size-12 items-center justify-center rounded-full ${s.tone}`}><s.icon className="size-6" /></div>
+            <p className="text-sm text-muted-foreground">{s.label}</p>
+            <p className="mt-1 font-display text-3xl font-normal tabular-nums">{s.value}</p>
+          </div>
         ))}
       </div>
-      <Card className="mt-6">
-        <CardHeader><CardTitle className="text-base">Écrans récemment connectés</CardTitle></CardHeader>
-        <CardContent>
+      <section className="mt-8">
+        <h2 className="text-lg font-medium">Écrans récemment connectés</h2>
           {recent.length === 0 ? (
             <EmptyState icon={Monitor} title="Aucune connexion pour l'instant"
               text="Les écrans apparaîtront ici dès qu'ils se connecteront à ScreenFlow."
@@ -59,8 +55,7 @@ function Dashboard() {
               ))}
             </ul>
           )}
-        </CardContent>
-      </Card>
+      </section>
     </div>
   );
 }

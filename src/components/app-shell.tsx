@@ -21,18 +21,18 @@ export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const current = nav.find((n) => (n.url === "/" ? path === "/" : path.startsWith(n.url)));
   return (
-    <SidebarProvider>
+    <SidebarProvider className="console-shell bg-sidebar">
       <Sidebar collapsible="icon">
         <SidebarHeader>
-          <div className="flex items-center gap-2 px-2 py-3">
-            <img src={markAsset.url} alt="" className="size-8 shrink-0 rounded-md" />
-            <span className="font-display text-lg font-semibold text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden">ScreenFlow</span>
+          <div className="flex h-16 items-center gap-3 px-3">
+            <img src={markAsset.url} alt="" className="size-8 shrink-0" />
+            <span className="font-display text-xl font-medium text-sidebar-foreground group-data-[collapsible=icon]:hidden">ScreenFlow</span>
           </div>
         </SidebarHeader>
         <SidebarContent>
-          <SidebarGroup>
+          <SidebarGroup className="px-3 pt-4">
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-2">
                 {nav.map((item) => (
                   <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton asChild isActive={current?.url === item.url} tooltip={item.title}>
@@ -48,15 +48,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
-          <p className="px-2 pb-2 text-xs text-sidebar-foreground/60 group-data-[collapsible=icon]:hidden">Données sauvegardées dans le cloud</p>
+          <p className="px-5 pb-4 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">ScreenFlow · Affichage dynamique</p>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur">
-          <SidebarTrigger />
+      <SidebarInset className="min-w-0">
+        <header className="sticky top-0 z-10 flex h-20 items-center gap-3 bg-sidebar px-4 md:px-8">
+          <SidebarTrigger aria-label="Ouvrir ou fermer le menu" title="Ouvrir ou fermer le menu" />
           <span className="text-sm font-medium text-muted-foreground">{current?.title}</span>
         </header>
-        <main className="flex-1 p-4 md:p-8">{children}</main>
+        <div className="flex-1 p-5 md:px-10 md:py-8">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );
@@ -64,10 +64,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 export function PageHeader({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
   return (
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h1 className="text-2xl font-semibold md:text-3xl">{title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+    <div className="mb-9 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <h1 className="text-2xl font-normal md:text-3xl">{title}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
       </div>
       {action}
     </div>
@@ -76,8 +76,8 @@ export function PageHeader({ title, description, action }: { title: string; desc
 
 export function EmptyState({ icon: Icon, title, text, action }: { icon: typeof Monitor; title: string; text: string; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-card px-6 py-16 text-center">
-      <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-accent text-accent-foreground"><Icon className="size-5" /></div>
+    <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+      <div className="mb-5 flex size-16 items-center justify-center rounded-full bg-accent text-accent-foreground"><Icon className="size-7" /></div>
       <h3 className="font-semibold">{title}</h3>
       <p className="mt-1 max-w-sm text-sm text-muted-foreground">{text}</p>
       {action && <div className="mt-5">{action}</div>}

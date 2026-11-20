@@ -1,5 +1,9 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Style Google Play Console
+- [x] Harmoniser les couleurs, la typographie, le menu et les boutons avec la capture fournie
+- [x] Adapter la connexion et le tableau de bord ; navigation connectée vérifiée sur les sept pages, ordinateur et téléphone sans erreur
+
 ## Appairage QR code
 - [x] QR code local sur le lecteur, lien public sans identité secrète
 - [x] Connexion et confirmation de jumelage sur téléphone
