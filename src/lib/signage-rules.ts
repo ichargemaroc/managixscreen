@@ -9,3 +9,11 @@ export function mediaKind(mime: string): "image" | "video" | null {
   if (["video/mp4", "video/webm", "video/quicktime", "video/x-m4v", "video/ogg"].includes(mime)) return "video";
   return null;
 }
+
+// Keep user filenames in media.name, never in the storage object key.
+export function mediaStorageFilename(filename: string, id: string) {
+  const extension = filename.split(".").pop()?.toLowerCase();
+  return extension && /^[a-z0-9]{1,10}$/.test(extension) && filename.includes(".")
+    ? `${id}.${extension}`
+    : id;
+}
