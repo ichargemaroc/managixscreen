@@ -1,5 +1,9 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Fluidité de navigation
+- [x] Éviter la vérification réseau répétée à chaque clic avec une vérification serveur partagée pendant 30 secondes, invalidée avec l’identité et effacée à la déconnexion
+- [x] Cinq pages du compte réel mesurées : 56–116 ms après correction contre 122–384 ms avant ; six tests réussis, deux écrans réels relus, déconnexion et retour arrière refusé vérifiés
+
 ## Déconnexion
 - [x] Bouton « Se déconnecter » dans l’en-tête et le bas du menu, avec nettoyage sûr des données protégées
 - [x] 140 tests réussis ; parcours connecté vérifié : clic, retour à l’accueil, retour arrière refusé et session effacée
