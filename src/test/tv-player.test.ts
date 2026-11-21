@@ -23,7 +23,7 @@ describe("TV player playback and offline cache", () => {
   it("does not replace the playable playlist when a new media download fails", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response("data")).mockRejectedValue(new Error("Offline"));
     await downloadContent(manifest, () => {});
-    const replacement: Content = { ...manifest, playlist: manifest.playlist ? { ...manifest.playlist, updated_at: "2026-11-20T01:00:00Z" } : null };
+    const replacement: Content = { ...manifest, playlist: manifest.playlist ? { ...manifest.playlist, updated_at: "2026-11-20T01:00:00Z", items: [{ ...item, media: { ...item.media, id: 'b67f4500-b2f4-4049-9a31-5433f14aad57' } }] } : null };
     await expect(downloadContent(replacement, () => {})).rejects.toThrow("Offline");
     expect(await readContent()).toEqual(manifest);
     expect(await cachedMedia(manifest, item)).toBeDefined();
@@ -36,6 +36,28 @@ describe("TV player playback and offline cache", () => {
   });
   it("does not key local media by expiring signed URLs", () => {
     expect(cacheKey(manifest, item)).toBe(cacheKey(manifest, { ...item, media: { ...item.media, download_url: "https://example.test/renewed.png" } }));
+  });
+  it('applies an edited assigned playlist without downloading the same video again', async () => {
+    const fetcher = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('data')).mockRejectedValue(new Error('Download unavailable'));
+    await downloadContent(manifest, () => {});
+    const replacement: Content = { ...manifest, playlist: manifest.playlist ? { ...manifest.playlist, updated_at: '2026-11-21T00:00:00Z', items: [{ ...item, display_duration: 23 }] } : null };
+    await downloadContent(replacement, () => {});
+    expect((await readContent())?.playlist?.items[0]?.display_duration).toBe(23);
+    expect((await readContent())?.playlist?.updated_at).toBe('2026-11-21T00:00:00Z');
+    expect(await cachedMedia(replacement, item)).toBeDefined();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it('serializes overlapping replacements so an older download cannot overwrite the new playlist', async () => {
+    let finish: ((response: Response) => void) | undefined;
+    const fetcher = vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise<Response>(resolve => { finish = resolve; }));
+    const first = downloadContent(manifest, () => {});
+    await vi.waitFor(() => expect(finish).toBeDefined());
+    const replacement: Content = { ...manifest, playlist: manifest.playlist ? { ...manifest.playlist, updated_at: '2026-11-21T00:00:00Z', items: [{ ...item, display_duration: 23 }] } : null };
+    const second = downloadContent(replacement, () => {});
+    finish?.(new Response('data'));
+    await Promise.all([first, second]);
+    expect(await readContent()).toEqual(replacement);
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
   it('stores webpage instructions without fetching HTML into the media cache', async () => {
     const fetcher = vi.spyOn(globalThis, 'fetch');

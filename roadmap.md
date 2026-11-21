@@ -1,5 +1,11 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Actualisation des playlists affectées
+- [x] Réutiliser les médias locaux après modification d’ordre/durée, migrer les anciens fichiers locaux et sérialiser les remplacements du cache
+- [x] Ne pas bloquer la récupération de contenu en cas d’échec temporaire du suivi de connexion
+- [x] Playlist réellement affectée puis modifiée : nouvelle image affichée automatiquement, un seul nouveau téléchargement et conservation hors connexion ; données temporaires supprimées
+- [ ] Essai Android TV physique : nouvelle compilation APK et matériel nécessaires
+
 ## Fluidité de navigation
 - [x] Éviter la vérification réseau répétée à chaque clic avec une vérification serveur partagée pendant 30 secondes, invalidée avec l’identité et effacée à la déconnexion
 - [x] Cinq pages du compte réel mesurées : 56–116 ms après correction contre 122–384 ms avant ; six tests réussis, deux écrans réels relus, déconnexion et retour arrière refusé vérifiés

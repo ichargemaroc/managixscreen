@@ -13,7 +13,9 @@ export const contentSchema = z.object({ wall: wallPlaybackSchema.nullable().opti
 export type Content = z.input<typeof contentSchema>;
 export type Item = NonNullable<Content["playlist"]>["items"][number];
 export const commandsSchema = z.object({ server_time: z.string().optional(), commands: z.array(z.object({ id: z.string().uuid(), command: z.enum(["refresh_content", "reload_playlist", "restart_player", "clear_cache", "position_test", "stop_position_test"]), expires_at: z.string(), payload: z.unknown().optional() })) });
-export function cacheKey(content: Content, item: Item) { return `${content.playlist?.id}:${content.playlist?.updated_at}:${item.media.id}`; }
+// Uploaded media IDs are immutable; editing order/duration must not redownload large videos.
+export function cacheKey(_content: Content, item: Item) { return `media:${item.media.id}:${item.media.type}:${item.media.size}`; }
+export function legacyCacheKey(content: Content, item: Item) { return `${content.playlist?.id}:${content.playlist?.updated_at}:${item.media.id}`; }
 export function nextItem(index: number, count: number) { return count > 0 ? (index + 1) % count : 0; }
 export function imageDuration(item: Item) { return Math.max(1, item.display_duration) * 1000; }
 

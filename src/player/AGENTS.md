@@ -1,3 +1,5 @@
 - Web pages render in a separate native WebView without a Capacitor bridge; browser previews use sandboxed frames to isolate device credentials and commands.
 - HTTP sources may be saved but native cleartext remains disabled; HTTPS is required for Android playback to retain existing transport security.
 - Web walls repeat a whole page on each assigned screen rather than promising canvas cropping or synchronized DOM rendering.
+- Key immutable local media by ID/type/size rather than playlist revision and migrate legacy keys; serialize cache commits to prevent overlapping refreshes from discarding current playback.
+- Keep content retrieval independent of transient heartbeat failures while stopping on revoked device access; telemetry must not block playlist updates.

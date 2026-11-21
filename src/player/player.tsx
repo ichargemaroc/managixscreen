@@ -114,7 +114,12 @@ export function TVPlayer() {
           if (status.paired && !cancelled) { const claimed = { ...identity, paired: true }; await saveCredentials(claimed); setIdentity(claimed); setPhase("playing"); }
           return;
         }
-        await deviceApi("heartbeat", identity, { player_version: `${nativePlayer ? 'android-tv' : 'web'}-${playerVersion}`, playback_status: { state: playback.current, playlist_id: current.current.content?.playlist?.id ?? null, media_id: current.current.content?.playlist?.items[current.current.index]?.media.id ?? null } });
+        try {
+          await deviceApi("heartbeat", identity, { player_version: `${nativePlayer ? 'android-tv' : 'web'}-${playerVersion}`, playback_status: { state: playback.current, playlist_id: current.current.content?.playlist?.id ?? null, media_id: current.current.content?.playlist?.items[current.current.index]?.media.id ?? null } });
+        } catch (e) {
+          // A telemetry outage must not prevent fetching an updated assigned playlist.
+          if (e instanceof DeviceApiError && e.status === 401) throw e;
+        }
         try { await sync(identity); } catch (e) { if (e instanceof DeviceApiError && e.status === 401) throw e; setProgress(""); setError("Synchronisation interrompue ; contenu local conservé."); }
 
       } catch (e) {
