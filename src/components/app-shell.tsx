@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, FolderTree, Settings, PanelsTopLeft } from "lucide-react";
 import markAsset from "@/assets/screenflow-mark.png.asset.json";
 import { ThemeToggle } from '@/components/theme-toggle';
+import { SignOutButton } from '@/components/sign-out-button';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SidebarInset, useSidebar,
@@ -70,6 +71,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Link>
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          <SignOutButton />
           <SidebarTrigger aria-label="Ouvrir ou fermer le menu" title="Ouvrir ou fermer le menu" className="size-10" />
         </div>
       </header>
@@ -90,6 +92,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
+          <div className="flex items-center gap-2 px-2 pb-3">
+            <SignOutButton variant="outline" />
+            <p className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">Se déconnecter</p>
+          </div>
           <p className="px-5 pb-4 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">ScreenFlow · Affichage dynamique</p>
         </SidebarFooter>
       </Sidebar>

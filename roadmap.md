@@ -1,5 +1,9 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Déconnexion
+- [x] Bouton « Se déconnecter » dans l’en-tête et le bas du menu, avec nettoyage sûr des données protégées
+- [x] 140 tests réussis ; parcours connecté vérifié : clic, retour à l’accueil, retour arrière refusé et session effacée
+
 ## Accueil Google TV
 - [x] Refaire l’accueil avant connexion dans le style Google TV, en conservant le logo et les accès existants
 - [x] Vérifier l’affichage ordinateur/téléphone et l’ouverture de la connexion
