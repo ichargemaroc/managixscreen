@@ -63,7 +63,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [path]);
   return (
     <SidebarProvider open={menuPinned || menuHovered} onOpenChange={setMenuPinned} className="console-shell bg-sidebar pt-20">
-      <header className="fixed inset-x-0 top-0 z-20 flex h-20 items-center justify-between bg-sidebar px-5 md:px-8">
+      <header className="fixed inset-x-0 top-0 z-20 flex h-20 items-center justify-between bg-sidebar text-sidebar-foreground px-5 md:px-8">
         <Link to="/" className="flex items-center gap-3" aria-label="ScreenFlow — Tableau de bord">
           <img src={markAsset.url} alt="" className="size-8 shrink-0" />
           <span className="font-display text-xl font-medium text-sidebar-foreground">ScreenFlow</span>
