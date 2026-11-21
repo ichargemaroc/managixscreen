@@ -1,5 +1,12 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Murs d’images
+- [x] Configuration, grille, affectations uniques et contenu depuis la médiathèque
+- [x] Tables isolées par propriétaire, contrôles transactionnels et manifeste appareil sécurisé
+- [x] Découpage réel au rendu, cache et horloge commune dans le lecteur partagé Android/web ; fichier global téléchargé, sans transcodage serveur
+- [x] 71 tests réussis ; deux lecteurs image, vidéo locale/hors ligne, reprise après rechargement et validations transactionnelles vérifiés ; rapport VIDEO_WALL.md
+- [ ] Vérification APK et synchronisation sur TV physiques : matériel et exécution GitHub indisponibles
+
 ## Démarrage automatique Android TV
 - [x] Receiver natif BOOT_COMPLETED et MY_PACKAGE_REPLACED, permissions et intégration à la préparation Capacitor
 - [x] Démarrage limité aux cas autorisés, alternative Accueil Android et plein écran moderne

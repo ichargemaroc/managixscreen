@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { wallPlaybackSchema } from "./video-wall";
 
 export const deviceCommand = z.enum(["refresh_content", "reload_playlist", "restart_player", "clear_cache"]);
 const deviceInfo = z.object({ manufacturer: z.string().max(120).optional(), model: z.string().max(120).optional(), android_version: z.string().max(80).optional() }).strict();
@@ -7,6 +8,7 @@ export const deviceIdentity = z.object({ device_id: z.string().uuid() }).strict(
 export const deviceReport = deviceIdentity.extend({ player_version: z.string().trim().min(1).max(80).optional(), device_info: deviceInfo.optional(), playback_status: playbackStatus.optional() }).strict();
 export const commandAck = deviceIdentity.extend({ command_id: z.string().uuid(), status: z.enum(["completed", "failed"]), error: z.string().max(500).optional() }).strict();
 export const manifestSchema = z.object({
+  wall: wallPlaybackSchema.nullable().optional(), server_time: z.string().optional(),
   screen_id: z.string().uuid(), assignment_updated_at: z.string(),
   playlist: z.object({ id: z.string().uuid(), name: z.string(), updated_at: z.string(), items: z.array(z.object({
     id: z.string().uuid(), position: z.number(), display_duration: z.number(), media: z.object({ id: z.string().uuid(), name: z.string(), type: z.enum(["image", "video"]), size: z.number(), duration: z.number().nullable(), path: z.string() }),

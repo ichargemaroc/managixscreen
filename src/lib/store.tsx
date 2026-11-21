@@ -7,6 +7,8 @@ import { claimScreen, revokeScreen } from "@/lib/pairing.functions";
 import { enqueueCommand } from "@/lib/player.functions";
 import type { deviceCommand } from "@/lib/player-protocol";
 import type { z } from "zod";
+import { saveWall, controlWall } from "./video-wall.functions";
+import type { VideoWall, WallConfig, WallMember } from "./video-wall";
 
 // Données ScreenFlow lues depuis Lovable Cloud. Les pages utilisent useStore()
 // et les actions ci-dessous ; la synchronisation temps réel des écrans est
@@ -27,12 +29,12 @@ export type Schedule = {
   startDate: string; endDate: string; startTime: string; endTime: string; days: number[];
 };
 
-type State = { groups: Group[]; screens: Screen[]; media: Media[]; playlists: Playlist[]; schedules: Schedule[]; commands: DeviceCommand[] };
+type State = { groups: Group[]; screens: Screen[]; media: Media[]; playlists: Playlist[]; schedules: Schedule[]; commands: DeviceCommand[]; walls: VideoWall[]; wallEvents: { id: string; wall_id: string; action: string; effective_at: string; created_at: string }[] };
 type Ctx = State & { loading: boolean; refresh: () => void };
 
 const StoreCtx = createContext<Ctx | null>(null);
 
-const EMPTY: State = { groups: [], screens: [], media: [], playlists: [], schedules: [], commands: [] };
+const EMPTY: State = { groups: [], screens: [], media: [], playlists: [], schedules: [], commands: [], walls: [], wallEvents: [] };
 
 async function signedUrl(path: string) {
   const { data, error } = await supabase.storage.from("media").createSignedUrl(path, 60 * 60);
@@ -41,7 +43,7 @@ async function signedUrl(path: string) {
 }
 
 async function fetchAll(): Promise<State> {
-  const [groups, screens, media, playlists, items, schedules, members, sessions, telemetry, commands] = await Promise.all([
+  const [groups, screens, media, playlists, items, schedules, members, sessions, telemetry, commands, walls, wallMembers, wallEvents] = await Promise.all([
     supabase.from("groups").select("*").order("created_at"),
     supabase.from("screens").select("*").order("created_at"),
     supabase.from("media").select("*").order("created_at", { ascending: false }),
@@ -52,8 +54,11 @@ async function fetchAll(): Promise<State> {
     supabase.from("pairing_sessions").select("screen_id, device_id, status"),
     supabase.from("device_telemetry").select("*"),
     supabase.from("device_commands").select("*").order("created_at", { ascending: false }).limit(200),
+    supabase.from("video_walls").select("*").order("created_at"),
+    supabase.from("video_wall_screens").select("*"),
+    supabase.from("video_wall_events").select("id,wall_id,action,effective_at,created_at").order("created_at", { ascending: false }).limit(100),
   ]);
-  for (const r of [groups, screens, media, playlists, items, schedules, members, sessions, telemetry, commands]) {
+  for (const r of [groups, screens, media, playlists, items, schedules, members, sessions, telemetry, commands, walls, wallMembers, wallEvents]) {
     if (r.error) throw r.error;
   }
   const mediaRows = await Promise.all(
@@ -69,6 +74,8 @@ async function fetchAll(): Promise<State> {
     itemsByPlaylist.set(it.playlist_id, list);
   }
   return {
+    walls: (walls.data ?? []).map((w) => ({ ...w, orientation: w.orientation as VideoWall["orientation"], state: w.state as VideoWall["state"], members: (wallMembers.data ?? []).filter((m) => m.wall_id === w.id) })),
+    wallEvents: wallEvents.data ?? [],
     groups: (groups.data ?? []).map((g) => ({ id: g.id, name: g.name, location: g.location, screenIds: (members.data ?? []).filter((m) => m.group_id === g.id).map((m) => m.screen_id) })),
     screens: (screens.data ?? []).map((s) => ({
       id: s.id, name: s.name, pairingCode: s.pairing_code, groupId: s.group_id,
@@ -108,6 +115,10 @@ export function useStore() {
 }
 
 // ===== Actions (écritures Cloud) =====
+
+export async function saveVideoWall(id: string | null, config: WallConfig, members: WallMember[]) { return saveWall({ data: { id, config, members } }); }
+export async function controlVideoWall(id: string, action: "play" | "pause" | "stop") { await controlWall({ data: { id, action } }); }
+export async function deleteVideoWall(id: string) { const { error } = await supabase.from("video_walls").delete().eq("id", id); if (error) throw error; }
 
 async function userId() {
   const { data } = await supabase.auth.getUser();

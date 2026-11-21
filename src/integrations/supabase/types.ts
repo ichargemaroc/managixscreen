@@ -567,6 +567,142 @@ export type Database = {
           },
         ]
       }
+      video_wall_events: {
+        Row: {
+          action: string
+          created_at: string
+          effective_at: string
+          id: string
+          position_seconds: number
+          wall_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          effective_at: string
+          id?: string
+          position_seconds: number
+          wall_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          effective_at?: string
+          id?: string
+          position_seconds?: number
+          wall_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_wall_events_wall_id_fkey"
+            columns: ["wall_id"]
+            isOneToOne: false
+            referencedRelation: "video_walls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_wall_screens: {
+        Row: {
+          column_index: number
+          row_index: number
+          screen_id: string
+          wall_id: string
+        }
+        Insert: {
+          column_index: number
+          row_index: number
+          screen_id: string
+          wall_id: string
+        }
+        Update: {
+          column_index?: number
+          row_index?: number
+          screen_id?: string
+          wall_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_wall_screens_screen_id_fkey"
+            columns: ["screen_id"]
+            isOneToOne: true
+            referencedRelation: "screens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_wall_screens_wall_id_fkey"
+            columns: ["wall_id"]
+            isOneToOne: false
+            referencedRelation: "video_walls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_walls: {
+        Row: {
+          columns: number
+          created_at: string
+          epoch: string
+          gap_x: number
+          gap_y: number
+          height: number
+          id: string
+          media_id: string | null
+          name: string
+          orientation: string
+          position_seconds: number
+          revision: number
+          rows: number
+          state: string
+          user_id: string
+          width: number
+        }
+        Insert: {
+          columns?: number
+          created_at?: string
+          epoch?: string
+          gap_x?: number
+          gap_y?: number
+          height?: number
+          id?: string
+          media_id?: string | null
+          name: string
+          orientation?: string
+          position_seconds?: number
+          revision?: number
+          rows?: number
+          state?: string
+          user_id: string
+          width?: number
+        }
+        Update: {
+          columns?: number
+          created_at?: string
+          epoch?: string
+          gap_x?: number
+          gap_y?: number
+          height?: number
+          id?: string
+          media_id?: string | null
+          name?: string
+          orientation?: string
+          position_seconds?: number
+          revision?: number
+          rows?: number
+          state?: string
+          user_id?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_walls_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       screen_groups: {
@@ -617,6 +753,10 @@ export type Database = {
         Args: { p_key: string; p_max: number; p_seconds: number }
         Returns: boolean
       }
+      control_video_wall: {
+        Args: { p_action: string; p_wall: string }
+        Returns: undefined
+      }
       device_ack_command: {
         Args: {
           p_command: string
@@ -651,6 +791,7 @@ export type Database = {
         Args: { p_device: string; p_hash: string }
         Returns: string
       }
+      device_wall: { Args: { p_device: string; p_hash: string }; Returns: Json }
       enqueue_device_command: {
         Args: { p_command: string; p_screen: string }
         Returns: string
@@ -671,6 +812,10 @@ export type Database = {
         Returns: undefined
       }
       revoke_screen_device: { Args: { p_screen: string }; Returns: undefined }
+      save_video_wall: {
+        Args: { p_config: Json; p_id: string; p_members: Json }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

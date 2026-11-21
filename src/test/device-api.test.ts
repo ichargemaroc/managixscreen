@@ -65,7 +65,7 @@ describe("Device API isolation", () => {
     mocks.rpc.mockResolvedValueOnce({ data: true }).mockResolvedValueOnce({ data: {
       screen_id: deviceId, assignment_updated_at: "2026-11-20T00:00:00Z",
       playlist: { id: deviceId, name: "Playlist", updated_at: "2026-11-20T00:01:00Z", items: [{ id: deviceId, position: 0, display_duration: 17, media: { id: deviceId, name: "Image", type: "image", size: 256, duration: null, path: "owner/file.png" } }] },
-    } }).mockResolvedValueOnce({ data: "2026-11-20T00:02:00Z" });
+    } }).mockResolvedValueOnce({ data: null }).mockResolvedValueOnce({ data: "2026-11-20T00:02:00Z" });
     const sign = vi.fn().mockResolvedValue({ data: { signedUrl: "https://internal.test/storage/v1/object/sign/media/owner/file.png?token=test-only" } });
     mocks.storage.from.mockReturnValue({ createSignedUrl: sign });
     const response = await handleDeviceRequest(request("a".repeat(64)), "content");
@@ -82,10 +82,10 @@ describe("Device API isolation", () => {
   });
   it("does not mark synchronization if signing a media URL fails", async () => {
     mocks.from.mockReturnValue(row({ device_id: deviceId }));
-    mocks.rpc.mockResolvedValueOnce({ data: true }).mockResolvedValueOnce({ data: { screen_id: deviceId, assignment_updated_at: "now", playlist: { id: deviceId, name: "Playlist", updated_at: "now", items: [{ id: deviceId, position: 0, display_duration: 10, media: { id: deviceId, name: "Image", type: "image", size: 1, duration: null, path: "owner/file.png" } }] } } });
+    mocks.rpc.mockResolvedValueOnce({ data: true }).mockResolvedValueOnce({ data: { screen_id: deviceId, assignment_updated_at: "now", playlist: { id: deviceId, name: "Playlist", updated_at: "now", items: [{ id: deviceId, position: 0, display_duration: 10, media: { id: deviceId, name: "Image", type: "image", size: 1, duration: null, path: "owner/file.png" } }] } } }).mockResolvedValueOnce({ data: null });
     mocks.storage.from.mockReturnValue({ createSignedUrl: vi.fn().mockResolvedValue({ error: { message: "Missing" } }) });
     expect((await handleDeviceRequest(request("a".repeat(64)), "content")).status).toBe(503);
-    expect(mocks.rpc).toHaveBeenCalledTimes(2);
+    expect(mocks.rpc).toHaveBeenCalledTimes(3);
   });
   it("scopes acknowledgements to the authenticated device and rejects invalid transitions", async () => {
     mocks.from.mockReturnValue(row({ device_id: deviceId }));
@@ -110,5 +110,35 @@ describe("Device API access from the Android app", () => {
     expect(response.headers.get("access-control-allow-origin")).toBe("*");
     expect(response.headers.get("access-control-allow-headers")).toContain("Authorization");
     expect(response.headers.get("access-control-allow-credentials")).toBeNull();
+  });
+});
+
+describe("Video wall device manifests", () => {
+  beforeEach(() => vi.resetAllMocks());
+  it("overrides a standard playlist with only the device wall and strips private fields", async () => {
+    vi.stubEnv("VITE_SUPABASE_URL", "https://storage.example.test");
+    mocks.from.mockReturnValue(row({ device_id: deviceId }));
+    mocks.rpc.mockResolvedValueOnce({ data: true }).mockResolvedValueOnce({ data: { screen_id: deviceId, assignment_updated_at: "now", playlist: null } }).mockResolvedValueOnce({ data: {
+      id: deviceId, user_id: "private-owner", name: "Wall", columns: 2, rows: 2, width: 3840, height: 2160, gap_x: 0, gap_y: 0, orientation: "landscape", row_index: 1, column_index: 0, state: "playing", epoch: "2026-11-21T14:00:00Z", position_seconds: 0, revision: 1,
+      media: { id: deviceId, name: "Wall image", type: "image", size: 256, duration: null, path: "owner/wall.png" },
+    } }).mockResolvedValueOnce({ data: "2026-11-21T14:00:00Z" });
+    mocks.storage.from.mockReturnValue({ createSignedUrl: vi.fn().mockResolvedValue({ data: { signedUrl: "https://internal.test/storage/v1/object/sign/media/owner/wall.png?token=test-only" } }) });
+    const response = await handleDeviceRequest(request("a".repeat(64)), "content");
+    const result = await response.json();
+    expect(response.status).toBe(200);
+    expect(result.wall).toMatchObject({ row_index: 1, column_index: 0, columns: 2, rows: 2 });
+    expect(result.wall.user_id).toBeUndefined();
+    expect(result.wall.media).toBeUndefined();
+    expect(result.playlist.items).toHaveLength(1);
+    expect(result.playlist.items[0].media.name).toBe("Wall image");
+    expect(result.playlist.items[0].media.path).toBeUndefined();
+    expect(mocks.rpc).toHaveBeenCalledWith("device_wall", { p_device: deviceId, p_hash: expect.any(String) });
+    vi.unstubAllEnvs();
+  });
+  it("fails closed when wall authorization cannot be revalidated", async () => {
+    mocks.from.mockReturnValue(row({ device_id: deviceId }));
+    mocks.rpc.mockResolvedValueOnce({ data: true }).mockResolvedValueOnce({ data: { screen_id: deviceId, assignment_updated_at: "now", playlist: null } }).mockResolvedValueOnce({ error: { message: "Unauthorized" } });
+    expect((await handleDeviceRequest(request("a".repeat(64)), "content")).status).toBe(503);
+    expect(mocks.storage.from).not.toHaveBeenCalled();
   });
 });

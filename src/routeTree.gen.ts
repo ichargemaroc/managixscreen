@@ -21,6 +21,7 @@ import { Route as AuthenticatedPlaylistsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedScreensRouteImport } from './routes/_authenticated/screens'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedVideoWallsRouteImport } from './routes/_authenticated/video-walls'
 import { Route as AuthenticatedScreensScreenIdRouteImport } from './routes/_authenticated/screens_.$screenId'
 import { Route as ApiPublicDevicesCommandsRouteImport } from './routes/api/public/devices/commands'
 import { Route as ApiPublicDevicesContentRouteImport } from './routes/api/public/devices/content'
@@ -88,6 +89,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedVideoWallsRoute = AuthenticatedVideoWallsRouteImport.update({
+  id: '/video-walls',
+  path: '/video-walls',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedScreensScreenIdRoute =
   AuthenticatedScreensScreenIdRouteImport.update({
     id: '/screens_/$screenId',
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/schedule': typeof AuthenticatedScheduleRoute
   '/screens': typeof AuthenticatedScreensRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/video-walls': typeof AuthenticatedVideoWallsRoute
   '/screens/$screenId': typeof AuthenticatedScreensScreenIdRoute
   '/api/public/devices/commands': typeof ApiPublicDevicesCommandsRouteWithChildren
   '/api/public/devices/content': typeof ApiPublicDevicesContentRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/schedule': typeof AuthenticatedScheduleRoute
   '/screens': typeof AuthenticatedScreensRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/video-walls': typeof AuthenticatedVideoWallsRoute
   '/': typeof AuthenticatedIndexRoute
   '/screens/$screenId': typeof AuthenticatedScreensScreenIdRoute
   '/api/public/devices/commands': typeof ApiPublicDevicesCommandsRouteWithChildren
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/screens': typeof AuthenticatedScreensRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/video-walls': typeof AuthenticatedVideoWallsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/screens_/$screenId': typeof AuthenticatedScreensScreenIdRoute
   '/api/public/devices/commands': typeof ApiPublicDevicesCommandsRouteWithChildren
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/schedule'
     | '/screens'
     | '/settings'
+    | '/video-walls'
     | '/screens/$screenId'
     | '/api/public/devices/commands'
     | '/api/public/devices/content'
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
     | '/schedule'
     | '/screens'
     | '/settings'
+    | '/video-walls'
     | '/'
     | '/screens/$screenId'
     | '/api/public/devices/commands'
@@ -244,6 +255,7 @@ export interface FileRouteTypes {
     | '/_authenticated/schedule'
     | '/_authenticated/screens'
     | '/_authenticated/settings'
+    | '/_authenticated/video-walls'
     | '/_authenticated/'
     | '/_authenticated/screens_/$screenId'
     | '/api/public/devices/commands'
@@ -353,6 +365,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/video-walls': {
+      id: '/_authenticated/video-walls'
+      path: '/video-walls'
+      fullPath: '/video-walls'
+      preLoaderRoute: typeof AuthenticatedVideoWallsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/screens_/$screenId': {
       id: '/_authenticated/screens_/$screenId'
       path: '/screens/$screenId'
@@ -412,6 +431,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedScreensRoute: typeof AuthenticatedScreensRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedVideoWallsRoute: typeof AuthenticatedVideoWallsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedScreensScreenIdRoute: typeof AuthenticatedScreensScreenIdRoute
 }
@@ -423,6 +443,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedScreensRoute: AuthenticatedScreensRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedVideoWallsRoute: AuthenticatedVideoWallsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedScreensScreenIdRoute: AuthenticatedScreensScreenIdRoute,
 }

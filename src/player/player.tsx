@@ -8,6 +8,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { pairingUrl } from "@/lib/qr-pairing";
 // Bundled locally so the logo also shows inside the offline Android app (relative CDN URLs do not resolve there).
 import markUrl from "./screenflow-mark.png";
+import { WallStage } from "./wall-stage";
 
 export function TVPlayer() {
   const [identity, setIdentity] = useState<Credentials | null>(null);
@@ -59,7 +60,9 @@ export function TVPlayer() {
   };
 
   const sync = async (creds: Credentials) => {
+    const sent = Date.now();
     const manifest = contentSchema.parse(await deviceApi("content", creds));
+    if (manifest.server_time) manifest.clock_offset = Date.parse(manifest.server_time) - (sent + Date.now()) / 2;
     await downloadContent(manifest, (done, total) => setProgress(`${done} / ${total}`));
     const previous = current.current.content;
     setContent(manifest);
@@ -109,10 +112,10 @@ export function TVPlayer() {
         setProgress("");
       } finally { busy.current = false; }
     };
-    void tick(); const timer = window.setInterval(() => void tick(), identity.paired ? 30000 : 5000);
+    void tick(); const timer = window.setInterval(() => void tick(), identity.paired ? content?.wall ? 10000 : 30000 : 5000);
     const resume = () => void tick(); window.addEventListener("online", resume);
     return () => { cancelled = true; clearInterval(timer); window.removeEventListener("online", resume); };
-  }, [identity, phase]);
+  }, [identity, phase, content?.wall?.id]);
 
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
   useEffect(() => {
@@ -121,16 +124,16 @@ export function TVPlayer() {
     return () => { active = false; if (url) URL.revokeObjectURL(url); };
   }, [content?.playlist?.id, content?.playlist?.updated_at, item?.id]);
   useEffect(() => {
-    if (!item || !source || paused || item.media.type !== "image") return;
+    if (content?.wall || !item || !source || paused || item.media.type !== "image") return;
     playback.current = "playing";
     const timer = setTimeout(() => setIndex((value) => nextItem(value, items.length)), imageDuration(item)); return () => clearTimeout(timer);
-  }, [item?.id, item?.display_duration, source, paused, items.length]);
+  }, [item?.id, item?.display_duration, source, paused, items.length, content?.wall?.id]);
   useEffect(() => { if (paused) { playback.current = "paused"; video.current?.pause(); } else if (video.current) void video.current.play().catch(() => { setError("Lecture vidéo bloquée. Appuyez sur Lecture."); setControls(true); }); }, [paused, source]);
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
       if (event.key !== "Escape" && event.key !== "BrowserBack") setControls(true);
-      if (event.key === "ArrowRight" && phase === "playing") { event.preventDefault(); setIndex((value) => nextItem(value, items.length)); }
-      else if (event.key === " " || event.key === "MediaPlayPause") { event.preventDefault(); setPaused((value) => !value); }
+      if (event.key === "ArrowRight" && phase === "playing" && !content?.wall) { event.preventDefault(); setIndex((value) => nextItem(value, items.length)); }
+      else if ((event.key === " " || event.key === "MediaPlayPause") && !content?.wall) { event.preventDefault(); setPaused((value) => !value); }
       else if (event.key === "Escape" || event.key === "BrowserBack") setControls((value) => !value);
       else if (event.key.startsWith("Arrow")) {
         const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>(".tv-player button:not(:disabled)"));
@@ -138,14 +141,14 @@ export function TVPlayer() {
       }
     };
     window.addEventListener("keydown", key); return () => window.removeEventListener("keydown", key);
-  }, [phase, items.length]);
+  }, [phase, items.length, content?.wall?.id]);
   useEffect(() => { if (!controls) return; const timer = setTimeout(() => setControls(false), 6000); return () => clearTimeout(timer); }, [controls]);
 
   const expired = identity && !identity.paired && now >= identity.expires_at;
   const qrUrl = phase === "pairing" && identity && !expired ? pairingUrl(import.meta.env['VITE_PLAYER_API_ORIGIN'] || window.location.origin, identity.pairing_code) : "";
   return <main className="tv-player" onPointerMove={() => phase === "playing" && setControls(true)}>
     {phase === "playing" && source && item ? <div className="tv-stage">
-      {item.media.type === "image" ? <img src={source} alt={item.media.name} /> : <video ref={video} src={source} autoPlay muted playsInline loop={items.length === 1} onPlaying={() => { playback.current = "playing"; }} onEnded={() => setIndex((value) => nextItem(value, items.length))} onError={() => { playback.current = "error"; setError("Format vidéo non pris en charge par cet appareil."); setTimeout(() => setIndex((value) => nextItem(value, items.length)), 3000); }} />}
+      {content?.wall ? <WallStage wall={content.wall} source={source} type={item.media.type} clockOffset={content.clock_offset ?? 0} onState={(state) => { playback.current = state; }} /> : item.media.type === "image" ? <img src={source} alt={item.media.name} /> : <video ref={video} src={source} autoPlay muted playsInline loop={items.length === 1} onPlaying={() => { playback.current = "playing"; }} onEnded={() => setIndex((value) => nextItem(value, items.length))} onError={() => { playback.current = "error"; setError("Format vidéo non pris en charge par cet appareil."); setTimeout(() => setIndex((value) => nextItem(value, items.length)), 3000); }} />}
     </div> : <div className="tv-enrollment">
       <header className="tv-brand"><img src={markUrl} alt="" className="tv-brand-mark" /><span>ScreenFlow <small>TV PLAYER</small></span></header>
       <div className="tv-center">
@@ -158,7 +161,7 @@ export function TVPlayer() {
       </div>
       <footer className="tv-footer"><span>{online ? <Wifi /> : <WifiOff />}{online ? "Réseau disponible" : "Hors connexion"}</span><span>LECTEUR WEB · 0.1.0</span><Button variant="ghost" size="icon" aria-label="Plein écran" onClick={() => void enterPlayerMode()}><Maximize /></Button></footer>
     </div>}
-    {phase === "playing" && source && controls && <div className="tv-controls"><span>{online ? <Wifi /> : <WifiOff />}{content?.playlist?.name} · {index + 1}/{items.length}{progress && ` · ${progress}`}</span><div><Button variant="ghost" size="icon" aria-label={paused ? "Lecture" : "Pause"} onClick={() => setPaused(!paused)}>{paused ? <Play /> : <Pause />}</Button><Button variant="ghost" size="icon" aria-label="Média suivant" onClick={() => setIndex((value) => nextItem(value, items.length))}><ChevronRight /></Button><Button variant="ghost" size="icon" aria-label="Synchroniser" disabled={busy.current || !identity || !online} onClick={() => { if (identity && !busy.current) { busy.current = true; void sync(identity).catch(() => setError("Synchronisation indisponible.")).finally(() => { busy.current = false; }); } }}><RefreshCw /></Button><Button variant="ghost" size="icon" aria-label="Plein écran" onClick={() => void enterPlayerMode()}><Maximize /></Button></div>{error && <p role="alert">{error}</p>}</div>}
+    {phase === "playing" && source && controls && <div className="tv-controls"><span>{online ? <Wifi /> : <WifiOff />}{content?.playlist?.name} · {index + 1}/{items.length}{progress && ` · ${progress}`}</span><div><Button disabled={Boolean(content?.wall)} variant="ghost" size="icon" aria-label={paused ? "Lecture" : "Pause"} onClick={() => setPaused(!paused)}>{paused ? <Play /> : <Pause />}</Button><Button disabled={Boolean(content?.wall)} variant="ghost" size="icon" aria-label="Média suivant" onClick={() => setIndex((value) => nextItem(value, items.length))}><ChevronRight /></Button><Button variant="ghost" size="icon" aria-label="Synchroniser" disabled={busy.current || !identity || !online} onClick={() => { if (identity && !busy.current) { busy.current = true; void sync(identity).catch(() => setError("Synchronisation indisponible.")).finally(() => { busy.current = false; }); } }}><RefreshCw /></Button><Button variant="ghost" size="icon" aria-label="Plein écran" onClick={() => void enterPlayerMode()}><Maximize /></Button></div>{error && <p role="alert">{error}</p>}</div>}
     {phase === "playing" && source && !controls && <Button className="tv-menu" variant="ghost" size="icon" aria-label="Commandes de lecture" onClick={() => setControls(true)}><Settings2 /></Button>}
   </main>;
 }

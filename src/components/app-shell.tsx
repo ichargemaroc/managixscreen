@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, FolderTree, Settings } from "lucide-react";
+import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, FolderTree, Settings, PanelsTopLeft } from "lucide-react";
 import markAsset from "@/assets/screenflow-mark.png.asset.json";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader,
@@ -10,6 +10,7 @@ import {
 const nav = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
   { title: "Écrans", url: "/screens", icon: Monitor },
+  { title: "Murs d’images", url: "/video-walls", icon: PanelsTopLeft },
   { title: "Médiathèque", url: "/media", icon: Image },
   { title: "Playlists", url: "/playlists", icon: ListVideo },
   { title: "Programmation", url: "/schedule", icon: CalendarClock },

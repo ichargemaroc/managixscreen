@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { wallPlaybackSchema } from "@/lib/video-wall";
 
 export const credentialsSchema = z.object({ device_id: z.string().uuid(), device_token: z.string().regex(/^[a-f0-9]{64}$/), pairing_code: z.string().regex(/^\d{6}$/), expires_at: z.number(), paired: z.boolean() });
 export type Credentials = z.infer<typeof credentialsSchema>;
-export const contentSchema = z.object({ screen_id: z.string().uuid(), assignment_updated_at: z.string(), last_sync_at: z.string(), playlist: z.object({ id: z.string().uuid(), name: z.string(), updated_at: z.string(), items: z.array(z.object({ id: z.string().uuid(), position: z.number().int().min(0), display_duration: z.number().positive(), media: z.object({ id: z.string().uuid(), name: z.string(), type: z.enum(["image", "video"]), size: z.number(), duration: z.number().nullable(), download_url: z.string().url() }) })) }).nullable() });
+export const contentSchema = z.object({ wall: wallPlaybackSchema.nullable().optional(), server_time: z.string().optional(), clock_offset: z.number().optional(), screen_id: z.string().uuid(), assignment_updated_at: z.string(), last_sync_at: z.string(), playlist: z.object({ id: z.string().uuid(), name: z.string(), updated_at: z.string(), items: z.array(z.object({ id: z.string().uuid(), position: z.number().int().min(0), display_duration: z.number().positive(), media: z.object({ id: z.string().uuid(), name: z.string(), type: z.enum(["image", "video"]), size: z.number(), duration: z.number().nullable(), download_url: z.string().url() }) })) }).nullable() });
 export type Content = z.infer<typeof contentSchema>;
 export type Item = NonNullable<Content["playlist"]>["items"][number];
 export const commandsSchema = z.object({ commands: z.array(z.object({ id: z.string().uuid(), command: z.enum(["refresh_content", "reload_playlist", "restart_player", "clear_cache"]), expires_at: z.string() })) });
