@@ -22,28 +22,33 @@ export async function deviceApi(operation: string, credentials: Credentials | nu
   const { Capacitor, CapacitorHttp } = await import("@capacitor/core");
   if (Capacitor.isNativePlatform()) {
     if (!configured) throw new Error("L’adresse du serveur n’a pas été configurée pour Android.");
-    // Native HTTP can hang on some devices (DNS/TLS are not bounded by its timeouts): cap it, then retry through the WebView.
-    let nativeDetail = "";
+    // The WebView uses the same network stack as Chrome (which reaches the server), so try it first with a short cap;
+    // native HTTP is only a fallback because it can hang on some devices.
+    let webDetail = "";
+    try { return await webRequest(url, headers, body, 8000); }
+    catch (e) {
+      if (e instanceof DeviceApiError) throw e;
+      webDetail = e instanceof Error && e.message ? e.message : "réseau injoignable";
+    }
     try {
-      const response = await withTimeout(CapacitorHttp.post({ url: url.toString(), headers, data: body, connectTimeout: 10000, readTimeout: 10000 }), 12000);
+      const response = await withTimeout(CapacitorHttp.post({ url: url.toString(), headers, data: body, connectTimeout: 7000, readTimeout: 7000 }), 8000);
       if (response.status < 200 || response.status >= 300) throw new DeviceApiError(response.status);
       return (typeof response.data === "string" ? JSON.parse(response.data) : response.data) as unknown;
     } catch (e) {
       if (e instanceof DeviceApiError) throw e;
-      nativeDetail = e instanceof Error && e.message ? e.message : "réseau injoignable";
-    }
-    try { return await webRequest(url, headers, body); }
-    catch (e) {
-      if (e instanceof DeviceApiError) throw e;
-      const webDetail = e instanceof Error && e.message ? e.message : "réseau injoignable";
-      throw new Error(`Connexion impossible vers ${url.hostname} (natif : ${nativeDetail} ; web : ${webDetail})`);
+      const nativeDetail = e instanceof Error && e.message ? e.message : "réseau injoignable";
+      throw new Error(`Connexion impossible vers ${url.hostname} (web : ${webDetail} ; natif : ${nativeDetail})`);
     }
   }
   return webRequest(url, headers, body);
 }
 function withTimeout<T>(task: Promise<T>, ms: number) { return Promise.race([task, new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`délai de ${ms / 1000} s dépassé`)), ms))]); }
-async function webRequest(url: URL, headers: Record<string, string>, body: unknown) {
-  const response = await withTimeout(fetch(url, { method: "POST", headers, body: JSON.stringify(body), cache: "no-store" }), 15000);
-  if (!response.ok) throw new DeviceApiError(response.status);
-  return response.json() as Promise<unknown>;
+async function webRequest(url: URL, headers: Record<string, string>, body: unknown, ms = 15000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    const response = await withTimeout(fetch(url, { method: "POST", headers, body: JSON.stringify(body), cache: "no-store", signal: controller.signal }), ms);
+    if (!response.ok) throw new DeviceApiError(response.status);
+    return await response.json() as unknown;
+  } finally { clearTimeout(timer); }
 }
