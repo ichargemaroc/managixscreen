@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, FolderTree, Settings, PanelsTopLeft } from "lucide-react";
 import markAsset from "@/assets/screenflow-mark.png.asset.json";
+import { ThemeToggle } from '@/components/theme-toggle';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SidebarInset, useSidebar,
@@ -67,7 +68,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           <img src={markAsset.url} alt="" className="size-8 shrink-0" />
           <span className="font-display text-xl font-medium text-sidebar-foreground">ScreenFlow</span>
         </Link>
-        <SidebarTrigger aria-label="Ouvrir ou fermer le menu" title="Ouvrir ou fermer le menu" className="size-10" />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <SidebarTrigger aria-label="Ouvrir ou fermer le menu" title="Ouvrir ou fermer le menu" className="size-10" />
+        </div>
       </header>
       <Sidebar collapsible="icon"
         onPointerEnter={(event) => { if (event.pointerType === "mouse") setMenuHovered(true); }}

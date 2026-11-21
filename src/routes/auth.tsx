@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import logoAsset from "@/assets/screenflow-logo.png.asset.json";
 import welcomeImage from '@/assets/screenflow-tv-welcome.png';
 import { ArrowRight } from "lucide-react";
+import { ThemeToggle } from '@/components/theme-toggle';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -86,9 +87,12 @@ function AuthPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="flex h-20 shrink-0 items-center justify-between gap-4 border-b bg-background px-6 sm:px-10">
-        <img src={logoAsset.url} alt="Screenflow" className="h-10 w-auto max-w-full object-contain" />
-        <Button variant="outline" className="shrink-0" onClick={() => { setMode('login'); setConnecting(true); }}>Se connecter</Button>
+      <header className="flex h-20 shrink-0 items-center justify-between gap-2 border-b bg-background px-4 sm:px-10">
+        <img src={logoAsset.url} alt="Screenflow" className="welcome-logo h-10 w-auto max-w-32 shrink-0 object-contain" />
+        <div className="flex items-center gap-1 sm:gap-2">
+          <ThemeToggle />
+          <Button variant="outline" className="shrink-0" onClick={() => { setMode('login'); setConnecting(true); }}>Se connecter</Button>
+        </div>
       </header>
       <main>
         <section className="google-tv-welcome">

@@ -1,0 +1,1 @@
+- Share appearance through ThemeProvider and semantic CSS tokens; persist only browser appearance locally, never alter playback media when switching dashboard themes.

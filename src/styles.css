@@ -79,6 +79,7 @@
 }
 
 :root {
+  color-scheme: light;
   --qr-background: oklch(1 0 0);
   --qr-foreground: oklch(0 0 0);
   --player-background: oklch(0.14 0.006 240);
@@ -122,6 +123,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --success: oklch(0.7 0.15 155);
   --warning: oklch(0.78 0.15 75);
   --background: oklch(0.19 0.005 260);
@@ -132,11 +134,11 @@
   --popover-foreground: oklch(0.984 0.003 247.858);
   --primary: oklch(0.78 0.1 255);
   --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
+  --secondary: oklch(0.29 0.005 260);
   --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
+  --muted: oklch(0.29 0.005 260);
+  --muted-foreground: oklch(0.76 0.008 260);
+  --accent: oklch(0.34 0.045 250);
   --accent-foreground: oklch(0.984 0.003 247.858);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.984 0.003 247.858);
@@ -150,9 +152,9 @@
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.23 0.005 260);
   --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
@@ -184,6 +186,7 @@
 .console-shell [data-slot="card"] { box-shadow: none; }
 
 .welcome-intro { min-height: min(720px, calc(100svh - 150px)); display: flex; align-items: center; padding-block: 80px; }
+.dark .welcome-logo { background: var(--qr-background); border-radius: 4px; padding: 4px; }
 .google-tv-welcome { position: relative; height: min(880px, calc(100svh - 150px)); min-height: 620px; overflow: hidden; }
 .google-tv-welcome-image { position: absolute; inset: 240px 0 0; width: 100%; height: calc(100% - 240px); object-fit: contain; object-position: center bottom; }
 .google-tv-welcome-copy { position: relative; z-index: 1; padding: 34px 24px 0; text-align: center; }
