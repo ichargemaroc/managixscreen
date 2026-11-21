@@ -2,7 +2,8 @@
 
 ## Blocage du coffre sur TV — version 1.0.1
 - [x] Ajouter des diagnostics sûrs distinguant module absent, délai, déchiffrement et identité invalide ; conserver le jumelage
-- [ ] Identifier la cause native et valider sur la TV : nouvel APK et code de diagnostic de la TV nécessaires
+- [x] Reproduire VAULT_TIMEOUT : le proxy Capacitor renvoyé par une fonction async bloque avant la lecture ; remplacer par un adaptateur ordinaire et ajouter un test de régression
+- [ ] Valider sur la TV Mi : nouvelle compilation APK et installation sur le matériel nécessaires
 
 ## Préparation Google Play TV
 - [x] Positionnement de l’image à la souris, recentrage, coordonnées partagées avec le lecteur ; sauvegarde et relecture vérifiées sur un vrai mur

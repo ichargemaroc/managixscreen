@@ -7,7 +7,15 @@ async function vault() {
   const { Capacitor, registerPlugin } = await import("@capacitor/core");
   if (!Capacitor.isNativePlatform()) return null;
   if (!Capacitor.isPluginAvailable("DeviceVault")) throw vaultError("VAULT_PLUGIN_MISSING");
-  return registerPlugin<NativeCredentialVault>("DeviceVault");
+  const plugin = registerPlugin<NativeCredentialVault>("DeviceVault");
+  // Capacitor proxies synthesize `then`, so returning the proxy from an async
+  // function makes Promise resolution call a nonexistent native method forever.
+  // Return an ordinary adapter instead; only actual operations cross the bridge.
+  return {
+    read: () => plugin.read(),
+    write: (options: { value: string }) => plugin.write(options),
+    clear: () => plugin.clear(),
+  } satisfies NativeCredentialVault;
 }
 // Native credentials must never fall back to plaintext WebView storage.
 async function limit<T>(task: Promise<T>) {
