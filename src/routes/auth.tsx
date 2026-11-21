@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import logoAsset from "@/assets/screenflow-logo.png.asset.json";
-import heroAsset from '@/assets/screenflow-tv-hero.png.asset.json';
-import markAsset from '@/assets/screenflow-mark.png.asset.json';
+import logoAsset from "@/assets/screenflow-logo.webp.asset.json";
+import heroAsset from '@/assets/screenflow-tv-hero.webp.asset.json';
+import markAsset from '@/assets/screenflow-mark.webp.asset.json';
 import { ArrowRight, Image, Globe, ListVideo, Monitor } from "lucide-react";
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
