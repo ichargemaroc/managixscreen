@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { effectivePairingStatus, generateDeviceToken, generatePairingCode, hashDeviceToken, PAIRING_LIFETIME_SECONDS } from "@/lib/device-protocol";
-import { deviceIdentity, deviceReport, commandAck, manifestSchema } from "@/lib/player-protocol";
+import { deviceIdentity, deviceReport, commandAck, manifestSchema, manifestMediaSchema } from "@/lib/player-protocol";
 import { wallPlaybackSchema } from "@/lib/video-wall";
+import { webpageUrl } from './webpage';
 
 const registration = z.object({ device_name: z.string().trim().max(120).default("Android TV"), device_metadata: z.record(z.string(), z.union([z.string().max(200), z.number(), z.boolean()])).default({}) }).strict();
 
@@ -62,13 +63,14 @@ export async function handleDeviceRequest(request: Request, operation: "request"
       const { data: wallData, error: wallError } = await supabaseAdmin.rpc("device_wall", { p_device: input.device_id, p_hash: hash });
       if (wallError) throw new Error("Wall unavailable");
       const wall = wallData ? wallPlaybackSchema.parse(wallData) : null;
-      const wallMedia = wallData ? z.object({ media: z.object({ id: z.string().uuid(), name: z.string(), type: z.enum(["image", "video"]), size: z.number(), duration: z.number().nullable(), path: z.string() }).nullable() }).parse(wallData).media : null;
+      const wallMedia = wallData ? z.object({ media: manifestMediaSchema.nullable() }).parse(wallData).media : null;
       const base = manifestSchema.parse(data);
       // An assigned wall is an explicit playback mode, even when stopped or without media.
       // Media ID, not control revision, keys the offline cache so pause/resume never redownloads.
-      const manifest = { ...base, wall, playlist: wall ? wallMedia ? { id: wall.id, name: wall.name, updated_at: wallMedia.id, items: [{ id: wallMedia.id, position: 0, display_duration: 10, media: wallMedia }] } : null : base.playlist };
+      const manifest = { ...base, wall, playlist: wall ? wallMedia ? { id: wall.id, name: wall.name, updated_at: wallMedia.type === 'webpage' ? `${wallMedia.id}:${wallMedia.webpage_url ?? ''}:${wallMedia.refresh_minutes}:${wallMedia.webpage_fullscreen}` : wallMedia.id, items: [{ id: wallMedia.id, position: 0, display_duration: wallMedia.duration ?? 10, media: wallMedia }] } : null : base.playlist };
       const items = await Promise.all((manifest.playlist?.items ?? []).map(async ({ media, ...item }) => {
         const { path, ...metadata } = media;
+        if (media.type === 'webpage') return { ...item, media: { ...metadata, webpage_url: webpageUrl(media.webpage_url ?? '') } };
         const { data: url, error: urlError } = await supabaseAdmin.storage.from("media").createSignedUrl(path, 3600);
         if (urlError || !url?.signedUrl) throw new Error("Media unavailable");
         // The backend request host may be internal in drafts. Downloads must use the browser-facing host.

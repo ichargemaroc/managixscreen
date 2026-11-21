@@ -1,5 +1,16 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Accueil Google TV
+- [x] Refaire l’accueil avant connexion dans le style Google TV, en conservant le logo et les accès existants
+- [x] Vérifier l’affichage ordinateur/téléphone et l’ouverture de la connexion
+
+## Diffusion de pages Web
+- [x] Sources nommées avec URL validée, durée, plein écran et rafraîchissement ; création, modification, suppression et test
+- [x] Playlists mixtes, affectation aux TV et murs via les mécanismes existants ; manifeste et cache compatibles
+- [x] WebView Android isolée préparée sans accès au coffre/commandes, délai borné, télécommande/Retour et retour aux médias ; adaptateur et génération testés
+- [x] 137 tests réussis ; création/aperçu/relecture, vrai écran jumelé, page Web puis image et page diffusée dans un mur vérifiés ; données temporaires supprimées, rapport WEBPAGE_PLAYER.md
+- [ ] Compilation APK/AAB et vérification WebView/télécommande sur TV physique : SDK complet, exécution GitHub et matériel indisponibles
+
 ## Son des vidéos diffusées
 - [x] Activer le son dans les playlists et les murs, avec reprise explicite si le navigateur bloque la lecture
 - [x] 114 tests réussis ; import, jumelage, affectation et lecture réelle avec piste audio décodée vérifiés, y compris après rechargement ; données de vérification supprimées

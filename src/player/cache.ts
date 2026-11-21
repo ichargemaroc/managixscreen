@@ -27,7 +27,9 @@ export async function downloadContent(content: Content, progress: (done: number,
   // Download the complete replacement before switching playback; keep the old manifest on failure.
   for (let i = 0; i < items.length; i++) {
     const item = items[i]; if (!item) continue;
+    if (item.media.type === 'webpage') { progress(i + 1, items.length); continue; }
     if (!await cachedMedia(content, item)) {
+      if (!item.media.download_url) throw new Error('URL du média manquante.');
       const response = await fetch(item.media.download_url, { signal: AbortSignal.timeout(120000) });
       if (!response.ok) throw new Error("Un média n’a pas pu être téléchargé.");
       const blob = await response.blob();

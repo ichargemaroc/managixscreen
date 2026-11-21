@@ -1,10 +1,16 @@
 import { z } from "zod";
 import { wallPlaybackSchema } from "@/lib/video-wall";
+import { webpageUrl } from '@/lib/webpage';
+
+export const playerMediaSchema = z.object({ id: z.string().uuid(), name: z.string(), type: z.enum(['image', 'video', 'webpage']), size: z.number(), duration: z.number().nullable(), download_url: z.string().url().optional(), webpage_url: z.string().nullable().optional(), refresh_minutes: z.number().int().min(0).max(1440).optional(), webpage_fullscreen: z.boolean().optional() }).superRefine((media, ctx) => {
+  if (media.type === 'webpage') { try { webpageUrl(media.webpage_url ?? ''); } catch { ctx.addIssue({ code: 'custom', message: 'Invalid webpage URL' }); } }
+  else if (!media.download_url) ctx.addIssue({ code: 'custom', message: 'Missing media download URL' });
+});
 
 export const credentialsSchema = z.object({ device_id: z.string().uuid(), device_token: z.string().regex(/^[a-f0-9]{64}$/), pairing_code: z.string().regex(/^\d{6}$/), expires_at: z.number(), paired: z.boolean() });
 export type Credentials = z.infer<typeof credentialsSchema>;
-export const contentSchema = z.object({ wall: wallPlaybackSchema.nullable().optional(), server_time: z.string().optional(), clock_offset: z.number().optional(), screen_id: z.string().uuid(), assignment_updated_at: z.string(), last_sync_at: z.string(), playlist: z.object({ id: z.string().uuid(), name: z.string(), updated_at: z.string(), items: z.array(z.object({ id: z.string().uuid(), position: z.number().int().min(0), display_duration: z.number().positive(), media: z.object({ id: z.string().uuid(), name: z.string(), type: z.enum(["image", "video"]), size: z.number(), duration: z.number().nullable(), download_url: z.string().url() }) })) }).nullable() });
-export type Content = z.infer<typeof contentSchema>;
+export const contentSchema = z.object({ wall: wallPlaybackSchema.nullable().optional(), server_time: z.string().optional(), clock_offset: z.number().optional(), screen_id: z.string().uuid(), assignment_updated_at: z.string(), last_sync_at: z.string(), playlist: z.object({ id: z.string().uuid(), name: z.string(), updated_at: z.string(), items: z.array(z.object({ id: z.string().uuid(), position: z.number().int().min(0), display_duration: z.number().positive(), media: playerMediaSchema })) }).nullable() });
+export type Content = z.input<typeof contentSchema>;
 export type Item = NonNullable<Content["playlist"]>["items"][number];
 export const commandsSchema = z.object({ server_time: z.string().optional(), commands: z.array(z.object({ id: z.string().uuid(), command: z.enum(["refresh_content", "reload_playlist", "restart_player", "clear_cache", "position_test", "stop_position_test"]), expires_at: z.string(), payload: z.unknown().optional() })) });
 export function cacheKey(content: Content, item: Item) { return `${content.playlist?.id}:${content.playlist?.updated_at}:${item.media.id}`; }

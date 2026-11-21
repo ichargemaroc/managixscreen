@@ -31,7 +31,7 @@ function generatedManifest() {
     expect(run().status).toBe(0);
     expect(readFileSync(path, "utf8")).toBe(first);
     expect(readFileSync(join(fixture, "android/app/build.gradle"), "utf8").split("apply from: 'play-release.gradle'")).toHaveLength(2);
-    for (const name of ["MainActivity", "BootReceiver", "AutoStartPolicy", "DeviceVaultPlugin"]) {
+    for (const name of ["MainActivity", "BootReceiver", "AutoStartPolicy", "DeviceVaultPlugin", "WebpagePlayerPlugin"]) {
       expect(readFileSync(join(fixture, `android/app/src/main/java/app/screenflow/player/${name}.java`), "utf8"))
         .toBe(readFileSync(`android-support/${name}.java`, "utf8"));
     }

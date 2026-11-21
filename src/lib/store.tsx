@@ -9,6 +9,7 @@ import type { deviceCommand } from "@/lib/player-protocol";
 import type { z } from "zod";
 import { saveWall, controlWall, positionTest } from "./video-wall.functions";
 import type { VideoWall, WallConfig, WallMember } from "./video-wall";
+import { webpageSchema, type WebpageConfig } from './webpage';
 
 // Données ScreenFlow lues depuis Lovable Cloud. Les pages utilisent useStore()
 // et les actions ci-dessous ; la synchronisation temps réel des écrans est
@@ -21,7 +22,7 @@ export type Screen = {
   playerVersion: string | null; lastSyncAt: string | null; deviceInfo: unknown; playbackStatus: unknown;
 };
 export type DeviceCommand = { id: string; screenId: string; command: z.infer<typeof deviceCommand>; status: string; createdAt: string; deliveredAt: string | null; acknowledgedAt: string | null; expiresAt: string; error: string | null; wallId: string | null; testId: string | null; payload: unknown };
-export type Media = { id: string; name: string; type: "image" | "video"; size: number; duration: number | null; url: string; path: string; createdAt: string };
+export type Media = { id: string; name: string; type: "image" | "video" | "webpage"; size: number; duration: number | null; url: string; path: string; createdAt: string; refreshMinutes?: number; fullscreen?: boolean };
 export type PlaylistItem = { id: string; mediaId: string; duration: number };
 export type Playlist = { id: string; name: string; description: string; items: PlaylistItem[]; createdAt: string };
 export type Schedule = {
@@ -63,8 +64,9 @@ async function fetchAll(): Promise<State> {
   }
   const mediaRows = await Promise.all(
     (media.data ?? []).map(async (m) => ({
-      id: m.id, name: m.name, type: m.type as "image" | "video", size: m.size,
-      duration: m.duration, path: m.path, url: await signedUrl(m.path), createdAt: m.created_at,
+      id: m.id, name: m.name, type: m.type as Media['type'], size: m.size,
+      duration: m.duration, path: m.path, url: m.type === 'webpage' ? m.webpage_url ?? '' : await signedUrl(m.path), createdAt: m.created_at,
+      refreshMinutes: m.refresh_minutes, fullscreen: m.webpage_fullscreen,
     })),
   );
   const itemsByPlaylist = new Map<string, PlaylistItem[]>();
@@ -194,8 +196,10 @@ export async function addMedia(file: File, type: "image" | "video", duration: nu
 }
 
 export async function deleteMedia(m: Media) {
-  const { error: storageError } = await supabase.storage.from("media").remove([m.path]);
-  if (storageError) throw storageError;
+  if (m.type !== 'webpage') {
+    const { error: storageError } = await supabase.storage.from("media").remove([m.path]);
+    if (storageError) throw storageError;
+  }
   const { error } = await supabase.from("media").delete().eq("id", m.id);
   if (error) throw error;
 }
@@ -203,6 +207,19 @@ export async function deleteMedia(m: Media) {
 export async function renameMedia(id: string, name: string) {
   const { error } = await supabase.from("media").update({ name }).eq("id", id);
   if (error) throw error;
+}
+
+export async function saveWebpage(id: string | null, input: WebpageConfig) {
+  const config = webpageSchema.parse(input);
+  const row = { name: config.name, webpage_url: config.url, duration: config.duration, refresh_minutes: config.refreshMinutes, webpage_fullscreen: config.fullscreen };
+  if (id) {
+    const { error } = await supabase.from('media').update(row).eq('id', id).eq('type', 'webpage');
+    if (error) throw error;
+  } else {
+    const owner = await userId();
+    const { error } = await supabase.from('media').insert({ ...row, user_id: owner, type: 'webpage', size: 0, path: `${owner}/${crypto.randomUUID()}.webpage` });
+    if (error) throw error;
+  }
 }
 
 export async function createPlaylist(name: string) {

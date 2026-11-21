@@ -87,6 +87,17 @@ describe("Device API isolation", () => {
     expect((await handleDeviceRequest(request("a".repeat(64)), "content")).status).toBe(503);
     expect(mocks.rpc).toHaveBeenCalledTimes(3);
   });
+  it('delivers a webpage URL only to the paired device without storage signing or private paths', async () => {
+    mocks.from.mockReturnValue(row({ device_id: deviceId }));
+    mocks.rpc.mockResolvedValueOnce({ data: true }).mockResolvedValueOnce({ data: { screen_id: deviceId, assignment_updated_at: 'now', playlist: { id: deviceId, name: 'Site', updated_at: 'now', items: [{ id: deviceId, position: 0, display_duration: 45, media: { id: deviceId, name: 'Site', type: 'webpage', size: 0, duration: 45, path: 'owner/private.webpage', webpage_url: 'https://example.com/page', refresh_minutes: 2, webpage_fullscreen: true } }] } } }).mockResolvedValueOnce({ data: null }).mockResolvedValueOnce({ data: 'now' });
+    const response = await handleDeviceRequest(request('a'.repeat(64)), 'content');
+    expect(response.status).toBe(200);
+    const result = await response.json();
+    expect(result.playlist.items[0].media.webpage_url).toBe('https://example.com/page');
+    expect(result.playlist.items[0].media.path).toBeUndefined();
+    expect(result.playlist.items[0].media.download_url).toBeUndefined();
+    expect(mocks.storage.from).not.toHaveBeenCalled();
+  });
   it("scopes acknowledgements to the authenticated device and rejects invalid transitions", async () => {
     mocks.from.mockReturnValue(row({ device_id: deviceId }));
     mocks.rpc.mockResolvedValueOnce({ data: true }).mockResolvedValueOnce({ data: false });

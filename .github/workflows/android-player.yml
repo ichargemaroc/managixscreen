@@ -48,7 +48,7 @@ jobs:
           accept-android-sdk-licenses: true
       - run: bun install --frozen-lockfile
       - name: Test player and Android configuration
-        run: bunx vitest run src/test/android-workflow.test.ts src/test/android-autostart.test.ts src/test/android-play.test.ts src/test/player-vault.test.ts src/test/player-storage-error.test.tsx src/test/tv-navigation.test.ts src/test/player-restart.test.tsx src/test/player-position.test.tsx src/test/tv-player.test.ts src/test/video-wall.test.ts src/test/player-protocol.test.ts src/test/device-api.test.ts
+        run: bunx vitest run src/test/android-workflow.test.ts src/test/android-autostart.test.ts src/test/android-play.test.ts src/test/player-vault.test.ts src/test/player-storage-error.test.tsx src/test/tv-navigation.test.ts src/test/player-restart.test.tsx src/test/player-position.test.tsx src/test/tv-player.test.ts src/test/video-wall.test.ts src/test/player-protocol.test.ts src/test/device-api.test.ts src/test/webpage.test.ts src/test/webpage-stage.test.tsx src/test/webpage-native.test.tsx src/test/player-audio.test.tsx
       - name: Test artifact audit
         run: python3 scripts/test-android-artifacts.py
       - name: Test native auto-start policy

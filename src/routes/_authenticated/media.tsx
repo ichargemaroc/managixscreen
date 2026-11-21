@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Image as ImageIcon, Upload, Trash2, Film, Pencil } from "lucide-react";
+import { Image as ImageIcon, Upload, Trash2, Film, Pencil, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { mediaKind } from "@/lib/signage-rules";
 import { useStore, formatBytes, formatDuration, addMedia, deleteMedia, renameMedia, type Media } from "@/lib/store";
+import { WebpageEditor } from '@/components/webpage-editor';
+import { WebpagePreview } from '@/components/webpage-preview';
 
 export const Route = createFileRoute("/_authenticated/media")({
   head: () => ({ meta: [
@@ -69,7 +71,7 @@ function MediaPage() {
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader title="Médiathèque" description="Photos et vidéos disponibles pour vos playlists."
-        action={<Button onClick={() => input.current?.click()} disabled={uploading}><Upload /> {uploading ? "Import en cours…" : "Importer"}</Button>} />
+        action={<div className="flex gap-2"><WebpageEditor /><Button onClick={() => input.current?.click()} disabled={uploading}><Upload /> {uploading ? "Import en cours…" : "Importer"}</Button></div>} />
       <input ref={input} type="file" accept="image/*,video/*" multiple hidden onChange={(e) => { onFiles(e.target.files); e.target.value = ""; }} />
       {media.length === 0 ? (
         <div onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); onFiles(e.dataTransfer.files); }}>
@@ -80,7 +82,7 @@ function MediaPage() {
         <>
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Tabs value={tab} onValueChange={setTab}><TabsList>
-              <TabsTrigger value="all">Tous</TabsTrigger><TabsTrigger value="image">Photos</TabsTrigger><TabsTrigger value="video">Vidéos</TabsTrigger>
+              <TabsTrigger value="all">Tous</TabsTrigger><TabsTrigger value="image">Photos</TabsTrigger><TabsTrigger value="video">Vidéos</TabsTrigger><TabsTrigger value="webpage">Pages Web</TabsTrigger>
             </TabsList></Tabs>
             <Input className="sm:w-64" placeholder="Rechercher…" value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
@@ -88,15 +90,15 @@ function MediaPage() {
             {list.map((m) => (
               <Card key={m.id} className="group overflow-hidden p-0">
                 <button className="relative block aspect-video w-full bg-muted" onClick={() => setPreview(m)}>
-                  {m.type === "image" ? <img src={m.url} alt={m.name} className="size-full object-cover" /> : <video src={m.url} className="size-full object-cover" muted />}
+                  {m.type === 'webpage' ? <div className="flex size-full flex-col items-center justify-center gap-3 text-primary"><Globe className="size-10" /><span className="max-w-full truncate px-3 text-sm">{new URL(m.url).hostname}</span></div> : m.type === "image" ? <img src={m.url} alt={m.name} className="size-full object-cover" /> : <video src={m.url} className="size-full object-cover" muted />}
                   {m.type === "video" && <Film className="absolute left-2 top-2 size-4 text-primary-foreground drop-shadow" />}
                 </button>
                 <div className="flex items-start justify-between gap-2 p-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{m.name}</p>
-                    <p className="text-xs text-muted-foreground">{m.type === "image" ? "Photo" : "Vidéo"} · {formatBytes(m.size)}{m.type === "video" ? ` · ${formatDuration(m.duration)}` : ""}</p>
+                    <p className="text-xs text-muted-foreground">{m.type === 'webpage' ? `Page Web · ${formatDuration(m.duration)}` : `${m.type === "image" ? "Photo" : "Vidéo"} · ${formatBytes(m.size)}`}{m.type === "video" ? ` · ${formatDuration(m.duration)}` : ""}</p>
                   </div>
-                  <div className="flex flex-col"><Button variant="ghost" size="icon" aria-label="Renommer" onClick={() => { setRenaming(m); setName(m.name); }}><Pencil /></Button>
+                  <div className="flex flex-col">{m.type === 'webpage' ? <WebpageEditor key={`${m.id}:${m.url}`} media={m} /> : <Button variant="ghost" size="icon" aria-label="Renommer" onClick={() => { setRenaming(m); setName(m.name); }}><Pencil /></Button>}
                   <Button variant="ghost" size="icon" aria-label="Supprimer" onClick={async () => { await deleteMedia(m); refresh(); toast.success("Média supprimé"); }}><Trash2 /></Button></div>
                 </div>
               </Card>
@@ -108,7 +110,7 @@ function MediaPage() {
       <Dialog open={!!preview} onOpenChange={() => setPreview(null)}>
         <DialogContent className="max-w-3xl">
           <DialogHeader><DialogTitle className="truncate">{preview?.name}</DialogTitle></DialogHeader>
-          {preview && (preview.type === "image" ? <img src={preview.url} alt={preview.name} className="w-full rounded-md" /> : <video src={preview.url} controls autoPlay className="w-full rounded-md" />)}
+          {preview && (preview.type === 'webpage' ? <WebpagePreview url={preview.url} name={preview.name} /> : preview.type === "image" ? <img src={preview.url} alt={preview.name} className="w-full rounded-md" /> : <video src={preview.url} controls autoPlay className="w-full rounded-md" />)}
         </DialogContent>
       </Dialog>
     </div>

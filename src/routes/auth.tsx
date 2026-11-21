@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import logoAsset from "@/assets/screenflow-logo.png.asset.json";
-import markAsset from "@/assets/screenflow-mark.png.asset.json";
+import welcomeImage from '@/assets/screenflow-tv-welcome.png';
 import { ArrowRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,10 +20,10 @@ export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
-    { title: "Connexion — ScreenFlow" },
-    { name: "description", content: "Connectez-vous à ScreenFlow pour gérer vos écrans." },
-    { property: "og:title", content: "Connexion — ScreenFlow" },
-    { property: "og:description", content: "Connectez-vous à ScreenFlow pour gérer vos écrans." },
+    { title: "ScreenFlow — Vos contenus sur grand écran" },
+    { name: "description", content: "Vos photos, vidéos et pages Web réunies sur vos TV Android avec ScreenFlow." },
+    { property: "og:title", content: "ScreenFlow — Vos contenus sur grand écran" },
+    { property: "og:description", content: "Vos contenus, vos écrans, un seul espace ScreenFlow." },
   ] }),
   component: AuthPage,
 });
@@ -86,25 +86,28 @@ function AuthPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="flex h-20 shrink-0 items-center bg-sidebar px-6 sm:px-10">
+      <header className="flex h-20 shrink-0 items-center justify-between gap-4 border-b bg-background px-6 sm:px-10">
         <img src={logoAsset.url} alt="Screenflow" className="h-10 w-auto max-w-full object-contain" />
+        <Button variant="outline" className="shrink-0" onClick={() => { setMode('login'); setConnecting(true); }}>Se connecter</Button>
       </header>
       <main>
-        <section className="welcome-intro relative mx-auto max-w-7xl px-6 sm:px-12">
-          <img src={markAsset.url} alt="" className="welcome-mark" />
-          <div className="relative z-10 max-w-3xl">
-            <h1 className="welcome-title font-bold">ScreenFlow</h1>
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">Gérez vos téléviseurs Android à distance. Rassemblez vos photos et vidéos, composez vos playlists et diffusez vos contenus sur les écrans de votre entreprise.</p>
-            <div className="mt-10 flex flex-wrap gap-4">
-              <Button size="lg" onClick={() => { setMode("login"); setConnecting(true); }}>Se connecter <ArrowRight /></Button>
-              <Button size="lg" variant="ghost" onClick={() => { setMode("signup"); setConnecting(true); }}>Créer un compte</Button>
+        <section className="google-tv-welcome">
+          <img src={welcomeImage} alt="Une télévision affichant une composition de paysages et d’images colorées" className="google-tv-welcome-image" />
+          <div className="google-tv-welcome-copy">
+            <p className="mb-3 text-sm font-medium text-primary">Vos contenus. Tous vos écrans.</p>
+            <h1 className="google-tv-welcome-title">ScreenFlow</h1>
+            <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">Faites vivre vos écrans, où que vous soyez.</p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Button size="lg" onClick={() => { setMode("signup"); setConnecting(true); }}>Commencer <ArrowRight /></Button>
+              <Button size="lg" variant="outline" onClick={() => { setMode("login"); setConnecting(true); }}>Se connecter</Button>
             </div>
           </div>
         </section>
-        <section className="border-t bg-sidebar px-6 py-10 sm:px-12">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
-            <h2 className="text-xl font-medium">Vos écrans, au même endroit.</h2>
-            <p className="text-sm text-muted-foreground">TV Android · Photos et vidéos · Playlists</p>
+        <section className="border-t bg-background px-6 py-12 sm:px-12">
+          <div className="mx-auto max-w-6xl text-center">
+            <p className="mb-3 text-sm font-medium text-primary">À chaque écran, son contenu</p>
+            <h2 className="text-3xl font-medium">Un seul espace. Toutes vos TV.</h2>
+            <div className="mt-8 flex flex-wrap justify-center gap-x-10 gap-y-4 text-sm text-muted-foreground"><span>Photos & vidéos</span><span>Pages Web</span><span>Playlists</span><span>Murs d’écrans</span></div>
           </div>
         </section>
       </main>

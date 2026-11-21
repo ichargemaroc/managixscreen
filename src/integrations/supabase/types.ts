@@ -215,9 +215,12 @@ export type Database = {
           id: string
           name: string
           path: string
+          refresh_minutes: number
           size: number
           type: string
           user_id: string
+          webpage_fullscreen: boolean
+          webpage_url: string | null
         }
         Insert: {
           created_at?: string
@@ -228,9 +231,12 @@ export type Database = {
           id?: string
           name: string
           path: string
+          refresh_minutes?: number
           size?: number
           type: string
           user_id: string
+          webpage_fullscreen?: boolean
+          webpage_url?: string | null
         }
         Update: {
           created_at?: string
@@ -241,9 +247,12 @@ export type Database = {
           id?: string
           name?: string
           path?: string
+          refresh_minutes?: number
           size?: number
           type?: string
           user_id?: string
+          webpage_fullscreen?: boolean
+          webpage_url?: string | null
         }
         Relationships: []
       }
@@ -827,6 +836,10 @@ export type Database = {
       enqueue_device_command: {
         Args: { p_command: string; p_screen: string }
         Returns: string
+      }
+      manifest_media: {
+        Args: { m: Database["public"]["Tables"]["media"]["Row"] }
+        Returns: Json
       }
       register_pairing_session: {
         Args: {

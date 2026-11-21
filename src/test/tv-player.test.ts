@@ -37,4 +37,11 @@ describe("TV player playback and offline cache", () => {
   it("does not key local media by expiring signed URLs", () => {
     expect(cacheKey(manifest, item)).toBe(cacheKey(manifest, { ...item, media: { ...item.media, download_url: "https://example.test/renewed.png" } }));
   });
+  it('stores webpage instructions without fetching HTML into the media cache', async () => {
+    const fetcher = vi.spyOn(globalThis, 'fetch');
+    const webpage: Item = { ...item, media: { id: item.id, name: 'Site', type: 'webpage', size: 0, duration: 30, webpage_url: 'https://example.com', refresh_minutes: 0, webpage_fullscreen: true } };
+    const content: Content = { ...manifest, playlist: manifest.playlist ? { ...manifest.playlist, items: [webpage] } : null };
+    await downloadContent(content, () => {});
+    expect(fetcher).not.toHaveBeenCalled(); expect(await readContent()).toEqual(content); expect(await cachedMedia(content, webpage)).toBeUndefined();
+  });
 });
