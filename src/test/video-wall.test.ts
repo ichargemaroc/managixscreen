@@ -1,7 +1,12 @@
 import {describe,it,expect} from 'vitest';
-import {wallConfigSchema,wallViewport,wallMediaRect,wallPosition,validateWallMembers} from '@/lib/video-wall';
+import {assignWallScreen,wallConfigSchema,wallViewport,wallMediaRect,wallPosition,validateWallMembers} from '@/lib/video-wall';
 const config={name:'Mur',columns:2,rows:2,width:3840,height:2160,gap_x:0,gap_y:0,orientation:'landscape' as const,media_id:null};
 describe('Video wall rules',()=>{
+  it('moves a television instead of assigning it twice in the same wall',()=>{expect(assignWallScreen(config,[{screen_id:'a',row_index:0,column_index:0}],1,1,'a',null,[],['a'])).toEqual([{screen_id:'a',row_index:1,column_index:1}]);});
+  it('replaces the television in the selected cell',()=>{expect(assignWallScreen(config,[{screen_id:'a',row_index:0,column_index:0}],0,0,'b',null,[],['a','b'])).toEqual([{screen_id:'b',row_index:0,column_index:0}]);});
+  it('releases a television without changing other cells',()=>{expect(assignWallScreen(config,[{screen_id:'a',row_index:0,column_index:0},{screen_id:'b',row_index:1,column_index:1}],0,0,null,null,[],['a','b'])).toEqual([{screen_id:'b',row_index:1,column_index:1}]);});
+  it('rejects a television assigned to another wall even when stopped',()=>{expect(()=>assignWallScreen(config,[],0,0,'a','new',[{...config,id:'other',state:'stopped',epoch:'2026-11-21',position_seconds:0,revision:1,members:[{screen_id:'a',row_index:0,column_index:0}]}],['a'])).toThrow('autre mur');});
+  it('rejects televisions absent from real registered screens',()=>{expect(()=>assignWallScreen(config,[],0,0,'missing',null,[],['a'])).toThrow('disponible');});
   it('maps each television to its own quarter, never repeats the entire content',()=>{
     expect(wallViewport({...config,row_index:1,column_index:1})).toEqual({x:1920,y:1080,width:1920,height:1080});
     expect(wallViewport({...config,row_index:0,column_index:0})).toEqual({x:0,y:0,width:1920,height:1080});

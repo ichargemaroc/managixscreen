@@ -604,18 +604,21 @@ export type Database = {
       }
       video_wall_screens: {
         Row: {
+          assigned_at: string | null
           column_index: number
           row_index: number
           screen_id: string
           wall_id: string
         }
         Insert: {
+          assigned_at?: string | null
           column_index: number
           row_index: number
           screen_id: string
           wall_id: string
         }
         Update: {
+          assigned_at?: string | null
           column_index?: number
           row_index?: number
           screen_id?: string

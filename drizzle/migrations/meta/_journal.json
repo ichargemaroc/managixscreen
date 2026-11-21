@@ -71,6 +71,13 @@
       "when": 1795270572181,
       "tag": "0009_video_wall_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795272152323,
+      "tag": "0010_wall_assignment_dates",
+      "breakpoints": true
     }
   ]
 }

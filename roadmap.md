@@ -1,6 +1,8 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
 ## Murs d’images
+- [x] Sélecteur détaillé par cellule, remplacement/retrait, erreurs visibles et enregistrement des affectations datées
+- [x] Affectation, déplacement et retrait relus après rechargement sur compte réel ; 41 tests du mur, du protocole appareil et du lecteur réussis, sans modifier la transmission existante
 - [x] Configuration, grille, affectations uniques et contenu depuis la médiathèque
 - [x] Tables isolées par propriétaire, contrôles transactionnels et manifeste appareil sécurisé
 - [x] Découpage réel au rendu, cache et horloge commune dans le lecteur partagé Android/web ; fichier global téléchargé, sans transcodage serveur

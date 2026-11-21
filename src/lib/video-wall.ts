@@ -3,7 +3,7 @@ export const wallConfigSchema = z.object({ name: z.string().trim().min(1).max(12
 export const wallPlaybackSchema = z.object({ id: z.string().uuid(), name: z.string(), columns: z.number().int().min(1).max(8), rows: z.number().int().min(1).max(8), width: z.number().positive(), height: z.number().positive(), gap_x: z.number().nonnegative(), gap_y: z.number().nonnegative(), orientation: z.enum(['landscape','portrait']), row_index: z.number().int().nonnegative(), column_index: z.number().int().nonnegative(), state: z.enum(['playing','paused','stopped']), epoch: z.string(), position_seconds: z.number().nonnegative(), revision: z.number() });
 export type WallConfig = z.infer<typeof wallConfigSchema>;
 export type WallPlayback = z.infer<typeof wallPlaybackSchema>;
-export type WallMember = { screen_id: string; row_index: number; column_index: number };
+export type WallMember = { screen_id: string; row_index: number; column_index: number; assigned_at?: string | null };
 export type VideoWall = WallConfig & { id: string; state: WallPlayback['state']; epoch: string; position_seconds: number; revision: number; members: WallMember[] };
 export function validateWallMembers(config: WallConfig, members: WallMember[]) {
   const screens = new Set<string>(); const positions = new Set<string>();
@@ -12,6 +12,14 @@ export function validateWallMembers(config: WallConfig, members: WallMember[]) {
     if (m.row_index < 0 || m.row_index >= config.rows || m.column_index < 0 || m.column_index >= config.columns || !Number.isInteger(m.row_index) || !Number.isInteger(m.column_index) || screens.has(m.screen_id) || positions.has(key)) throw new Error('Chaque écran doit occuper une seule position valide.');
     screens.add(m.screen_id); positions.add(key);
   }
+}
+export function assignWallScreen(config: WallConfig, members: WallMember[], row: number, column: number, screenId: string | null, wallId: string | null, walls: VideoWall[], availableScreenIds: string[]) {
+  if (screenId && !availableScreenIds.includes(screenId)) throw new Error('Cet écran n’est plus disponible.');
+  if (screenId && walls.some(w => w.id !== wallId && w.members.some(m => m.screen_id === screenId))) throw new Error('Cet écran est déjà affecté à un autre mur. Libérez-le dans ce mur avant de l’affecter ici.');
+  const next = members.filter(m => !(m.row_index === row && m.column_index === column) && m.screen_id !== screenId);
+  if (screenId) next.push({ screen_id: screenId, row_index: row, column_index: column });
+  validateWallMembers(config, next);
+  return next;
 }
 export function wallViewport(w: Pick<WallPlayback,'width'|'height'|'columns'|'rows'|'gap_x'|'gap_y'|'row_index'|'column_index'>) {
   const width=(w.width-(w.columns-1)*w.gap_x)/w.columns;

@@ -1,6 +1,23 @@
 # Murs d’images — état réel de l’intégration
 
+## Affecter une télévision depuis l’administration
+1. Ouvrir « Murs d’images », puis « Nouveau mur » ou le crayon « Configurer le mur ».
+2. Choisir la configuration, puis cliquer sur « Affecter une TV » dans la case correspondant à la position physique (ligne et colonne).
+3. Rechercher une télévision par son nom ou son identifiant. Le sélecteur montre le statut réel et, si nécessaire, le nom du mur où elle est déjà affectée. Une TV réservée à un autre mur n’est pas sélectionnable, même si ce mur est arrêté.
+4. Choisir la TV. Si elle occupe une autre case du même mur, la mention « Déplacer depuis … » annonce le déplacement : l’ancienne case sera libérée, pas dupliquée.
+5. Cliquer sur la TV de la case pour la remplacer, ou sur la croix « Retirer l’écran » pour libérer la case. Ces modifications restent provisoires jusqu’à l’enregistrement ; « Annuler » abandonne les modifications non enregistrées.
+6. Cliquer sur « Enregistrer les affectations ». Les nouvelles positions sont enregistrées ensemble, avec leur date. Une erreur ne détruit pas les affectations précédentes.
+7. Sélectionner le contenu du mur puis « Lancer le mur » : les affectations sont d’abord enregistrées, puis la lecture commune est demandée. Le bouton « Arrêter le mur » reste disponible sur le mur sélectionné. Une TV hors ligne ne recevra la nouvelle configuration qu’à sa reconnexion.
+
+## Vérification complémentaire des affectations
+- 41 tests réussis : déplacement sans doublon, remplacement, retrait, conflit entre murs, écran absent, règles de découpage, API appareil et reprise locale.
+- Compte réel connecté : une télévision existante sélectionnée, affectation datée enregistrée puis relue après rechargement ; déplacement vers une autre cellule, retrait enregistré et relu. Mur d’essai supprimé, télévision existante conservée.
+- Sélecteur contrôlé sur ordinateur et téléphone, avec nom, UUID et statut hors ligne réel ; aucun débordement horizontal du document.
+- Le protocole de transmission et le lecteur partagés restent inchangés. Pas de nouveau test de lancement sur TV physique dans cette intervention ; les limites matérielles décrites ci-dessous restent valables.
+
 ## Terminé
+- Affectation par clic sur une case : sélection avec recherche par nom/identifiant, statut heartbeat réel et nom du mur bloquant ; déplacement explicite depuis une autre case du même mur, remplacement et retrait.
+- Bouton « Enregistrer les affectations » et lancement après enregistrement depuis la configuration. Les nouvelles affectations sont datées ; la date reste inchangée si l’écran ne bouge pas, et les dates historiques inconnues ne sont pas inventées.
 - Rubrique française « Murs d’images », liste des murs, création, modification et suppression avec confirmation.
 - Grilles prédéfinies 1×2, 2×2, 2×3, 3×3, 4×4 (colonnes × lignes), et dimensions personnalisées de 1 à 8 par axe.
 - Résolution globale, proportions paysage/portrait, compensation des espaces entre panneaux en pixels du visuel global.
