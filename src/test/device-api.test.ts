@@ -102,3 +102,13 @@ describe("Device API isolation", () => {
     expect(mocks.rpc).toHaveBeenCalledTimes(2);
   });
 });
+describe("Device API access from the Android app", () => {
+  it("answers the Android WebView preflight without cookies", async () => {
+    const { deviceCorsPreflight } = await import("@/lib/device-api.server");
+    const response = deviceCorsPreflight();
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBe("*");
+    expect(response.headers.get("access-control-allow-headers")).toContain("Authorization");
+    expect(response.headers.get("access-control-allow-credentials")).toBeNull();
+  });
+});

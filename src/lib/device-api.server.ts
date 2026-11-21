@@ -4,8 +4,12 @@ import { deviceIdentity, deviceReport, commandAck, manifestSchema } from "@/lib/
 
 const registration = z.object({ device_name: z.string().trim().max(120).default("Android TV"), device_metadata: z.record(z.string(), z.union([z.string().max(200), z.number(), z.boolean()])).default({}) }).strict();
 
+// Device routes use bearer tokens, never cookies: allowing any origin lets the Android WebView fall back to fetch.
+export const deviceCorsHeaders = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Authorization", "Access-Control-Max-Age": "86400" };
+export function deviceCorsPreflight() { return new Response(null, { status: 204, headers: deviceCorsHeaders }); }
+
 export async function handleDeviceRequest(request: Request, operation: "request" | "status" | "heartbeat" | "content" | "commands" | "ack") {
-  const reply = (value: unknown, status = 200) => Response.json(value, { status, headers: { "Cache-Control": "no-store" } });
+  const reply = (value: unknown, status = 200) => Response.json(value, { status, headers: { "Cache-Control": "no-store", ...deviceCorsHeaders } });
   try {
     if (!request.headers.get("content-type")?.includes("application/json")) return reply({ error: "JSON requis" }, 415);
     const body = await request.text();
