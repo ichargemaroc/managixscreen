@@ -1,2 +1,0 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./web-Crmp2iFM.js","./dist-QzZOlqwQ.js"])))=>i.map(i=>d[i]);
-import{t as e}from"./index-n8Fkq4ap.js";import{registerPlugin as t}from"./dist-QzZOlqwQ.js";var n=t(`App`,{web:()=>e(()=>import(`./web-Crmp2iFM.js`).then(e=>new e.AppWeb),__vite__mapDeps([0,1]),import.meta.url)});export{n as App};
