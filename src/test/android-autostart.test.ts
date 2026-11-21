@@ -22,11 +22,15 @@ function generatedManifest() {
     symlinkSync(resolve("android-support"), join(fixture, "android-support"), "dir");
     const path = join(fixture, "android/app/src/main/AndroidManifest.xml");
     writeFileSync(path, template.stdout);
+    const gradle = spawnSync("tar", ["-xOzf", "node_modules/@capacitor/cli/assets/android-template.tar.gz", "app/build.gradle"], { encoding: "utf8" });
+    expect(gradle.status).toBe(0);
+    writeFileSync(join(fixture, "android/app/build.gradle"), gradle.stdout);
     const run = () => spawnSync("node", [resolve("scripts/prepare-android.mjs")], { cwd: fixture, encoding: "utf8" });
     expect(run().status).toBe(0);
     const first = readFileSync(path, "utf8");
     expect(run().status).toBe(0);
     expect(readFileSync(path, "utf8")).toBe(first);
+    expect(readFileSync(join(fixture, "android/app/build.gradle"), "utf8").split("apply from: 'play-release.gradle'")).toHaveLength(2);
     for (const name of ["MainActivity", "BootReceiver", "AutoStartPolicy", "DeviceVaultPlugin"]) {
       expect(readFileSync(join(fixture, `android/app/src/main/java/app/screenflow/player/${name}.java`), "utf8"))
         .toBe(readFileSync(`android-support/${name}.java`, "utf8"));
@@ -67,5 +71,20 @@ describe("native Android boot preparation", () => {
     expect(android(home?.querySelector("action"), "name")).toBe("android.intent.action.MAIN");
     expect(Array.from(activity?.querySelectorAll("category") ?? []).map((e) => android(e, "name")))
       .toContain("android.intent.category.LEANBACK_LAUNCHER");
+  });
+  it("requires TV but not touch, camera, microphone, telephony or Wi-Fi hardware", () => {
+    const doc = generatedManifest();
+    const features = Array.from(doc.querySelectorAll('uses-feature'));
+    expect(android(features.find(e => android(e, 'name') === 'android.software.leanback'), 'required')).toBe('true');
+    for (const name of ['touchscreen', 'faketouch', 'camera', 'camera.autofocus', 'microphone', 'telephony', 'location', 'wifi']) {
+      expect(android(features.find(e => android(e, 'name') === `android.hardware.${name}`), 'required')).toBe('false');
+    }
+  });
+  it("prevents credential backup, transfer and cleartext traffic", () => {
+    const app = generatedManifest().querySelector('application');
+    expect(android(app, 'allowBackup')).toBe('false');
+    expect(android(app, 'fullBackupContent')).toBe('false');
+    expect(android(app, 'dataExtractionRules')).toBe('@xml/data_extraction_rules');
+    expect(android(app, 'usesCleartextTraffic')).toBe('false');
   });
 });

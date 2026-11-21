@@ -1,5 +1,12 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Préparation Google Play TV
+- [x] Positionnement de l’image à la souris, recentrage, coordonnées partagées avec le lecteur ; sauvegarde et relecture vérifiées sur un vrai mur
+- [x] Manifeste TV, identité graphique embarquée, versionnement et signature de production sans secrets dans le dépôt
+- [x] Workflow manuel unique : APK de test, AAB release, vérifications ELF 16 Ko, 64 bits, permissions, signatures et documentation française GOOGLE_PLAY_TV.md
+- [x] Navigation télécommande/Retour et protection du coffre natif ; 100 tests Vitest, 8 tests Python, politique JVM Java 21 et actionlint réussis ; jumelage/image/D-pad/reprise en ligne puis hors réseau vérifiés dans le navigateur
+- [ ] Compilation signée et tests Android TV physiques : clés de signature, exécution GitHub et TV nécessaires
+
 ## Test de position des murs
 - [x] Commandes individuelles sécurisées depuis les affectations réelles, durée bornée, arrêt et suivi honnête des accusés
 - [x] Écran de test partagé Android/web, grille numérotée et contrôles dans l’administration

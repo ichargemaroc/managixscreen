@@ -51,6 +51,8 @@ public class DeviceVaultPlugin extends Plugin {
     } catch (Exception e) { call.reject("Secure storage unavailable"); }
   }
   @PluginMethod public void clear(PluginCall call) {
-    getContext().getSharedPreferences(ALIAS, Context.MODE_PRIVATE).edit().clear().commit(); call.resolve();
+    boolean committed = getContext().getSharedPreferences(ALIAS, Context.MODE_PRIVATE).edit().clear().commit();
+    if (!committed) { call.reject("Secure storage unavailable"); return; }
+    call.resolve();
   }
 }

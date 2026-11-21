@@ -667,6 +667,8 @@ export type Database = {
           height: number
           id: string
           media_id: string | null
+          media_x: number
+          media_y: number
           name: string
           orientation: string
           position_seconds: number
@@ -685,6 +687,8 @@ export type Database = {
           height?: number
           id?: string
           media_id?: string | null
+          media_x?: number
+          media_y?: number
           name: string
           orientation?: string
           position_seconds?: number
@@ -703,6 +707,8 @@ export type Database = {
           height?: number
           id?: string
           media_id?: string | null
+          media_x?: number
+          media_y?: number
           name?: string
           orientation?: string
           position_seconds?: number

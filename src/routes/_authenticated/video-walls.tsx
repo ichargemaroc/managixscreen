@@ -1,14 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
-import { PanelsTopLeft, Plus, Pencil, Trash2, Play, Pause, Square, Save, Monitor } from 'lucide-react';
+import { PanelsTopLeft, Plus, Pencil, Trash2, Play, Pause, Square, Save } from 'lucide-react';
 import { PageHeader, EmptyState, StatusBadge } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { useStore, saveVideoWall, controlVideoWall, deleteVideoWall, type Media } from '@/lib/store';
-import { wallConfigSchema, wallViewport, type WallConfig, type WallMember, type VideoWall } from '@/lib/video-wall';
+import { useStore, saveVideoWall, controlVideoWall, deleteVideoWall } from '@/lib/store';
+import { wallConfigSchema, type WallConfig, type WallMember, type VideoWall } from '@/lib/video-wall';
+import { WallMediaPreview } from '@/components/wall-media-preview';
 import { toast } from 'sonner';
 import { WallAssignments } from '@/components/wall-assignments';
 import { WallPositionTest } from '@/components/wall-position-test';
@@ -18,12 +19,7 @@ export const Route=createFileRoute('/_authenticated/video-walls')({head:()=>({me
 ]}),component:WallsPage});
 const DEFAULT:WallConfig={name:'',columns:2,rows:2,width:3840,height:2160,gap_x:0,gap_y:0,orientation:'landscape',media_id:null};
 const states={playing:'Lecture programmée',paused:'En pause',stopped:'Arrêté'};
-function Preview({config,media}:{config:WallConfig;media:Media|undefined}){
-  return <div className="wall-preview" style={{aspectRatio:`${config.width}/${config.height}`}}>
-    {media ? media.type==='image'?<img src={media.url} alt={media.name}/>:<video src={media.url} muted playsInline preload="metadata"/>:<Monitor className="size-10 text-muted-foreground"/>}
-    <div className="absolute inset-0 pointer-events-none">{Array.from({length:config.rows*config.columns},(_,i)=>{const viewport=wallViewport({...config,row_index:Math.floor(i/config.columns),column_index:i%config.columns});return <span className="absolute border border-primary" key={i} style={{left:`${viewport.x/config.width*100}%`,top:`${viewport.y/config.height*100}%`,width:`${viewport.width/config.width*100}%`,height:`${viewport.height/config.height*100}%`}}/>;})}</div>
-  </div>;
-}
+const Preview = WallMediaPreview;
 function WallsPage(){
   const {walls,screens,media,wallEvents,refresh}=useStore();
   const [editing,setEditing]=useState<string|null>(null); const [open,setOpen]=useState(false);
@@ -31,7 +27,7 @@ function WallsPage(){
   const [busy,setBusy]=useState(false); const [error,setError]=useState(''); const [removing,setRemoving]=useState<VideoWall|null>(null);
   const [selected,setSelected]=useState<string|null>(null);
   const active=walls.find(w=>w.id===selected)??walls[0];
-  const begin=(wall?:VideoWall)=>{setEditing(wall?.id??null);setConfig(wall?{name:wall.name,columns:wall.columns,rows:wall.rows,width:wall.width,height:wall.height,gap_x:wall.gap_x,gap_y:wall.gap_y,orientation:wall.orientation,media_id:wall.media_id}:DEFAULT);setMembers(wall?.members.map(m=>({...m}))??[]);setError('');setOpen(true);};
+  const begin=(wall?:VideoWall)=>{setEditing(wall?.id??null);setConfig(wall?{name:wall.name,columns:wall.columns,rows:wall.rows,width:wall.width,height:wall.height,gap_x:wall.gap_x,gap_y:wall.gap_y,orientation:wall.orientation,media_id:wall.media_id,media_x:wall.media_x??0,media_y:wall.media_y??0}:DEFAULT);setMembers(wall?.members.map(m=>({...m}))??[]);setError('');setOpen(true);};
   const run=async(task:()=>Promise<unknown>)=>{setBusy(true);try{await task();refresh();}catch(e){toast.error(e instanceof Error?e.message:'La modification a échoué.');}finally{setBusy(false);}};
   const resize=(columns:number,rows:number)=>{setConfig(c=>({...c,columns,rows,width:columns*(c.orientation==='landscape'?1920:1080),height:rows*(c.orientation==='landscape'?1080:1920)}));setMembers(list=>list.filter(m=>m.column_index<columns&&m.row_index<rows));};
 
@@ -65,7 +61,7 @@ function WallsPage(){
         <div className="space-y-2"><Label>Orientation des écrans</Label><Select value={config.orientation} onValueChange={v=>{const orientation=v==='portrait'?'portrait':'landscape';setConfig(c=>({...c,orientation,width:c.columns*(orientation==='landscape'?1920:1080),height:c.rows*(orientation==='landscape'?1080:1920)}));}}><SelectTrigger aria-label="Orientation"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="landscape">Paysage</SelectItem><SelectItem value="portrait">Portrait</SelectItem></SelectContent></Select></div>
         <div className="grid grid-cols-2 gap-3">{(['width','height','gap_x','gap_y'] as const).map(key=><div className="space-y-2" key={key}><Label htmlFor={`wall-${key}`}>{({width:'Largeur (px)',height:'Hauteur (px)',gap_x:'Espace X (px)',gap_y:'Espace Y (px)'})[key]}</Label><Input id={`wall-${key}`} type="number" min={key==='width'?320:key==='height'?180:0} value={config[key]} onChange={e=>setConfig(c=>({...c,[key]:Number(e.target.value)}))}/></div>)}</div>
         <div className="space-y-2"><Label>Contenu du mur</Label><Select value={config.media_id??'none'} onValueChange={value=>setConfig(c=>({...c,media_id:value==='none'?null:value}))}><SelectTrigger aria-label="Contenu du mur"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="none">Aucun contenu</SelectItem>{media.map(m=><SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select></div>
-      </div><div className="min-w-0 space-y-5"><Preview config={config} media={media.find(m=>m.id===config.media_id)}/><h3 className="text-sm font-medium">Affectation des télévisions · {members.length}/{config.columns*config.rows}</h3>
+      </div><div className="min-w-0 space-y-5"><Preview config={config} media={media.find(m=>m.id===config.media_id)} onChange={placement=>setConfig(previous=>({...previous,...placement}))}/><h3 className="text-sm font-medium">Affectation des télévisions · {members.length}/{config.columns*config.rows}</h3>
         <WallAssignments config={config} members={members} screens={screens} walls={walls} wallId={editing} busy={busy} onChange={setMembers}/>
       </div></div>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       <DialogFooter><Button variant="ghost" disabled={busy} onClick={()=>setOpen(false)}>Annuler</Button><Button variant="secondary" disabled={busy||!config.name.trim()||!config.media_id||!members.length} onClick={()=>void save(true)}><Play/>Lancer le mur</Button><Button disabled={busy||!config.name.trim()} onClick={()=>void save()}><Save/>{busy?'Enregistrement…':'Enregistrer les affectations'}</Button></DialogFooter>

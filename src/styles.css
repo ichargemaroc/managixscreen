@@ -224,6 +224,8 @@
 #module-startup-recovery h1 { font-size: 24px; letter-spacing: 0; }
 #module-startup-recovery button { padding: 12px 24px; border-radius: 6px; background: var(--primary); color: var(--primary-foreground); cursor: pointer; }
 .tv-player button:focus-visible { outline: 3px solid var(--primary); outline-offset: 5px; }
+.tv-controls button { min-width: 48px; min-height: 48px; }
+@media (max-width: 640px) { .tv-footer { flex-wrap: wrap; } .tv-footer > span { font-size: 12px; } }
 @media (max-width: 640px), (max-height: 500px) { .tv-enrollment { padding: 24px; } .tv-player h1 { font-size: 28px; } .tv-center { gap: 18px; } .tv-display-icon { width: 48px; height: 48px; } .tv-code { font-size: 36px; gap: 8px; max-width: 340px; } .tv-footer { font-size: 10px; } .tv-controls { left: 12px; right: 12px; bottom: 12px; } }
 
 .wall-preview { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; overflow: hidden; background: var(--muted); border: 1px solid var(--border); border-radius: 4px; max-height: 520px; }

@@ -6,20 +6,32 @@ async function vault() {
   const { Capacitor, registerPlugin } = await import("@capacitor/core");
   return Capacitor.isNativePlatform() ? registerPlugin<NativeCredentialVault>("DeviceVault") : null;
 }
-// A failing or hung native vault falls back to WebView storage so pairing can still proceed.
+// Native credentials must never fall back to plaintext WebView storage.
 function limit<T>(task: Promise<T>) { return Promise.race([task, new Promise<never>((_, reject) => setTimeout(() => reject(new Error("vault timeout")), 4000))]); }
 export async function readCredentials(): Promise<Credentials | null> {
-  const native = await vault().catch(() => null);
+  const native = await vault();
   let value: string | null | undefined = null;
-  if (native) { try { value = (await limit(native.read())).value; } catch { value = null; } }
-  value ||= localStorage.getItem(credentialKey);
+  if (native) {
+    value = (await limit(native.read())).value;
+    // Migrate older fallback credentials only after a successful encrypted write.
+    if (!value) {
+      const legacy = localStorage.getItem(credentialKey);
+      if (legacy) {
+        const parsed = credentialsSchema.parse(JSON.parse(legacy));
+        await limit(native.write({ value: JSON.stringify(parsed) }));
+        value = JSON.stringify(parsed);
+      }
+    }
+    localStorage.removeItem(credentialKey);
+  } else value = localStorage.getItem(credentialKey);
   if (!value) return null;
   try { return credentialsSchema.parse(JSON.parse(value)); } catch { return null; }
 }
 export async function saveCredentials(value: Credentials | null) {
-  const native = await vault().catch(() => null);
+  const native = await vault();
   if (native) {
-    try { if (value) await limit(native.write({ value: JSON.stringify(value) })); else await limit(native.clear()); localStorage.removeItem(credentialKey); return; } catch { /* fall back below */ }
+    if (value) await limit(native.write({ value: JSON.stringify(value) })); else await limit(native.clear());
+    localStorage.removeItem(credentialKey); return;
   }
   if (value) localStorage.setItem(credentialKey, JSON.stringify(value)); else localStorage.removeItem(credentialKey);
 }

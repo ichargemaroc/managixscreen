@@ -53,9 +53,11 @@ Un simple réveil de veille n’est pas un boot et n’émet pas nécessairement
 
 Références : [restrictions Android des activités en arrière-plan](https://developer.android.com/guide/components/activities/background-starts), [application HOME pour appareils dédiés](https://developer.android.com/work/dpc/dedicated-devices/cookbook).
 
-## GitHub Actions
+## Google Play TV et GitHub Actions
 
-`.github/workflows/android-player.yml` se lance manuellement avec l’origine publiée, prépare Android puis assemble un APK debug avec Java 21, SDK Android et Bun. L’APK est déposé seulement si la compilation réussit. **Aucun APK n’a encore été compilé ou testé sur TV.** Signature de production, distribution, codecs, télécommandes, coffre natif, cache WebView et kiosk restent à valider.
+`.github/workflows/android-player.yml` reste l’unique workflow manuel. Le mode `debug` produit l’APK de test ; `play-release` prépare un APK et un AAB signés avec une clé d’envoi fournie par les secrets GitHub. Java 21, SDK 36 et build-tools 35.0.0 sont conservés. Les contrôles exécutent les tests, vérifient les permissions fusionnées, les segments ELF 16 Ko, les équivalents 64 bits et l’alignement APK. **Cette préparation n’a pas compilé de nouvel APK/AAB ni lancé GitHub Actions.** Voir [GOOGLE_PLAY_TV.md](GOOGLE_PLAY_TV.md) pour la signature, les fichiers et la soumission.
+
+Le manifeste cible Android TV/Google TV (leanback requis) : la distribution Play n’est pas destinée aux téléphones. Le coffre natif n’utilise plus de secours en clair ; les anciens identifiants de secours sont migrés uniquement après écriture chiffrée réussie. Une panne du coffre bloque le nouveau jumelage plutôt que de remplacer l’association existante. Les sauvegardes cloud et transferts Android sont exclus. Le bouton Retour natif ferme les commandes ouvertes, puis quitte l’application à la racine sans effacer le jumelage. Les flèches déplacent le focus dans les deux directions et ne changent plus le média par accident.
 
 Connecter la synchronisation GitHub dans les paramètres Git de Lovable ; ce workflow ne connecte pas un dépôt et ne lance pas automatiquement une compilation.
 

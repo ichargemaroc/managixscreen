@@ -1,0 +1,46 @@
+import { useRef, useState } from 'react';
+import { Monitor, Move, RotateCcw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { wallMediaRect, wallViewport, moveWallMedia, type WallConfig } from '@/lib/video-wall';
+import type { Media } from '@/lib/store';
+
+export function WallMediaPreview({ config, media, onChange }: { config: WallConfig; media: Media | undefined; onChange?: (placement: { media_x: number; media_y: number }) => void }) {
+  const [dimensions, setDimensions] = useState({ width: 1, height: 1, id: '' });
+  const drag = useRef<{ pointer: number; x: number; y: number; width: number; height: number; media_x: number; media_y: number } | null>(null);
+  const ready = Boolean(media && dimensions.id === media.id);
+  const rect = wallMediaRect(config, dimensions.width, dimensions.height);
+  const positioned = { left: `${rect.x / config.width * 100}%`, top: `${rect.y / config.height * 100}%`, width: `${rect.width / config.width * 100}%`, height: `${rect.height / config.height * 100}%` };
+  return <div className="space-y-2">
+    {onChange && <div className="flex justify-end gap-1">
+      <Button variant="ghost" size="icon" title="Déplacer l’image" aria-label="Déplacer l’image" disabled={!media} onClick={() => document.querySelector<HTMLElement>('[aria-label="Position du contenu sur le mur"]')?.focus()}><Move /></Button>
+      <Button variant="ghost" size="icon" title="Recentrer" aria-label="Recentrer l’image" disabled={!media} onClick={() => onChange({ media_x: 0, media_y: 0 })}><RotateCcw /></Button>
+    </div>}
+    <div className={`wall-preview ${onChange && media ? 'cursor-grab active:cursor-grabbing touch-none' : ''}`}
+      style={{ aspectRatio: `${config.width}/${config.height}` }}
+      tabIndex={onChange && media ? 0 : undefined} aria-label={onChange ? 'Position du contenu sur le mur' : undefined}
+      onKeyDown={event => {
+        if (!onChange || !media || !event.key.startsWith('Arrow')) return;
+        event.preventDefault();
+        onChange(moveWallMedia({ media_x: config.media_x ?? 0, media_y: config.media_y ?? 0 }, event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowRight' ? 1 : 0, event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0, 100, 100));
+      }}
+      onPointerDown={event => {
+        if (!onChange || !media || event.button !== 0) return;
+        event.preventDefault(); event.currentTarget.focus();
+        const box = event.currentTarget.getBoundingClientRect();
+        drag.current = { pointer: event.pointerId, x: event.clientX, y: event.clientY, width: box.width, height: box.height, media_x: config.media_x ?? 0, media_y: config.media_y ?? 0 };
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }}
+      onPointerMove={event => {
+        const start = drag.current;
+        if (start && start.pointer === event.pointerId && onChange) onChange(moveWallMedia(start, event.clientX - start.x, event.clientY - start.y, start.width, start.height));
+      }}
+      onPointerUp={event => { drag.current = null; if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); }}
+      onPointerCancel={() => { drag.current = null; }}>
+      {media ? media.type === 'image' ? <img key={media.id} src={media.url} alt={media.name} draggable={false} className="pointer-events-none select-none" style={ready ? positioned : undefined} onLoad={event => setDimensions({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight, id: media.id })} /> : <video key={media.id} src={media.url} muted playsInline preload="metadata" className="pointer-events-none" style={ready ? positioned : undefined} onLoadedMetadata={event => setDimensions({ width: event.currentTarget.videoWidth, height: event.currentTarget.videoHeight, id: media.id })} /> : <Monitor className="size-10 text-muted-foreground" />}
+      <div className="absolute inset-0 pointer-events-none">{Array.from({ length: config.rows * config.columns }, (_, index) => {
+        const viewport = wallViewport({ ...config, row_index: Math.floor(index / config.columns), column_index: index % config.columns });
+        return <span className="absolute border border-primary" key={index} style={{ left: `${viewport.x / config.width * 100}%`, top: `${viewport.y / config.height * 100}%`, width: `${viewport.width / config.width * 100}%`, height: `${viewport.height / config.height * 100}%` }} />;
+      })}</div>
+    </div>
+  </div>;
+}

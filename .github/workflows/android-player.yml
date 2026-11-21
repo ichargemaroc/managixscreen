@@ -6,12 +6,31 @@ on:
         description: "Published HTTPS application origin (without /player)"
         required: true
         type: string
+      build_mode:
+        description: "Debug APK only, or signed APK and Play AAB (requires GitHub upload-key secrets)"
+        required: true
+        type: choice
+        default: debug
+        options: [debug, play-release]
+      version_code:
+        description: "Positive version code; increase for every Play upload"
+        required: true
+        default: "1"
+        type: string
+      version_name:
+        description: "Public version (for example 1.0.0)"
+        required: true
+        default: "1.0.0"
+        type: string
 permissions:
   contents: read
 jobs:
   apk:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      PLAYER_VERSION_CODE: ${{ inputs.version_code }}
+      PLAYER_VERSION_NAME: ${{ inputs.version_name }}
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -28,20 +47,82 @@ jobs:
           packages: 'platform-tools platforms;android-36 build-tools;35.0.0'
           accept-android-sdk-licenses: true
       - run: bun install --frozen-lockfile
+      - name: Test player and Android configuration
+        run: bunx vitest run src/test/android-workflow.test.ts src/test/android-autostart.test.ts src/test/android-play.test.ts src/test/player-vault.test.ts src/test/player-storage-error.test.tsx src/test/tv-navigation.test.ts src/test/player-restart.test.tsx src/test/player-position.test.tsx src/test/tv-player.test.ts src/test/video-wall.test.ts src/test/player-protocol.test.ts src/test/device-api.test.ts
+      - name: Test artifact audit
+        run: python3 scripts/test-android-artifacts.py
       - name: Test native auto-start policy
         run: node scripts/test-android-autostart.mjs
       - name: Validate server address
         env:
           PLAYER_ORIGIN: ${{ inputs.api_origin }}
         run: node -e 'const u=new URL(process.env.PLAYER_ORIGIN);if(u.protocol!=="https:"||u.pathname!=="/"||u.search||u.hash||u.username||u.password)throw Error("HTTPS origin required")'
+      - name: Validate version
+        run: node -e 'if(!/^[1-9][0-9]{0,8}$/.test(process.env.PLAYER_VERSION_CODE)||!/^\d+\.\d+\.\d+$/.test(process.env.PLAYER_VERSION_NAME))throw Error("Invalid version")'
+      - name: Prepare private upload key
+        if: inputs.build_mode == 'play-release'
+        env:
+          PLAYER_UPLOAD_KEYSTORE_BASE64: ${{ secrets.PLAYER_UPLOAD_KEYSTORE_BASE64 }}
+          PLAYER_KEYSTORE_PASSWORD: ${{ secrets.PLAYER_KEYSTORE_PASSWORD }}
+          PLAYER_KEY_ALIAS: ${{ secrets.PLAYER_KEY_ALIAS }}
+          PLAYER_KEY_PASSWORD: ${{ secrets.PLAYER_KEY_PASSWORD }}
+        run: |
+          python3 - <<'PY'
+          import base64, os
+          from pathlib import Path
+          required = ['PLAYER_UPLOAD_KEYSTORE_BASE64', 'PLAYER_KEYSTORE_PASSWORD', 'PLAYER_KEY_ALIAS', 'PLAYER_KEY_PASSWORD']
+          if not all(os.environ.get(key) for key in required):
+              raise SystemExit('Configure all four GitHub upload-key secrets before a Play release')
+          path = Path(os.environ['RUNNER_TEMP']) / 'screenflow-upload.jks'
+          path.write_bytes(base64.b64decode(os.environ['PLAYER_UPLOAD_KEYSTORE_BASE64'], validate=True))
+          path.chmod(0o600)
+          PY
       - run: bun run player:build
         env:
           VITE_PLAYER_API_ORIGIN: ${{ inputs.api_origin }}
+          VITE_PLAYER_VERSION_NAME: ${{ inputs.version_name }}
       - run: bun run android:prepare
       - run: bun run android:sync
       - run: chmod +x android/gradlew && cd android && ./gradlew assembleDebug
+      - name: Audit debug APK and manifest
+        run: |
+          python3 scripts/check-android-artifacts.py android/app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 -v 4 android/app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging android/app/build/outputs/apk/debug/app-debug.apk > "$RUNNER_TEMP/tv-badging.txt"
+          grep -q "targetSdkVersion:'36'" "$RUNNER_TEMP/tv-badging.txt"
+          grep -q 'leanback-launchable-activity:' "$RUNNER_TEMP/tv-badging.txt"
+          python3 scripts/check-android-manifest.py android/app/build/intermediates/merged_manifests/debug/processDebugManifest/AndroidManifest.xml
       - uses: actions/upload-artifact@v4
         with:
           name: screenflow-tv-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+      - name: Compile signed production APK and AAB
+        if: inputs.build_mode == 'play-release'
+        working-directory: android
+        env:
+          PLAYER_KEYSTORE_PATH: ${{ runner.temp }}/screenflow-upload.jks
+          PLAYER_KEYSTORE_PASSWORD: ${{ secrets.PLAYER_KEYSTORE_PASSWORD }}
+          PLAYER_KEY_ALIAS: ${{ secrets.PLAYER_KEY_ALIAS }}
+          PLAYER_KEY_PASSWORD: ${{ secrets.PLAYER_KEY_PASSWORD }}
+        run: ./gradlew lintRelease assembleRelease bundleRelease
+      - name: Audit signed release
+        if: inputs.build_mode == 'play-release'
+        run: |
+          python3 scripts/check-android-artifacts.py android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/bundle/release/app-release.aab
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 -v 4 android/app/build/outputs/apk/release/app-release.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify android/app/build/outputs/apk/release/app-release.apk
+          jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab
+          python3 scripts/check-android-manifest.py android/app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml
+      - uses: actions/upload-artifact@v4
+        if: inputs.build_mode == 'play-release'
+        with:
+          name: screenflow-tv-play-release
+          path: |
+            android/app/build/outputs/bundle/release/app-release.aab
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/reports/lint-results-release.html
+          if-no-files-found: error
+      - name: Remove private upload key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/screenflow-upload.jks"
