@@ -1,5 +1,10 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Son des vidéos diffusées
+- [x] Activer le son dans les playlists et les murs, avec reprise explicite si le navigateur bloque la lecture
+- [x] 114 tests réussis ; import, jumelage, affectation et lecture réelle avec piste audio décodée vérifiés, y compris après rechargement ; données de vérification supprimées
+- [ ] Essai physique TV : nouvelle compilation APK et installation sur le matériel nécessaires
+
 ## Blocage du coffre sur TV — version 1.0.1
 - [x] Ajouter des diagnostics sûrs distinguant module absent, délai, déchiffrement et identité invalide ; conserver le jumelage
 - [x] Reproduire VAULT_TIMEOUT : le proxy Capacitor renvoyé par une fonction async bloque avant la lecture ; remplacer par un adaptateur ordinaire et ajouter un test de régression

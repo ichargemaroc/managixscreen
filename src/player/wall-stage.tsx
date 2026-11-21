@@ -1,9 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import { wallMediaRect, wallPosition, wallViewport, type WallPlayback } from '@/lib/video-wall';
+import { Button } from '@/components/ui/button';
+import { Volume2 } from 'lucide-react';
 export function WallStage({ wall, source, type, clockOffset, onState }: { wall:WallPlayback; source:string; type:'image'|'video'; clockOffset:number; onState:(state:'idle'|'playing'|'paused'|'error')=>void }) {
   const canvas=useRef<HTMLCanvasElement>(null); const media=useRef<HTMLVideoElement>(null);
   const [failed,setFailed]=useState(false);
+  const [blocked,setBlocked]=useState(false);
+  const pending=useRef(false); const needsGesture=useRef(false);
   const latest=useRef({wall,clockOffset,onState}); latest.current={wall,clockOffset,onState};
+  const startVideo=()=>{
+    const video=media.current;
+    if(!video || pending.current) return;
+    pending.current=true;
+    void video.play().then(()=>{needsGesture.current=false;setBlocked(false);}).catch((reason:unknown)=>{
+      if(reason instanceof DOMException && reason.name==='AbortError') return;
+      needsGesture.current=true;
+      if(reason instanceof DOMException && reason.name==='NotAllowedError') setBlocked(true);
+      else setFailed(true);
+      latest.current.onState('error');
+    }).finally(()=>{pending.current=false;});
+  };
   useEffect(()=>{
     let active=true; let frame=0; let lastCorrection=0;
     const image=new Image(); if(type==='image') image.src=source;
@@ -21,7 +37,7 @@ export function WallStage({ wall, source, type, clockOffset, onState }: { wall:W
           video.playbackRate=running ? Math.max(0.97,Math.min(1.03,1+delta*0.1)):1;
           lastCorrection=performance.now();
         }
-        if(running && video.paused) void video.play().catch(()=>{setFailed(true);report('error');});
+        if(running && video.paused && !needsGesture.current) startVideo();
         if(!running && !video.paused) video.pause();
       }
       if(el && ctx){
@@ -42,9 +58,9 @@ export function WallStage({ wall, source, type, clockOffset, onState }: { wall:W
       }
       frame=requestAnimationFrame(draw);
     };
-    setFailed(false); image.onerror=()=>{setFailed(true);latest.current.onState('error');};
+    setFailed(false); setBlocked(false); needsGesture.current=false; image.onerror=()=>{setFailed(true);latest.current.onState('error');};
     frame=requestAnimationFrame(draw);
     return()=>{active=false;cancelAnimationFrame(frame);};
   },[source,type]);
-  return <div className="tv-wall-stage"><canvas ref={canvas} aria-label={`${wall.name} — ligne ${wall.row_index+1}, colonne ${wall.column_index+1}`} />{type==='video' && <video className="tv-wall-decoder" ref={media} src={source} muted playsInline loop preload="auto" onError={()=>{setFailed(true);onState('error');}} />}{failed && <p role="alert" className="tv-error">Ce média ne peut pas être lu sur cet appareil.</p>}</div>;
+  return <div className="tv-wall-stage"><canvas ref={canvas} aria-label={`${wall.name} — ligne ${wall.row_index+1}, colonne ${wall.column_index+1}`} />{type==='video' && <video className="tv-wall-decoder" ref={media} src={source} playsInline loop preload="auto" onError={()=>{setFailed(true);onState('error');}} />}{blocked && <div className="tv-controls"><Button autoFocus onClick={startVideo}><Volume2 />Lecture avec son</Button></div>}{failed && <p role="alert" className="tv-error">Ce média ne peut pas être lu sur cet appareil.</p>}</div>;
 }
