@@ -81,6 +81,7 @@ jobs:
         env:
           VITE_PLAYER_API_ORIGIN: ${{ inputs.api_origin }}
           VITE_PLAYER_VERSION_NAME: ${{ inputs.version_name }}
+          VITE_PLAYER_BUILD: ${{ github.sha }}
       - run: bun run android:prepare
       - run: bun run android:sync
       - run: chmod +x android/gradlew && cd android && ./gradlew assembleDebug

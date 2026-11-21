@@ -23,6 +23,8 @@ export function TVPlayer() {
   const [phase, setPhase] = useState<"boot" | "ready" | "pairing" | "playing" | "revoked" | "storage-error">("boot");
   const [nativePlayer, setNativePlayer] = useState(false);
   const playerVersion = import.meta.env['VITE_PLAYER_VERSION_NAME'] || '1.0.0';
+  // Short source revision lets support confirm which compilation is installed.
+  const playerBuild = String(import.meta.env['VITE_PLAYER_BUILD'] ?? '').slice(0, 7);
   const [error, setError] = useState("");
   const [online, setOnline] = useState(true);
   const [progress, setProgress] = useState("");
@@ -48,7 +50,7 @@ export function TVPlayer() {
         const { Capacitor } = await import('@capacitor/core');
         if (active) setNativePlayer(Capacitor.isNativePlatform());
         const timeout = <T,>(task: Promise<T>, fallback: T) => Promise.race([task.catch(() => fallback), new Promise<T>((r) => setTimeout(() => r(fallback), 5000))]);
-        const stored = await Promise.race([readCredentials(), new Promise<never>((_, reject) => setTimeout(() => reject(vaultError("VAULT_TIMEOUT")), 5000))]);
+        const stored = await Promise.race([readCredentials(), new Promise<never>((_, reject) => setTimeout(() => reject(vaultError("VAULT_TIMEOUT")), 20000))]);
         const cached = stored?.paired ? await timeout(readContent(), null) : null;
         if (!active) return;
         setNativePlayer(Capacitor.isNativePlatform()); setNow(Date.now()); setIdentity(stored); setContent(cached); setPhase(stored?.paired ? "playing" : stored ? "pairing" : "ready");
@@ -234,7 +236,7 @@ export function TVPlayer() {
         {qrUrl && <div className="tv-qr"><QRCodeSVG value={qrUrl} size={200} level="M" marginSize={4} fgColor="var(--qr-foreground)" bgColor="var(--qr-background)" title="QR code de jumelage" /><p>Appairage par QR code</p></div>}
         {error && <p role="alert" className="tv-error">{error}</p>}
       </div>
-      <footer className="tv-footer"><span className="text-base">{online ? <Wifi /> : <WifiOff />}{online ? "Réseau disponible" : "Hors connexion"}</span><span className="text-base">{nativePlayer ? "LECTEUR ANDROID TV" : "LECTEUR WEB"} · {playerVersion}</span><Button className="min-h-12 min-w-12" variant="ghost" size="icon" aria-label="Plein écran" onClick={() => void enterPlayerMode()}><Maximize /></Button></footer>
+      <footer className="tv-footer"><span className="text-base">{online ? <Wifi /> : <WifiOff />}{online ? "Réseau disponible" : "Hors connexion"}</span><span className="text-base">{nativePlayer ? "LECTEUR ANDROID TV" : "LECTEUR WEB"} · {playerVersion}{playerBuild ? ` · ${playerBuild}` : ""}</span><Button className="min-h-12 min-w-12" variant="ghost" size="icon" aria-label="Plein écran" onClick={() => void enterPlayerMode()}><Maximize /></Button></footer>
     </div>}
     {phase === "playing" && source && controls && <div className="tv-controls"><span>{online ? <Wifi /> : <WifiOff />}{content?.playlist?.name} · {index + 1}/{items.length}{progress && ` · ${progress}`}</span><div><Button disabled={Boolean(content?.wall)} variant="ghost" size="icon" aria-label={paused ? "Lecture" : "Pause"} onClick={() => setPaused(!paused)}>{paused ? <Play /> : <Pause />}</Button><Button disabled={Boolean(content?.wall)} variant="ghost" size="icon" aria-label="Média suivant" onClick={() => setIndex((value) => nextItem(value, items.length))}><ChevronRight /></Button><Button variant="ghost" size="icon" aria-label="Synchroniser" disabled={busy.current || !identity || !online} onClick={() => { if (identity && !busy.current) { busy.current = true; void sync(identity).catch(() => setError("Synchronisation indisponible.")).finally(() => { busy.current = false; }); } }}><RefreshCw /></Button><Button variant="ghost" size="icon" aria-label="Plein écran" onClick={() => void enterPlayerMode()}><Maximize /></Button></div>{error && <p role="alert">{error}</p>}</div>}
     {phase === "playing" && source && !controls && <Button className="tv-menu" variant="ghost" size="icon" aria-label="Commandes de lecture" onClick={() => setControls(true)}><Settings2 /></Button>}

@@ -11,6 +11,8 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -19,6 +21,11 @@ import javax.crypto.spec.GCMParameterSpec;
 @CapacitorPlugin(name = "DeviceVault")
 public class DeviceVaultPlugin extends Plugin {
   private static final String ALIAS = "screenflow_device_identity";
+  // Keystore work can be slow on TV boxes; keep it off Capacitor's shared plugin thread.
+  private final ExecutorService worker = Executors.newSingleThreadExecutor();
+  @Override protected void handleOnDestroy() { worker.shutdown(); }
+  // Answers immediately so the player can tell a stalled bridge from slow Keystore work.
+  @PluginMethod public void ping(PluginCall call) { call.resolve(); }
   private SecretKey key() throws Exception {
     KeyStore store = KeyStore.getInstance("AndroidKeyStore"); store.load(null);
     if (!store.containsAlias(ALIAS)) {
@@ -28,7 +35,8 @@ public class DeviceVaultPlugin extends Plugin {
     }
     return (SecretKey) store.getKey(ALIAS, null);
   }
-  @PluginMethod public void write(PluginCall call) {
+  @PluginMethod public void write(PluginCall call) { worker.execute(() -> writeNow(call)); }
+  private void writeNow(PluginCall call) {
     try {
       String value = call.getString("value"); if (value == null) { call.reject("Missing value"); return; }
       Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding"); cipher.init(Cipher.ENCRYPT_MODE, key());
@@ -38,7 +46,8 @@ public class DeviceVaultPlugin extends Plugin {
       if (!committed) { call.reject("Secure storage unavailable", "VAULT_WRITE_FAILED"); return; } call.resolve();
     } catch (Exception e) { call.reject("Secure storage unavailable", "VAULT_WRITE_FAILED"); }
   }
-  @PluginMethod public void read(PluginCall call) {
+  @PluginMethod public void read(PluginCall call) { worker.execute(() -> readNow(call)); }
+  private void readNow(PluginCall call) {
     try {
       var prefs = getContext().getSharedPreferences(ALIAS, Context.MODE_PRIVATE);
       String encrypted = prefs.getString("cipher", null), iv = prefs.getString("iv", null);
@@ -53,7 +62,8 @@ public class DeviceVaultPlugin extends Plugin {
       call.resolve(result);
     } catch (Exception e) { call.reject("Secure storage unavailable", "VAULT_READ_FAILED"); }
   }
-  @PluginMethod public void clear(PluginCall call) {
+  @PluginMethod public void clear(PluginCall call) { worker.execute(() -> clearNow(call)); }
+  private void clearNow(PluginCall call) {
     boolean committed = getContext().getSharedPreferences(ALIAS, Context.MODE_PRIVATE).edit().clear().commit();
     if (!committed) { call.reject("Secure storage unavailable", "VAULT_CLEAR_FAILED"); return; }
     call.resolve();

@@ -2,7 +2,7 @@ import { credentialsSchema, type Credentials } from "./protocol";
 import { vaultError } from "./vault-errors";
 
 const credentialKey = "screenflow-player-identity";
-type NativeCredentialVault = { read(): Promise<{ value?: string }>; write(options: { value: string }): Promise<void>; clear(): Promise<void> };
+type NativeCredentialVault = { ping(): Promise<void>; read(): Promise<{ value?: string }>; write(options: { value: string }): Promise<void>; clear(): Promise<void> };
 async function vault() {
   const { Capacitor, registerPlugin } = await import("@capacitor/core");
   if (!Capacitor.isNativePlatform()) return null;
@@ -12,21 +12,24 @@ async function vault() {
   // function makes Promise resolution call a nonexistent native method forever.
   // Return an ordinary adapter instead; only actual operations cross the bridge.
   return {
+    ping: () => plugin.ping(),
     read: () => plugin.read(),
     write: (options: { value: string }) => plugin.write(options),
     clear: () => plugin.clear(),
   } satisfies NativeCredentialVault;
 }
 // Native credentials must never fall back to plaintext WebView storage.
-async function limit<T>(task: Promise<T>) {
+// Slow TV boxes may need several seconds for Keystore work; the bridge itself must answer fast.
+async function limit<T>(task: Promise<T>, ms = 15000, code = "VAULT_TIMEOUT") {
   let timer: ReturnType<typeof setTimeout> | undefined;
-  try { return await Promise.race([task, new Promise<never>((_, reject) => { timer = setTimeout(() => reject(vaultError("VAULT_TIMEOUT")), 4000); })]); }
+  try { return await Promise.race([task, new Promise<never>((_, reject) => { timer = setTimeout(() => reject(vaultError(code)), ms); })]); }
   finally { clearTimeout(timer); }
 }
 export async function readCredentials(): Promise<Credentials | null> {
   const native = await vault();
   let value: string | null | undefined = null;
   if (native) {
+    await limit(native.ping(), 3000, "VAULT_BRIDGE_TIMEOUT");
     value = (await limit(native.read())).value;
     // Migrate older fallback credentials only after a successful encrypted write.
     if (!value) {

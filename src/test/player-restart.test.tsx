@@ -10,6 +10,7 @@ const native = vi.hoisted(() => ({ value: "", requests: vi.fn() }));
 vi.mock("@capacitor/core", () => ({
   Capacitor: { isNativePlatform: () => true, isPluginAvailable: () => true },
   registerPlugin: () => ({
+    ping: async () => {},
     read: async () => ({ value: native.value }),
     write: async ({ value }: { value: string }) => { native.value = value; },
     clear: async () => { native.value = ""; },

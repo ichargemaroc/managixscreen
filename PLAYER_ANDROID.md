@@ -74,3 +74,7 @@ Aucune table dupliquée : request, status, heartbeat, content, commands et comma
 ## Vérifications réalisées
 
 36 tests automatisés réussis. Le lecteur navigateur a été jumelé via un vrai code réclamé depuis l’administration : photo téléchargée et affichée depuis un fichier local, MP4 en lecture, navigation entre médias hors réseau, reprise de l’identité et de la playlist après rechargement en ligne. La commande Actualiser le contenu a été reçue et exécutée, puis son statut Exécutée a été relu dans l’administration. Écrans de jumelage et lecture vérifiés sur paysage 1920×1080 et téléphone 430×786. Les données de ce compte temporaire ont été nettoyées. Aucun appareil Android ni APK n’a été simulé, compilé ou validé.
+### Diagnostic du stockage sécurisé
+- Le pied de page du lecteur affiche la version suivie des 7 premiers caractères de la révision compilée, pour confirmer l’APK installé.
+- `VAULT_BRIDGE_TIMEOUT` : le module Android ne répond pas du tout (APK incomplet ou pont natif bloqué).
+- `VAULT_TIMEOUT` : le module répond, mais la lecture Keystore dépasse 15 s ; ce travail s’exécute sur un fil dédié.

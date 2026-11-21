@@ -1,11 +1,12 @@
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { readCredentials, saveCredentials } from '@/player/platform';
 
-const vault = vi.hoisted(() => ({ read: vi.fn(), write: vi.fn(), clear: vi.fn() }));
+const vault = vi.hoisted(() => ({ ping: vi.fn(), read: vi.fn(), write: vi.fn(), clear: vi.fn() }));
 const available = vi.hoisted(() => vi.fn(() => true));
 vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => true, isPluginAvailable: available }, registerPlugin: () => vault }));
 const key = 'screenflow-player-identity';
 const identity = { device_id: 'a67f4500-b2f4-4049-9a31-5433f14aad57', device_token: 'a'.repeat(64), pairing_code: '123456', expires_at: 1, paired: true };
+beforeEach(() => { vault.ping.mockResolvedValue(undefined); });
 afterEach(() => { localStorage.clear(); vi.resetAllMocks(); available.mockReturnValue(true); });
 
 it('never stores native credentials in plaintext when the secure write fails', async () => {
@@ -46,8 +47,27 @@ it('bounds an unresponsive native read without overwriting identity', async () =
   try {
     vault.read.mockReturnValue(new Promise(() => {}));
     const result = expect(readCredentials()).rejects.toMatchObject({ code: 'VAULT_TIMEOUT' });
-    await vi.advanceTimersByTimeAsync(4000);
+    await vi.advanceTimersByTimeAsync(15000);
     await result;
     expect(vault.write).not.toHaveBeenCalled();
+  } finally { vi.useRealTimers(); }
+});
+it('reports a stalled native bridge separately before reading identity', async () => {
+  vi.useFakeTimers();
+  try {
+    vault.ping.mockReturnValue(new Promise(() => {}));
+    const result = expect(readCredentials()).rejects.toMatchObject({ code: 'VAULT_BRIDGE_TIMEOUT' });
+    await vi.advanceTimersByTimeAsync(3000);
+    await result;
+    expect(vault.read).not.toHaveBeenCalled();
+  } finally { vi.useRealTimers(); }
+});
+it('waits for slow Keystore reads on TV boxes instead of failing after a few seconds', async () => {
+  vi.useFakeTimers();
+  try {
+    vault.read.mockReturnValue(new Promise((resolve) => setTimeout(() => resolve({ value: JSON.stringify(identity) }), 8000)));
+    const result = readCredentials();
+    await vi.advanceTimersByTimeAsync(8000);
+    expect(await result).toEqual(identity);
   } finally { vi.useRealTimers(); }
 });
