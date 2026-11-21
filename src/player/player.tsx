@@ -13,6 +13,7 @@ import { PositionStage } from "./position-stage";
 import { receivedPositionTest, type PositionTest } from "@/lib/position-test";
 import { flushSync } from "react-dom";
 import { focusPlayerButton, subscribePlayerBack } from "./tv-navigation";
+import { vaultError, vaultErrorMessage } from "./vault-errors";
 
 export function TVPlayer() {
   const [positionTest, setPositionTest] = useState<PositionTest | null>(null);
@@ -43,16 +44,17 @@ export function TVPlayer() {
     let active = true; let stopNetwork: (() => void) | undefined; let stopAwake: (() => void) | undefined;
     void (async () => {
       try {
-        // Never stay on the boot screen: a hung native vault or storage falls back to a fresh start.
-        const timeout = <T,>(task: Promise<T>, fallback: T) => Promise.race([task.catch(() => fallback), new Promise<T>((r) => setTimeout(() => r(fallback), 5000))]);
-        const stored = await Promise.race([readCredentials(), new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Secure storage timeout")), 5000))]);
+        // A failed identity read blocks enrollment; only the media cache may fall back.
         const { Capacitor } = await import('@capacitor/core');
+        if (active) setNativePlayer(Capacitor.isNativePlatform());
+        const timeout = <T,>(task: Promise<T>, fallback: T) => Promise.race([task.catch(() => fallback), new Promise<T>((r) => setTimeout(() => r(fallback), 5000))]);
+        const stored = await Promise.race([readCredentials(), new Promise<never>((_, reject) => setTimeout(() => reject(vaultError("VAULT_TIMEOUT")), 5000))]);
         const cached = stored?.paired ? await timeout(readContent(), null) : null;
         if (!active) return;
         setNativePlayer(Capacitor.isNativePlatform()); setNow(Date.now()); setIdentity(stored); setContent(cached); setPhase(stored?.paired ? "playing" : stored ? "pairing" : "ready");
         void subscribeNetwork(setOnline).then((stop) => { if (active) stopNetwork = stop; else stop(); }).catch(() => {}); void keepAwake().then((stop) => { if (active) stopAwake = stop; else stop(); }).catch(() => {});
         void navigator.storage?.persist?.();
-      } catch { if (active) { setError("Le stockage sécurisé est indisponible. L’association existante n’a pas été remplacée."); setPhase("storage-error"); } }
+      } catch (e) { if (active) { setError(vaultErrorMessage(e)); setPhase("storage-error"); } }
     })();
     return () => { active = false; stopNetwork?.(); stopAwake?.(); };
   }, []);

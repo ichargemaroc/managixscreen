@@ -55,6 +55,10 @@ Références : [restrictions Android des activités en arrière-plan](https://de
 
 ## Google Play TV et GitHub Actions
 
+### Diagnostic « Stockage sécurisé indisponible »
+
+Le lecteur affiche désormais un code fixe sans token ni détail privé : `VAULT_PLUGIN_MISSING` (module natif absent), `VAULT_TIMEOUT` (absence de réponse), `VAULT_READ_FAILED` (échec du déchiffrement Android), `VAULT_INCOMPLETE` (données chiffrées incomplètes), `VAULT_INVALID_IDENTITY` (identité invalide) ou `VAULT_UNKNOWN` (autre panne). Le pied de page identifie Android avant la lecture du coffre, même en cas d’échec. Aucun échec ne déclenche de nouveau jumelage ni d’effacement automatique. Photographier le code avec le modèle de TV pour poursuivre le diagnostic ; ne pas désinstaller ou effacer les données d’un écran déjà jumelé. Ces diagnostics nécessitent un nouvel APK ; la cause de la panne photographiée en version 1.0.1 n’est pas encore établie sur le matériel réel.
+
 `.github/workflows/android-player.yml` reste l’unique workflow manuel. Le mode `debug` produit l’APK de test ; `play-release` prépare un APK et un AAB signés avec une clé d’envoi fournie par les secrets GitHub. Java 21, SDK 36 et build-tools 35.0.0 sont conservés. Les contrôles exécutent les tests, vérifient les permissions fusionnées, les segments ELF 16 Ko, les équivalents 64 bits et l’alignement APK. **Cette préparation n’a pas compilé de nouvel APK/AAB ni lancé GitHub Actions.** Voir [GOOGLE_PLAY_TV.md](GOOGLE_PLAY_TV.md) pour la signature, les fichiers et la soumission.
 
 Le manifeste cible Android TV/Google TV (leanback requis) : la distribution Play n’est pas destinée aux téléphones. Le coffre natif n’utilise plus de secours en clair ; les anciens identifiants de secours sont migrés uniquement après écriture chiffrée réussie. Une panne du coffre bloque le nouveau jumelage plutôt que de remplacer l’association existante. Les sauvegardes cloud et transferts Android sont exclus. Le bouton Retour natif ferme les commandes ouvertes, puis quitte l’application à la racine sans effacer le jumelage. Les flèches déplacent le focus dans les deux directions et ne changent plus le média par accident.

@@ -8,7 +8,7 @@ import type { Content, Credentials } from "@/player/protocol";
 
 const native = vi.hoisted(() => ({ value: "", requests: vi.fn() }));
 vi.mock("@capacitor/core", () => ({
-  Capacitor: { isNativePlatform: () => true },
+  Capacitor: { isNativePlatform: () => true, isPluginAvailable: () => true },
   registerPlugin: () => ({
     read: async () => ({ value: native.value }),
     write: async ({ value }: { value: string }) => { native.value = value; },

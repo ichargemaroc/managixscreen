@@ -1,13 +1,20 @@
 import { credentialsSchema, type Credentials } from "./protocol";
+import { vaultError } from "./vault-errors";
 
 const credentialKey = "screenflow-player-identity";
 type NativeCredentialVault = { read(): Promise<{ value?: string }>; write(options: { value: string }): Promise<void>; clear(): Promise<void> };
 async function vault() {
   const { Capacitor, registerPlugin } = await import("@capacitor/core");
-  return Capacitor.isNativePlatform() ? registerPlugin<NativeCredentialVault>("DeviceVault") : null;
+  if (!Capacitor.isNativePlatform()) return null;
+  if (!Capacitor.isPluginAvailable("DeviceVault")) throw vaultError("VAULT_PLUGIN_MISSING");
+  return registerPlugin<NativeCredentialVault>("DeviceVault");
 }
 // Native credentials must never fall back to plaintext WebView storage.
-function limit<T>(task: Promise<T>) { return Promise.race([task, new Promise<never>((_, reject) => setTimeout(() => reject(new Error("vault timeout")), 4000))]); }
+async function limit<T>(task: Promise<T>) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try { return await Promise.race([task, new Promise<never>((_, reject) => { timer = setTimeout(() => reject(vaultError("VAULT_TIMEOUT")), 4000); })]); }
+  finally { clearTimeout(timer); }
+}
 export async function readCredentials(): Promise<Credentials | null> {
   const native = await vault();
   let value: string | null | undefined = null;
@@ -25,7 +32,7 @@ export async function readCredentials(): Promise<Credentials | null> {
     localStorage.removeItem(credentialKey);
   } else value = localStorage.getItem(credentialKey);
   if (!value) return null;
-  try { return credentialsSchema.parse(JSON.parse(value)); } catch { return null; }
+  try { return credentialsSchema.parse(JSON.parse(value)); } catch { throw vaultError("VAULT_INVALID_IDENTITY"); }
 }
 export async function saveCredentials(value: Credentials | null) {
   const native = await vault();

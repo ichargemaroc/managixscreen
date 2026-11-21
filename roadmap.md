@@ -1,5 +1,9 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Blocage du coffre sur TV — version 1.0.1
+- [x] Ajouter des diagnostics sûrs distinguant module absent, délai, déchiffrement et identité invalide ; conserver le jumelage
+- [ ] Identifier la cause native et valider sur la TV : nouvel APK et code de diagnostic de la TV nécessaires
+
 ## Préparation Google Play TV
 - [x] Positionnement de l’image à la souris, recentrage, coordonnées partagées avec le lecteur ; sauvegarde et relecture vérifiées sur un vrai mur
 - [x] Manifeste TV, identité graphique embarquée, versionnement et signature de production sans secrets dans le dépôt

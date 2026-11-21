@@ -35,24 +35,27 @@ public class DeviceVaultPlugin extends Plugin {
       String encrypted = Base64.encodeToString(cipher.doFinal(value.getBytes(StandardCharsets.UTF_8)), Base64.NO_WRAP);
       String iv = Base64.encodeToString(cipher.getIV(), Base64.NO_WRAP);
       boolean committed = getContext().getSharedPreferences(ALIAS, Context.MODE_PRIVATE).edit().putString("cipher", encrypted).putString("iv", iv).commit();
-      if (!committed) { call.reject("Storage unavailable"); return; } call.resolve();
-    } catch (Exception e) { call.reject("Secure storage unavailable"); }
+      if (!committed) { call.reject("Secure storage unavailable", "VAULT_WRITE_FAILED"); return; } call.resolve();
+    } catch (Exception e) { call.reject("Secure storage unavailable", "VAULT_WRITE_FAILED"); }
   }
   @PluginMethod public void read(PluginCall call) {
     try {
       var prefs = getContext().getSharedPreferences(ALIAS, Context.MODE_PRIVATE);
       String encrypted = prefs.getString("cipher", null), iv = prefs.getString("iv", null);
       JSObject result = new JSObject();
+      if ((encrypted == null) != (iv == null)) {
+        call.reject("Secure storage incomplete", "VAULT_INCOMPLETE"); return;
+      }
       if (encrypted != null && iv != null) {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding"); cipher.init(Cipher.DECRYPT_MODE, key(), new GCMParameterSpec(128, Base64.decode(iv, Base64.NO_WRAP)));
         result.put("value", new String(cipher.doFinal(Base64.decode(encrypted, Base64.NO_WRAP)), StandardCharsets.UTF_8));
       }
       call.resolve(result);
-    } catch (Exception e) { call.reject("Secure storage unavailable"); }
+    } catch (Exception e) { call.reject("Secure storage unavailable", "VAULT_READ_FAILED"); }
   }
   @PluginMethod public void clear(PluginCall call) {
     boolean committed = getContext().getSharedPreferences(ALIAS, Context.MODE_PRIVATE).edit().clear().commit();
-    if (!committed) { call.reject("Secure storage unavailable"); return; }
+    if (!committed) { call.reject("Secure storage unavailable", "VAULT_CLEAR_FAILED"); return; }
     call.resolve();
   }
 }
