@@ -2,8 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import logoAsset from "@/assets/screenflow-logo.png.asset.json";
-import welcomeImage from '@/assets/screenflow-tv-welcome.png';
-import { ArrowRight } from "lucide-react";
+import heroAsset from '@/assets/screenflow-tv-hero.png.asset.json';
+import markAsset from '@/assets/screenflow-mark.png.asset.json';
+import { ArrowRight, Image, Globe, ListVideo, Monitor } from "lucide-react";
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -87,34 +88,44 @@ function AuthPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="flex h-20 shrink-0 items-center justify-between gap-2 border-b bg-background px-4 sm:px-10">
+      <header className="welcome-header">
         <img src={logoAsset.url} alt="Screenflow" className="welcome-logo h-10 w-auto max-w-32 shrink-0 object-contain" />
+        <nav aria-label="Navigation de l’accueil" className="welcome-nav">
+          <Button variant="ghost" asChild><a href="#screenflow">Découvrir Screenflow</a></Button>
+          <Button variant="ghost" asChild><a href="#contenus">Vos contenus</a></Button>
+          <Button variant="ghost" asChild><a href="#questions">Questions fréquentes</a></Button>
+        </nav>
         <div className="flex items-center gap-1 sm:gap-2">
           <ThemeToggle />
-          <Button variant="outline" className="shrink-0" onClick={() => { setMode('login'); setConnecting(true); }}>Se connecter</Button>
+          <Button className="shrink-0 rounded-full px-5" onClick={() => { setMode('login'); setConnecting(true); }}>Se connecter</Button>
         </div>
       </header>
       <main>
-        <section className="google-tv-welcome">
-          <img src={welcomeImage} alt="Une télévision affichant une composition de paysages et d’images colorées" className="google-tv-welcome-image" />
+        <section id="screenflow" className="google-tv-welcome">
+          <img src={heroAsset.url} alt="Télévision Screenflow présentant des paysages, de l’architecture et des images colorées" className="google-tv-welcome-image" fetchPriority="high" />
           <div className="google-tv-welcome-copy">
-            <p className="mb-3 text-sm font-medium text-primary">Vos contenus. Tous vos écrans.</p>
-            <h1 className="google-tv-welcome-title">ScreenFlow</h1>
-            <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">Faites vivre vos écrans, où que vous soyez.</p>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Button size="lg" onClick={() => { setMode("signup"); setConnecting(true); }}>Commencer <ArrowRight /></Button>
-              <Button size="lg" variant="outline" onClick={() => { setMode("login"); setConnecting(true); }}>Se connecter</Button>
+            <h1 className="google-tv-welcome-title"><img src={markAsset.url} alt="" />Screenflow</h1>
+            <p className="google-tv-welcome-tagline">Tous vos contenus.<br />Un seul espace pour vos écrans.</p>
+            <Button size="lg" className="mt-6 rounded-full px-7" onClick={() => { setMode("signup"); setConnecting(true); }}>Commencer avec Screenflow <ArrowRight /></Button>
+          </div>
+        </section>
+        <section id="contenus" className="welcome-content-band bg-background px-6 sm:px-12">
+          <div className="mx-auto max-w-5xl text-center">
+            <p className="mx-auto max-w-2xl text-lg leading-relaxed text-muted-foreground">Vos images, vos vidéos et vos pages Web réunies sur vos TV Android. De l’écran d’accueil au mur d’images, donnez à chaque lieu le contenu qui lui ressemble.</p>
+            <h2 className="mt-14 text-4xl font-medium">À chaque écran, son contenu.</h2>
+            <div className="welcome-content-grid">
+              {[{ icon: Image, title: 'Photos & vidéos', detail: 'Vos médias sur grand écran.' }, { icon: Globe, title: 'Pages Web', detail: 'Vos sites et contenus en ligne.' }, { icon: ListVideo, title: 'Playlists', detail: 'Vos contenus, dans le bon ordre.' }, { icon: Monitor, title: 'Murs d’écrans', detail: 'Une image, plusieurs écrans.' }].map(({ icon: Icon, title, detail }) => <div key={title}><Icon className="mx-auto mb-5 size-8 text-primary" strokeWidth={1.5} /><h3 className="text-lg font-medium">{title}</h3><p className="mt-2 text-sm text-muted-foreground">{detail}</p></div>)}
             </div>
           </div>
         </section>
-        <section className="border-t bg-background px-6 py-12 sm:px-12">
-          <div className="mx-auto max-w-6xl text-center">
-            <p className="mb-3 text-sm font-medium text-primary">À chaque écran, son contenu</p>
-            <h2 className="text-3xl font-medium">Un seul espace. Toutes vos TV.</h2>
-            <div className="mt-8 flex flex-wrap justify-center gap-x-10 gap-y-4 text-sm text-muted-foreground"><span>Photos & vidéos</span><span>Pages Web</span><span>Playlists</span><span>Murs d’écrans</span></div>
+        <section id="questions" className="bg-muted px-6 py-16 sm:px-12">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="mb-8 text-center text-3xl font-medium">Questions fréquentes</h2>
+            {[['Comment connecter ma télévision ?', 'Ouvrez Screenflow Player sur votre télévision Android, puis associez-la à votre compte avec le code affiché ou son QR code.'], ['Quels contenus puis-je diffuser ?', 'Ajoutez vos photos, vidéos ou pages Web dans Médias, puis réunissez-les dans une playlist à affecter à vos écrans. Certains sites limitent leur affichage intégré.'], ['Puis-je gérer plusieurs écrans ?', 'Oui. Retrouvez vos télévisions dans le même espace, organisez-les en groupes et affectez vos playlists ou vos murs d’images.']].map(([question, answer]) => <details className="welcome-faq border-b py-5" key={question}><summary className="cursor-pointer text-lg font-medium">{question}</summary><p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">{answer}</p></details>)}
           </div>
         </section>
       </main>
+      <footer className="flex flex-wrap items-center justify-between gap-4 border-t px-6 py-7 sm:px-12"><img src={logoAsset.url} alt="Screenflow" className="welcome-logo h-8 w-auto max-w-28 object-contain" /><span className="text-sm text-muted-foreground">Vos contenus. Tous vos écrans.</span></footer>
       <Dialog open={connecting} onOpenChange={setConnecting}>
       <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-md">
       <div className="w-full">
