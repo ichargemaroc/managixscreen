@@ -1,5 +1,5 @@
 import { z } from 'zod';
-const mediaPlacement = { media_x: z.number().finite().min(-1).max(1).optional(), media_y: z.number().finite().min(-1).max(1).optional() };
+const mediaPlacement = { media_x: z.number().finite().min(-1).max(1).optional(), media_y: z.number().finite().min(-1).max(1).optional(), media_scale: z.number().finite().min(0.1).max(3).optional() };
 export const wallConfigSchema = z.object({ ...mediaPlacement, name: z.string().trim().min(1).max(120), columns: z.number().int().min(1).max(8), rows: z.number().int().min(1).max(8), width: z.number().int().min(320).max(32768), height: z.number().int().min(180).max(32768), gap_x: z.number().int().min(0).max(1000), gap_y: z.number().int().min(0).max(1000), orientation: z.enum(['landscape','portrait']), media_id: z.string().uuid().nullable() }).refine(w => w.width > (w.columns-1)*w.gap_x && w.height > (w.rows-1)*w.gap_y, 'Les espaces dépassent la taille du mur.');
 export const wallPlaybackSchema = z.object({ ...mediaPlacement, id: z.string().uuid(), name: z.string(), columns: z.number().int().min(1).max(8), rows: z.number().int().min(1).max(8), width: z.number().positive(), height: z.number().positive(), gap_x: z.number().nonnegative(), gap_y: z.number().nonnegative(), orientation: z.enum(['landscape','portrait']), row_index: z.number().int().nonnegative(), column_index: z.number().int().nonnegative(), state: z.enum(['playing','paused','stopped']), epoch: z.string(), position_seconds: z.number().nonnegative(), revision: z.number() });
 export type WallConfig = z.infer<typeof wallConfigSchema>;
@@ -32,8 +32,8 @@ export function wallPosition(w: Pick<WallPlayback,'state'|'epoch'|'position_seco
   return duration && duration>0 ? time%duration : time;
 }
 // A single global contain-fit preserves the source proportions before each physical viewport is cropped.
-export function wallMediaRect(w: Pick<WallPlayback,'width'|'height'|'media_x'|'media_y'>, sourceWidth:number, sourceHeight:number) {
-  const scale=Math.min(w.width/sourceWidth,w.height/sourceHeight);
+export function wallMediaRect(w: Pick<WallPlayback,'width'|'height'|'media_x'|'media_y'|'media_scale'>, sourceWidth:number, sourceHeight:number) {
+  const scale=Math.min(w.width/sourceWidth,w.height/sourceHeight)*(w.media_scale??1);
   return { x:(w.width-sourceWidth*scale)/2+(w.media_x??0)*w.width,y:(w.height-sourceHeight*scale)/2+(w.media_y??0)*w.height,width:sourceWidth*scale,height:sourceHeight*scale };
 }
 export function moveWallMedia(start: { media_x: number; media_y: number }, deltaX: number, deltaY: number, previewWidth: number, previewHeight: number) {

@@ -229,7 +229,7 @@
 @media (max-width: 640px), (max-height: 500px) { .tv-enrollment { padding: 24px; } .tv-player h1 { font-size: 28px; } .tv-center { gap: 18px; } .tv-display-icon { width: 48px; height: 48px; } .tv-code { font-size: 36px; gap: 8px; max-width: 340px; } .tv-footer { font-size: 10px; } .tv-controls { left: 12px; right: 12px; bottom: 12px; } }
 
 .wall-preview { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; overflow: hidden; background: var(--muted); border: 1px solid var(--border); border-radius: 4px; max-height: 520px; }
-.wall-preview > img, .wall-preview > video { width: 100%; height: 100%; object-fit: contain; position: absolute; inset: 0; }
+.wall-preview > img, .wall-preview > video { width: 100%; height: 100%; max-width: none; object-fit: contain; position: absolute; inset: 0; }
 .wall-preview-lines { position: absolute; inset: 0; display: grid; pointer-events: none; }
 .wall-preview-lines > span { border: 1px solid var(--primary); }
 .wall-assignment-grid { display: grid; gap: 12px; overflow-x: auto; padding-bottom: 8px; }

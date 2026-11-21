@@ -667,6 +667,7 @@ export type Database = {
           height: number
           id: string
           media_id: string | null
+          media_scale: number
           media_x: number
           media_y: number
           name: string
@@ -687,6 +688,7 @@ export type Database = {
           height?: number
           id?: string
           media_id?: string | null
+          media_scale?: number
           media_x?: number
           media_y?: number
           name: string
@@ -707,6 +709,7 @@ export type Database = {
           height?: number
           id?: string
           media_id?: string | null
+          media_scale?: number
           media_x?: number
           media_y?: number
           name?: string

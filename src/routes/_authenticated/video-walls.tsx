@@ -27,7 +27,7 @@ function WallsPage(){
   const [busy,setBusy]=useState(false); const [error,setError]=useState(''); const [removing,setRemoving]=useState<VideoWall|null>(null);
   const [selected,setSelected]=useState<string|null>(null);
   const active=walls.find(w=>w.id===selected)??walls[0];
-  const begin=(wall?:VideoWall)=>{setEditing(wall?.id??null);setConfig(wall?{name:wall.name,columns:wall.columns,rows:wall.rows,width:wall.width,height:wall.height,gap_x:wall.gap_x,gap_y:wall.gap_y,orientation:wall.orientation,media_id:wall.media_id,media_x:wall.media_x??0,media_y:wall.media_y??0}:DEFAULT);setMembers(wall?.members.map(m=>({...m}))??[]);setError('');setOpen(true);};
+  const begin=(wall?:VideoWall)=>{setEditing(wall?.id??null);setConfig(wall?{name:wall.name,columns:wall.columns,rows:wall.rows,width:wall.width,height:wall.height,gap_x:wall.gap_x,gap_y:wall.gap_y,orientation:wall.orientation,media_id:wall.media_id,media_x:wall.media_x??0,media_y:wall.media_y??0,media_scale:wall.media_scale??1}:DEFAULT);setMembers(wall?.members.map(m=>({...m}))??[]);setError('');setOpen(true);};
   const run=async(task:()=>Promise<unknown>)=>{setBusy(true);try{await task();refresh();}catch(e){toast.error(e instanceof Error?e.message:'La modification a échoué.');}finally{setBusy(false);}};
   const resize=(columns:number,rows:number)=>{setConfig(c=>({...c,columns,rows,width:columns*(c.orientation==='landscape'?1920:1080),height:rows*(c.orientation==='landscape'?1080:1920)}));setMembers(list=>list.filter(m=>m.column_index<columns&&m.row_index<rows));};
 

@@ -14,6 +14,7 @@
 - [ ] Compilation APK et essais sur TV physiques : matériel et exécution GitHub indisponibles
 
 ## Murs d’images
+- [x] Redimensionnement proportionnel du contenu avec curseur et zoom ; taille 150 % enregistrée puis relue, réduction/recentrage et affichage mobile vérifiés ; 28 tests réussis
 - [x] Sélecteur détaillé par cellule, remplacement/retrait, erreurs visibles et enregistrement des affectations datées
 - [x] Affectation, déplacement et retrait relus après rechargement sur compte réel ; 41 tests du mur, du protocole appareil et du lecteur réussis, sans modifier la transmission existante
 - [x] Configuration, grille, affectations uniques et contenu depuis la médiathèque

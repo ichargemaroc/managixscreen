@@ -99,6 +99,13 @@
       "when": 1795279149135,
       "tag": "0013_wall_media_placement",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795279814193,
+      "tag": "0014_wall_media_proportional_scale",
+      "breakpoints": true
     }
   ]
 }

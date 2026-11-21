@@ -1,17 +1,25 @@
 import { useRef, useState } from 'react';
-import { Monitor, Move, RotateCcw } from 'lucide-react';
+import { Monitor, Move, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
 import { wallMediaRect, wallViewport, moveWallMedia, type WallConfig } from '@/lib/video-wall';
 import type { Media } from '@/lib/store';
 
-export function WallMediaPreview({ config, media, onChange }: { config: WallConfig; media: Media | undefined; onChange?: (placement: { media_x: number; media_y: number }) => void }) {
+export function WallMediaPreview({ config, media, onChange }: { config: WallConfig; media: Media | undefined; onChange?: (placement: Partial<Pick<WallConfig, 'media_x' | 'media_y' | 'media_scale'>>) => void }) {
   const [dimensions, setDimensions] = useState({ width: 1, height: 1, id: '' });
   const drag = useRef<{ pointer: number; x: number; y: number; width: number; height: number; media_x: number; media_y: number } | null>(null);
   const ready = Boolean(media && dimensions.id === media.id);
+  const scalePercent = Math.round((config.media_scale ?? 1) * 100);
+  const changeScale = (percent: number) => onChange?.({ media_scale: Math.max(10, Math.min(300, percent)) / 100 });
   const rect = wallMediaRect(config, dimensions.width, dimensions.height);
   const positioned = { left: `${rect.x / config.width * 100}%`, top: `${rect.y / config.height * 100}%`, width: `${rect.width / config.width * 100}%`, height: `${rect.height / config.height * 100}%` };
   return <div className="space-y-2">
-    {onChange && <div className="flex justify-end gap-1">
+    {onChange && <div className="flex flex-wrap items-center justify-end gap-1">
+      <span className="mr-auto text-sm text-muted-foreground">Taille de l’image</span>
+      <Button variant="ghost" size="icon" title="Réduire" aria-label="Réduire l’image" disabled={!media || scalePercent <= 10} onClick={() => changeScale(scalePercent - 10)}><ZoomOut /></Button>
+      <Slider className="w-24 sm:w-36" min={10} max={300} step={1} value={[scalePercent]} disabled={!media} aria-label="Taille proportionnelle de l’image" onValueChange={values => { const value = values[0]; if (value !== undefined) changeScale(value); }} />
+      <Button variant="ghost" size="icon" title="Agrandir" aria-label="Agrandir l’image" disabled={!media || scalePercent >= 300} onClick={() => changeScale(scalePercent + 10)}><ZoomIn /></Button>
+      <Button variant="ghost" className="w-16 tabular-nums" title="Rétablir la taille à 100 %" aria-label="Rétablir la taille de l’image" disabled={!media} onClick={() => changeScale(100)}>{scalePercent} %</Button>
       <Button variant="ghost" size="icon" title="Déplacer l’image" aria-label="Déplacer l’image" disabled={!media} onClick={() => document.querySelector<HTMLElement>('[aria-label="Position du contenu sur le mur"]')?.focus()}><Move /></Button>
       <Button variant="ghost" size="icon" title="Recentrer" aria-label="Recentrer l’image" disabled={!media} onClick={() => onChange({ media_x: 0, media_y: 0 })}><RotateCcw /></Button>
     </div>}
