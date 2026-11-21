@@ -1,5 +1,11 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Test de position des murs
+- [x] Commandes individuelles sécurisées depuis les affectations réelles, durée bornée, arrêt et suivi honnête des accusés
+- [x] Écran de test partagé Android/web, grille numérotée et contrôles dans l’administration
+- [x] Tests automatisés, parcours connecté avec commande affichée/confirmée, TV hors ligne non envoyée, arrêt et expiration hors réseau ; documentation d’utilisation
+- [ ] Compilation APK et essais sur TV physiques : matériel et exécution GitHub indisponibles
+
 ## Murs d’images
 - [x] Sélecteur détaillé par cellule, remplacement/retrait, erreurs visibles et enregistrement des affectations datées
 - [x] Affectation, déplacement et retrait relus après rechargement sur compte réel ; 41 tests du mur, du protocole appareil et du lecteur réussis, sans modifier la transmission existante

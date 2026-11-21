@@ -57,3 +57,5 @@ use the editor.
 - Video walls use owner-scoped transactional configuration and a token-revalidated device manifest that overrides standard playlists; one screen belongs to one wall to avoid conflicting playback assignments.
 - Wall assignment cells use a dedicated screen picker and client-safe assignment rules; the existing transactional RPC remains authoritative and preserves timestamps for unchanged positions, leaving unknown historical dates null.
 - Wall playback crops one globally contain-fitted cached source into physical viewports, uses a persisted server timeline with midpoint clock correction and drift seeking, and retains control state offline; this is best-effort synchronization, not hardware frame lock or server-side transcoding.
+
+- Wall position tests reuse device_commands with server-derived assignment snapshots, expiring sessions and owner-only RPCs; independent five-second player polling must not wait for media downloads, and acknowledgements confirm rendered tests rather than enqueue success.

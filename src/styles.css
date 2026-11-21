@@ -231,3 +231,19 @@
 .wall-preview-lines { position: absolute; inset: 0; display: grid; pointer-events: none; }
 .wall-preview-lines > span { border: 1px solid var(--primary); }
 .wall-assignment-grid { display: grid; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+
+/* Isolated position-test palette shared by the grid and full-screen player. */
+:root { --position-blue: oklch(0.43 0.16 260); --position-red: oklch(0.43 0.17 25); --position-green: oklch(0.40 0.10 155); --position-violet: oklch(0.43 0.15 310); --position-teal: oklch(0.40 0.09 210); --position-gold: oklch(0.43 0.09 75); --position-ink: oklch(1 0 0); }
+.position-color-0 { --position-color: var(--position-blue); }
+.position-color-1 { --position-color: var(--position-red); }
+.position-color-2 { --position-color: var(--position-green); }
+.position-color-3 { --position-color: var(--position-violet); }
+.position-color-4 { --position-color: var(--position-teal); }
+.position-color-5 { --position-color: var(--position-gold); }
+.position-cell { background: var(--position-color); color: var(--position-ink); border-radius: 4px; padding: 12px; min-width: 100px; }
+.tv-position-test { position: absolute; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; background: var(--position-color); color: var(--position-ink); text-align: center; overflow: hidden; }
+.tv-position-test strong { font-size: 180px; line-height: 1; font-weight: 800; }
+.tv-position-test p { font-size: 24px; max-width: 90%; overflow-wrap: anywhere; }
+.tv-position-test .position-label { font-size: 32px; font-weight: 600; }
+.tv-position-test small { font-size: 16px; }
+@media (max-height: 600px), (max-width: 640px) { .tv-position-test strong { font-size: 110px; } .tv-position-test p { font-size: 18px; } .tv-position-test .position-label { font-size: 22px; } .tv-position-test { gap: 8px; } }

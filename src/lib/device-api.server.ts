@@ -86,7 +86,7 @@ export async function handleDeviceRequest(request: Request, operation: "request"
     if (operation === "commands") {
       const { data, error } = await supabaseAdmin.rpc("device_poll_commands", { p_device: input.device_id, p_hash: hash });
       if (error) return reply({ error: "Appareil non autorisé" }, 401);
-      return reply({ commands: data });
+      return reply({ commands: data, server_time: new Date().toISOString() });
     }
     if (operation === "ack") {
       const ack = commandAck.parse(parsedBody);

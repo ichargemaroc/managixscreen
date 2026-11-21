@@ -11,6 +11,7 @@ import { useStore, saveVideoWall, controlVideoWall, deleteVideoWall, type Media 
 import { wallConfigSchema, wallViewport, type WallConfig, type WallMember, type VideoWall } from '@/lib/video-wall';
 import { toast } from 'sonner';
 import { WallAssignments } from '@/components/wall-assignments';
+import { WallPositionTest } from '@/components/wall-position-test';
 export const Route=createFileRoute('/_authenticated/video-walls')({head:()=>({meta:[
   {title:'Murs d’images — ScreenFlow'}, {name:'description',content:'Configurez vos murs de télévisions, leurs positions et la diffusion commune de vos images et vidéos.'},
   {property:'og:title',content:'Murs d’images — ScreenFlow'},{property:'og:description',content:'Gestion des murs d’images et contrôle des lecteurs ScreenFlow.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary_large_image'},
@@ -52,7 +53,8 @@ function WallsPage(){
           <Button variant="ghost" size="icon" title="Supprimer" aria-label="Supprimer le mur" onClick={()=>setRemoving(active)}><Trash2/></Button>
         </div></div>
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(240px,1fr)]"><Preview config={active} media={media.find(m=>m.id===active.media_id)}/><div className="min-w-0"><h3 className="mb-3 text-sm font-medium">Positions des écrans</h3><div className="space-y-3">{Array.from({length:active.rows*active.columns},(_,i)=>{const row=Math.floor(i/active.columns),col=i%active.columns;const member=active.members.find(m=>m.row_index===row&&m.column_index===col);const screen=screens.find(s=>s.id===member?.screen_id);return <div key={i} className="flex items-center justify-between gap-3 border-b pb-2 text-sm"><span className="min-w-0"><span className="text-muted-foreground">{row+1}:{col+1}</span> · {screen?.name??'Libre'}</span>{screen && <StatusBadge status={screen.status}/>}</div>;})}</div></div></div>
-        <div className="mt-7 border-t pt-5"><h3 className="mb-3 text-sm font-medium">Commandes communes</h3>{wallEvents.filter(e=>e.wall_id===active.id).slice(0,5).map(e=><div key={e.id} className="flex flex-wrap justify-between gap-2 py-2 text-sm"><span>{e.action==='play'?'Démarrer / reprendre':e.action==='pause'?'Pause':'Arrêt'}</span><time className="text-muted-foreground">{new Date(e.effective_at).toLocaleString('fr-FR')}</time></div>)}</div>
+         <WallPositionTest key={active.id} wall={active}/>
+         <div className="mt-7 border-t pt-5"><h3 className="mb-3 text-sm font-medium">Commandes communes</h3>{wallEvents.filter(e=>e.wall_id===active.id).slice(0,5).map(e=><div key={e.id} className="flex flex-wrap justify-between gap-2 py-2 text-sm"><span>{e.action==='play'?'Démarrer / reprendre':e.action==='pause'?'Pause':'Arrêt'}</span><time className="text-muted-foreground">{new Date(e.effective_at).toLocaleString('fr-FR')}</time></div>)}</div>
       </section>}
     </>}
     <Dialog open={open} onOpenChange={value=>{if(!busy)setOpen(value);}}><DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-5xl"><DialogHeader><DialogTitle>{editing?'Configurer le mur':'Nouveau mur d’images'}</DialogTitle><DialogDescription>Configuration et affectations</DialogDescription></DialogHeader>

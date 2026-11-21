@@ -9,8 +9,13 @@ import { pairingUrl } from "@/lib/qr-pairing";
 // Bundled locally so the logo also shows inside the offline Android app (relative CDN URLs do not resolve there).
 import markUrl from "./screenflow-mark.png";
 import { WallStage } from "./wall-stage";
+import { PositionStage } from "./position-stage";
+import { receivedPositionTest, type PositionTest } from "@/lib/position-test";
+import { flushSync } from "react-dom";
 
 export function TVPlayer() {
+  const [positionTest, setPositionTest] = useState<PositionTest | null>(null);
+  const commandBusy = useRef(false);
   const [identity, setIdentity] = useState<Credentials | null>(null);
   const [content, setContent] = useState<Content | null>(null);
   const [phase, setPhase] = useState<"boot" | "ready" | "pairing" | "playing" | "revoked">("boot");
@@ -86,13 +91,52 @@ export function TVPlayer() {
         }
         await deviceApi("heartbeat", identity, { player_version: "web-0.1.0", playback_status: { state: playback.current, playlist_id: current.current.content?.playlist?.id ?? null, media_id: current.current.content?.playlist?.items[current.current.index]?.media.id ?? null } });
         try { await sync(identity); } catch (e) { if (e instanceof DeviceApiError && e.status === 401) throw e; setProgress(""); setError("Synchronisation interrompue ; contenu local conservé."); }
-        const queue = commandsSchema.parse(await deviceApi("commands", identity));
+
+      } catch (e) {
+        if (e instanceof DeviceApiError && e.status === 401) {
+          await saveCredentials(null); await clearMediaCache(); setContent(null); setSource(""); setIdentity(null); setPhase("revoked"); setPositionTest(null);
+        }
+        if (!cancelled) setError(e instanceof Error ? e.message : "Synchronisation indisponible.");
+        setProgress("");
+      } finally { busy.current = false; }
+    };
+    // Leave request capacity for the independent command poll and its acknowledgements.
+    void tick(); const timer = window.setInterval(() => void tick(), identity.paired ? content?.wall ? 15000 : 30000 : 5000);
+    const resume = () => void tick(); window.addEventListener("online", resume);
+    return () => { cancelled = true; clearInterval(timer); window.removeEventListener("online", resume); };
+  }, [identity, phase, content?.wall?.id]);
+
+  // Independent of media downloads: position commands must also reach a player without content.
+  useEffect(() => {
+    if (!identity?.paired || phase === "revoked") return;
+    let cancelled = false;
+    let retryAfter = 0;
+    const poll = async () => {
+      if (commandBusy.current || !navigator.onLine || Date.now() < retryAfter) return;
+      commandBusy.current = true;
+      try {
+        const sent = Date.now();
+        const response = await deviceApi("commands", identity);
+        const queue = commandsSchema.parse(response);
+        const server = queue.server_time ? Date.parse(queue.server_time) : sent;
+        const serverNow = server + (Date.now() - sent) / 2;
         for (const command of queue.commands) {
-          if (cancelled || Date.parse(command.expires_at) <= Date.now()) continue;
+          if (cancelled || Date.parse(command.expires_at) <= serverNow) continue;
           let receipt = await commandReceipt(command.id);
           let restart = false;
           if (!receipt) {
             try {
+              if (command.command === "position_test") {
+                const test = receivedPositionTest(command.payload, Date.parse(command.expires_at) - serverNow);
+                // Commit the full-screen surface before acknowledging its execution.
+                flushSync(() => { setPositionTest(test); setNow(Date.now()); });
+                await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+              }
+              if (command.command === "stop_position_test") {
+                const payload = command.payload as { wall_id?: unknown } | null;
+                if (!payload || typeof payload.wall_id !== "string") throw new Error("Commande invalide");
+                flushSync(() => setPositionTest(previous => previous?.wall_id === payload.wall_id ? null : previous));
+              }
               if (command.command === "clear_cache") { await clearMediaCache(); setContent(null); await sync(identity); }
               if (command.command === "refresh_content" || command.command === "reload_playlist") { await sync(identity); if (command.command === "reload_playlist") setIndex(0); }
               restart = command.command === "restart_player";
@@ -105,17 +149,19 @@ export function TVPlayer() {
           await deviceApi("commands/ack", identity, { command_id: command.id, status: receipt.status, ...(receipt.error ? { error: receipt.error } : {}) });
         }
       } catch (e) {
-        if (e instanceof DeviceApiError && e.status === 401) {
-          await saveCredentials(null); await clearMediaCache(); setContent(null); setSource(""); setIdentity(null); setPhase("revoked");
-        }
-        if (!cancelled) setError(e instanceof Error ? e.message : "Synchronisation indisponible.");
-        setProgress("");
-      } finally { busy.current = false; }
+        if (e instanceof DeviceApiError && e.status === 429) retryAfter = Date.now() + 60000;
+        if (e instanceof DeviceApiError && e.status === 401) { setPositionTest(null); setPhase("revoked"); }
+      } finally { commandBusy.current = false; }
     };
-    void tick(); const timer = window.setInterval(() => void tick(), identity.paired ? content?.wall ? 10000 : 30000 : 5000);
-    const resume = () => void tick(); window.addEventListener("online", resume);
-    return () => { cancelled = true; clearInterval(timer); window.removeEventListener("online", resume); };
-  }, [identity, phase, content?.wall?.id]);
+    void poll(); const timer = window.setInterval(() => void poll(), 5000);
+    window.addEventListener("online", poll);
+    return () => { cancelled = true; clearInterval(timer); window.removeEventListener("online", poll); };
+  }, [identity, phase]);
+  useEffect(() => {
+    if (!positionTest) return;
+    const timer = setTimeout(() => setPositionTest(null), Math.max(0, positionTest.deadline - Date.now()));
+    return () => clearTimeout(timer);
+  }, [positionTest]);
 
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
   useEffect(() => {
@@ -124,13 +170,14 @@ export function TVPlayer() {
     return () => { active = false; if (url) URL.revokeObjectURL(url); };
   }, [content?.playlist?.id, content?.playlist?.updated_at, item?.id]);
   useEffect(() => {
-    if (content?.wall || !item || !source || paused || item.media.type !== "image") return;
+    if (positionTest || content?.wall || !item || !source || paused || item.media.type !== "image") return;
     playback.current = "playing";
     const timer = setTimeout(() => setIndex((value) => nextItem(value, items.length)), imageDuration(item)); return () => clearTimeout(timer);
-  }, [item?.id, item?.display_duration, source, paused, items.length, content?.wall?.id]);
-  useEffect(() => { if (paused) { playback.current = "paused"; video.current?.pause(); } else if (video.current) void video.current.play().catch(() => { setError("Lecture vidéo bloquée. Appuyez sur Lecture."); setControls(true); }); }, [paused, source]);
+  }, [item?.id, item?.display_duration, source, paused, items.length, content?.wall?.id, positionTest]);
+  useEffect(() => { if (paused || (positionTest && !content?.wall)) { playback.current = "paused"; video.current?.pause(); } else if (video.current) void video.current.play().catch(() => { setError("Lecture vidéo bloquée. Appuyez sur Lecture."); setControls(true); }); }, [paused, source, positionTest, content?.wall?.id]);
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
+      if (positionTest) return;
       if (event.key !== "Escape" && event.key !== "BrowserBack") setControls(true);
       if (event.key === "ArrowRight" && phase === "playing" && !content?.wall) { event.preventDefault(); setIndex((value) => nextItem(value, items.length)); }
       else if ((event.key === " " || event.key === "MediaPlayPause") && !content?.wall) { event.preventDefault(); setPaused((value) => !value); }
@@ -141,7 +188,7 @@ export function TVPlayer() {
       }
     };
     window.addEventListener("keydown", key); return () => window.removeEventListener("keydown", key);
-  }, [phase, items.length, content?.wall?.id]);
+  }, [phase, items.length, content?.wall?.id, positionTest]);
   useEffect(() => { if (!controls) return; const timer = setTimeout(() => setControls(false), 6000); return () => clearTimeout(timer); }, [controls]);
 
   const expired = identity && !identity.paired && now >= identity.expires_at;
@@ -163,5 +210,6 @@ export function TVPlayer() {
     </div>}
     {phase === "playing" && source && controls && <div className="tv-controls"><span>{online ? <Wifi /> : <WifiOff />}{content?.playlist?.name} · {index + 1}/{items.length}{progress && ` · ${progress}`}</span><div><Button disabled={Boolean(content?.wall)} variant="ghost" size="icon" aria-label={paused ? "Lecture" : "Pause"} onClick={() => setPaused(!paused)}>{paused ? <Play /> : <Pause />}</Button><Button disabled={Boolean(content?.wall)} variant="ghost" size="icon" aria-label="Média suivant" onClick={() => setIndex((value) => nextItem(value, items.length))}><ChevronRight /></Button><Button variant="ghost" size="icon" aria-label="Synchroniser" disabled={busy.current || !identity || !online} onClick={() => { if (identity && !busy.current) { busy.current = true; void sync(identity).catch(() => setError("Synchronisation indisponible.")).finally(() => { busy.current = false; }); } }}><RefreshCw /></Button><Button variant="ghost" size="icon" aria-label="Plein écran" onClick={() => void enterPlayerMode()}><Maximize /></Button></div>{error && <p role="alert">{error}</p>}</div>}
     {phase === "playing" && source && !controls && <Button className="tv-menu" variant="ghost" size="icon" aria-label="Commandes de lecture" onClick={() => setControls(true)}><Settings2 /></Button>}
+    {positionTest && <PositionStage test={positionTest} now={now} />}
   </main>;
 }

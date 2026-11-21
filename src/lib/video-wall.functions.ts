@@ -12,3 +12,9 @@ export const controlWall = createServerFn({method:'POST'}).middleware([requireSu
   const {error}=await context.supabase.rpc('control_video_wall',{p_wall:data.id,p_action:data.action});
   if(error) throw new Error('Sélectionnez un contenu et au moins un écran avant de lancer le mur.');
 });
+
+export const positionTest = createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(z.object({id:z.string().uuid(),action:z.enum(['start','stop']),duration:z.number().int().min(10).max(300).default(60)})).handler(async ({data,context})=>{
+  const {data:result,error}=await context.supabase.rpc('control_wall_position_test',{p_wall:data.id,p_action:data.action,p_duration:data.duration});
+  if(error) throw new Error('Test refusé : vérifiez le mur et ses affectations.');
+  return result;
+});

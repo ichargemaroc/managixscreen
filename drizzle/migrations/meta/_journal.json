@@ -78,6 +78,20 @@
       "when": 1795272152323,
       "tag": "0010_wall_assignment_dates",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795274696597,
+      "tag": "0011_wall_position_test",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1795274857631,
+      "tag": "0012_restrict_position_test_enqueue",
+      "breakpoints": true
     }
   ]
 }

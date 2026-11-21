@@ -3,8 +3,8 @@ import { commandAck, deviceCommand, deviceReport } from "@/lib/player-protocol";
 
 const device_id = "a67f4500-b2f4-4049-9a31-5433f14aad57";
 describe("Native player input rules", () => {
-  it("allows exactly the four requested device commands", () => {
-    for (const command of ["refresh_content", "reload_playlist", "restart_player", "clear_cache"]) expect(deviceCommand.safeParse(command).success).toBe(true);
+  it("allows maintenance and the two position test commands only", () => {
+    for (const command of ["refresh_content", "reload_playlist", "restart_player", "clear_cache", "position_test", "stop_position_test"]) expect(deviceCommand.safeParse(command).success).toBe(true);
     expect(deviceCommand.safeParse("execute_shell").success).toBe(false);
   });
   it("accepts device version and playback data but rejects server-owned timestamps", () => {

@@ -97,7 +97,7 @@ describe("Device API isolation", () => {
     mocks.from.mockReturnValue(row({ device_id: deviceId }));
     mocks.rpc.mockResolvedValueOnce({ data: true }).mockResolvedValueOnce({ data: [{ id: deviceId, command: "restart_player" }] });
     const response = await handleDeviceRequest(request("a".repeat(64)), "commands");
-    expect(await response.json()).toEqual({ commands: [{ id: deviceId, command: "restart_player" }] });
+    expect(await response.json()).toEqual({ commands: [{ id: deviceId, command: "restart_player" }], server_time: expect.any(String) });
     expect(mocks.rpc).toHaveBeenLastCalledWith("device_poll_commands", { p_device: deviceId, p_hash: expect.any(String) });
     expect(mocks.rpc).toHaveBeenCalledTimes(2);
   });

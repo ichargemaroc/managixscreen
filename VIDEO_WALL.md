@@ -1,5 +1,27 @@
 # Murs d’images — état réel de l’intégration
 
+## Test de position
+1. Enregistrer les affectations, ouvrir le mur puis cliquer sur « Test de position » dans la grille numérotée.
+2. La durée est de 60 secondes par défaut, configurable entre 10 et 300 secondes. Chaque télévision connectée reçoit une commande individuelle contenant son nom, le nom du mur et sa position enregistrée : numérotation de gauche à droite puis de haut en bas.
+3. « En attente » n’est pas un succès. « Transmis » indique seulement la livraison ; « Test affiché · confirmé » apparaît après l’accusé du lecteur, une fois l’écran de test rendu. Les TV hors ligne au lancement sont explicitement non envoyées, sans démarrage tardif à leur reconnexion.
+4. « Arrêter le test » envoie l’arrêt aux appareils concernés, y compris ceux retirés du mur pendant le test. La surface normale est révélée dès réception ; le mur garde sa chronologie et la playlist individuelle conserve son média et son état pause. Le délai des images individuelles recommence à la sortie du test.
+5. Sans intervention, la surface de test disparaît automatiquement à l’échéance, même hors connexion. Le test n’est pas restauré après redémarrage et une retransmission déjà confirmée ne prolonge pas sa durée.
+
+### Transmission et sécurité
+- Réutilisation de `device_commands`, avec `wall_id`, `test_id` et `payload`. Aucun nouveau système d’identité ni table de commandes parallèle.
+- RPC propriétaire transactionnelle : coordonnées calculées depuis les affectations en base, durée bornée, annulation des anciennes commandes de test, file pleine signalée. Les écritures directes restent interdites aux comptes ordinaires.
+- Poll appareil réservé au service : jeton et jumelage revalidés, tests périmés ou affectations devenues incompatibles exclus. Un envoi individuel ordinaire ne peut pas fabriquer un test de position.
+- Lecture des commandes toutes les cinq secondes, indépendante des téléchargements ; pas de connexion instantanée garantie. Le manifeste du mur est désormais relu toutes les quinze secondes pour garder une marge sous la limite existante de 30 requêtes/minute.
+- L’arrêt nécessite une connexion : une TV déconnectée revient au contenu à son échéance locale, sans faux arrêt confirmé.
+- Les six fonds contrastés alternent dans les grandes grilles ; le numéro unique reste le repère de chaque case.
+
+### Vérification du test de position
+- Parcours connecté avec deux appareils jumelés temporaires : commande réelle rendue dans un lecteur web, numéro 1 et ligne/colonne vérifiés, accusé relu dans l’administration ; deuxième TV sans heartbeat signalée hors ligne et non envoyée.
+- Arrêt reçu et confirmé ; second test de 10 secondes expiré automatiquement après coupure du réseau du lecteur. Durée de 301 secondes et tentative de commande individuelle de test refusées par la base.
+- Contrôle mobile sans débordement, aucune erreur navigateur ; données temporaires supprimées, écrans existants conservés.
+- Le lecteur partagé est inclus dans la préparation Android existante : aucune modification native supplémentaire nécessaire. Publier le site puis recompiler et installer l’APK mis à jour sans désinstallation pour garder le jumelage.
+- Compilation GitHub et affichage sur TV physiques non exécutés ici ; ils restent à vérifier, notamment la lecture vidéo derrière le test, l’arrêt sur réseau lent et le plein écran Android.
+
 ## Affecter une télévision depuis l’administration
 1. Ouvrir « Murs d’images », puis « Nouveau mur » ou le crayon « Configurer le mur ».
 2. Choisir la configuration, puis cliquer sur « Affecter une TV » dans la case correspondant à la position physique (ligne et colonne).
@@ -44,7 +66,7 @@ Le lecteur partagé `src/player` utilise le même mode mur dans `/player` et dan
 - Le média global est téléchargé et mis en cache sur chaque appareil, puis réellement découpé au rendu par Canvas. Les portions ne sont pas des copies de l’image entière.
 - Le cadrage conserve les proportions du média global, puis applique le viewport et les espaces du panneau. Si les proportions physiques du panneau diffèrent, des bandes évitent la déformation.
 - L’époque du serveur, l’estimation d’écart d’horloge au milieu de l’aller-retour et la position persistée pilotent la lecture vidéo ; correction de dérive toutes les 500 ms, seuil de seek de 250 ms et vitesse ajustée entre 0,97 et 1,03.
-- En mode mur, lecture du manifeste toutes les 10 secondes ; les commandes ont donc une latence de propagation, augmentée par les téléchargements et les réseaux lents.
+- En mode mur, lecture du manifeste toutes les 15 secondes ; lecture indépendante des commandes toutes les 5 secondes pour que le test de position ne dépende pas des téléchargements.
 - Le cache conserve média, mur, position et écart d’horloge ; reconnexion et reprise après réouverture sans rejumelage. Les commandes locales pause/suivant sont désactivées dans ce mode.
 - Supprimer le mur rend aux appareils leur playlist standard à la prochaine synchronisation.
 

@@ -24,9 +24,12 @@ export type Database = {
           error_message: string | null
           expires_at: string
           id: string
+          payload: Json | null
           screen_id: string
           status: string
+          test_id: string | null
           user_id: string
+          wall_id: string | null
         }
         Insert: {
           acknowledged_at?: string | null
@@ -37,9 +40,12 @@ export type Database = {
           error_message?: string | null
           expires_at?: string
           id?: string
+          payload?: Json | null
           screen_id: string
           status?: string
+          test_id?: string | null
           user_id: string
+          wall_id?: string | null
         }
         Update: {
           acknowledged_at?: string | null
@@ -50,9 +56,12 @@ export type Database = {
           error_message?: string | null
           expires_at?: string
           id?: string
+          payload?: Json | null
           screen_id?: string
           status?: string
+          test_id?: string | null
           user_id?: string
+          wall_id?: string | null
         }
         Relationships: [
           {
@@ -67,6 +76,13 @@ export type Database = {
             columns: ["screen_id"]
             isOneToOne: false
             referencedRelation: "screens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_commands_wall_id_fkey"
+            columns: ["wall_id"]
+            isOneToOne: false
+            referencedRelation: "video_walls"
             referencedColumns: ["id"]
           },
         ]
@@ -759,6 +775,10 @@ export type Database = {
       control_video_wall: {
         Args: { p_action: string; p_wall: string }
         Returns: undefined
+      }
+      control_wall_position_test: {
+        Args: { p_action: string; p_duration?: number; p_wall: string }
+        Returns: Json
       }
       device_ack_command: {
         Args: {

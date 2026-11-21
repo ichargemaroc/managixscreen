@@ -7,7 +7,7 @@ import { claimScreen, revokeScreen } from "@/lib/pairing.functions";
 import { enqueueCommand } from "@/lib/player.functions";
 import type { deviceCommand } from "@/lib/player-protocol";
 import type { z } from "zod";
-import { saveWall, controlWall } from "./video-wall.functions";
+import { saveWall, controlWall, positionTest } from "./video-wall.functions";
 import type { VideoWall, WallConfig, WallMember } from "./video-wall";
 
 // Données ScreenFlow lues depuis Lovable Cloud. Les pages utilisent useStore()
@@ -20,7 +20,7 @@ export type Screen = {
   status: "online" | "offline" | "pending"; lastSeen: string | null; playlistId: string | null; location: string; deviceId: string | null; revoked: boolean;
   playerVersion: string | null; lastSyncAt: string | null; deviceInfo: unknown; playbackStatus: unknown;
 };
-export type DeviceCommand = { id: string; screenId: string; command: z.infer<typeof deviceCommand>; status: string; createdAt: string; deliveredAt: string | null; acknowledgedAt: string | null; expiresAt: string; error: string | null };
+export type DeviceCommand = { id: string; screenId: string; command: z.infer<typeof deviceCommand>; status: string; createdAt: string; deliveredAt: string | null; acknowledgedAt: string | null; expiresAt: string; error: string | null; wallId: string | null; testId: string | null; payload: unknown };
 export type Media = { id: string; name: string; type: "image" | "video"; size: number; duration: number | null; url: string; path: string; createdAt: string };
 export type PlaylistItem = { id: string; mediaId: string; duration: number };
 export type Playlist = { id: string; name: string; description: string; items: PlaylistItem[]; createdAt: string };
@@ -87,7 +87,7 @@ async function fetchAll(): Promise<State> {
       deviceInfo: telemetry.data?.find((t) => sessions.data?.some((p) => p.screen_id === s.id && p.device_id === t.device_id))?.device_info ?? {},
       playbackStatus: telemetry.data?.find((t) => sessions.data?.some((p) => p.screen_id === s.id && p.device_id === t.device_id))?.playback_status ?? {},
     })),
-    commands: (commands.data ?? []).map((c) => ({ id: c.id, screenId: c.screen_id, command: c.command as DeviceCommand["command"], status: c.status, createdAt: c.created_at, deliveredAt: c.delivered_at, acknowledgedAt: c.acknowledged_at, expiresAt: c.expires_at, error: c.error_message })),
+    commands: (commands.data ?? []).map((c) => ({ id: c.id, screenId: c.screen_id, command: c.command as DeviceCommand["command"], status: c.status, createdAt: c.created_at, deliveredAt: c.delivered_at, acknowledgedAt: c.acknowledged_at, expiresAt: c.expires_at, error: c.error_message, wallId: c.wall_id, testId: c.test_id, payload: c.payload })),
     media: mediaRows,
     playlists: (playlists.data ?? []).map((p) => ({ id: p.id, name: p.name, description: p.description, items: itemsByPlaylist.get(p.id) ?? [], createdAt: p.created_at })),
     schedules: (schedules.data ?? []).map((s) => ({
@@ -118,6 +118,7 @@ export function useStore() {
 
 export async function saveVideoWall(id: string | null, config: WallConfig, members: WallMember[]) { return saveWall({ data: { id, config, members } }); }
 export async function controlVideoWall(id: string, action: "play" | "pause" | "stop") { await controlWall({ data: { id, action } }); }
+export async function testVideoWall(id: string, action: "start" | "stop", duration = 60) { return positionTest({ data: { id, action, duration } }); }
 export async function deleteVideoWall(id: string) { const { error } = await supabase.from("video_walls").delete().eq("id", id); if (error) throw error; }
 
 async function userId() {
