@@ -109,3 +109,7 @@
 - [x] Finaliser profil, écrans, médias, playlists, groupes et programmation sans changer la navigation
 - [x] Vérifier les données réelles, les droits et le parcours connecté sur ordinateur et téléphone
 - [x] Limites identifiées : lecteur Android natif et diffusion programmée à développer ; protocole de jumelage/heartbeat testé avec un client de test uniquement ; invitations d’équipe non implémentées ; OAuth externe non testé ; publication de cette mise à jour nécessaire
+
+## YouTube en vidéo seule
+- [x] Liens YouTube (vidéo, Short, direct) convertis automatiquement en lecture vidéo seule, sans la page autour
+- [x] Aperçu du formulaire et lecteur (web + Android) utilisent la même conversion ; 154 tests verts

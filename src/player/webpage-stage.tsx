@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { webpageRefreshMs, webpageUrl, WEBPAGE_TIMEOUT_MS } from '@/lib/webpage';
+import { displayWebpageUrl, webpageRefreshMs, youtubeEmbedUrl, WEBPAGE_TIMEOUT_MS } from '@/lib/webpage';
 import { nativeWebpage } from './webpage-native';
 
 export function WebpageStage({ url, name, fullscreen = true, refreshMinutes = 0, active = true, onError, onState }: { url: string; name: string; fullscreen?: boolean; refreshMinutes?: number; active?: boolean; onError: () => void; onState: (state: 'buffering' | 'playing' | 'paused' | 'error') => void }) {
@@ -17,7 +17,7 @@ export function WebpageStage({ url, name, fullscreen = true, refreshMinutes = 0,
     timeout.current = setTimeout(fail, WEBPAGE_TIMEOUT_MS);
     void (async () => {
       try {
-        const safeUrl = webpageUrl(url); const native = await nativeWebpage();
+        const safeUrl = displayWebpageUrl(url); const native = await nativeWebpage();
         if (cancelled) return;
         if (native) {
           const listener = await native.listen(event => { if (cancelled || event.session !== session) return; if (event.state === 'loaded') loaded(); else { completed.current = false; fail(); } });
@@ -37,8 +37,9 @@ export function WebpageStage({ url, name, fullscreen = true, refreshMinutes = 0,
     })();
     return () => { cancelled = true; clearTimeout(timeout.current); clearInterval(refresh); close?.(); nativeClose.current = undefined; };
   }, [url, refreshMinutes, fullscreen, active]);
+  const youtube = !!youtubeEmbedUrl(url);
   return <div className={fullscreen ? 'tv-webpage' : 'tv-webpage tv-webpage-inset'}>
-    {active && web && !failed && <iframe key={revision} title={name} src={url} sandbox="allow-scripts allow-forms" referrerPolicy="no-referrer" onLoad={loaded} onError={fail} />}
+    {active && web && !failed && <iframe key={revision} title={name} src={displayWebpageUrl(url)} sandbox={youtube ? 'allow-scripts allow-same-origin allow-presentation' : 'allow-scripts allow-forms'} allow={youtube ? 'autoplay; encrypted-media; picture-in-picture' : undefined} referrerPolicy="no-referrer" onLoad={loaded} onError={fail} />}
     {active && loading && <p role="status" className="tv-webpage-status">Chargement de la page…</p>}
     {active && failed && <p role="alert" className="tv-webpage-status">Page Web indisponible.</p>}
   </div>;

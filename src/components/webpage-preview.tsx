@@ -1,7 +1,8 @@
-import { webpageUrl } from '@/lib/webpage';
+import { displayWebpageUrl, youtubeEmbedUrl } from '@/lib/webpage';
 
 export function WebpagePreview({ url, name }: { url: string; name: string }) {
   let safe: string;
-  try { safe = webpageUrl(url); } catch { return <p role="alert">URL non valide.</p>; }
-  return <div className="space-y-3"><iframe title={name} src={safe} sandbox="allow-scripts allow-forms" referrerPolicy="no-referrer" className="h-96 w-full border bg-background" /><p className="text-sm text-muted-foreground">Certains sites refusent l’aperçu intégré ; leur affichage sur la TV doit être vérifié séparément.</p><a className="text-sm text-primary underline" href={safe} target="_blank" rel="noopener noreferrer">Ouvrir le site dans un nouvel onglet</a></div>;
+  try { safe = displayWebpageUrl(url); } catch { return <p role="alert">URL non valide.</p>; }
+  const youtube = !!youtubeEmbedUrl(url);
+  return <div className="space-y-3"><iframe title={name} src={safe} sandbox={youtube ? 'allow-scripts allow-same-origin allow-presentation' : 'allow-scripts allow-forms'} allow={youtube ? 'autoplay; encrypted-media; picture-in-picture' : undefined} referrerPolicy="no-referrer" className="h-96 w-full border bg-background" /><p className="text-sm text-muted-foreground">Certains sites refusent l’aperçu intégré ; leur affichage sur la TV doit être vérifié séparément.</p><a className="text-sm text-primary underline" href={safe} target="_blank" rel="noopener noreferrer">Ouvrir le site dans un nouvel onglet</a></div>;
 }
