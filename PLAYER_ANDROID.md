@@ -25,7 +25,33 @@ cd android
 
 Utiliser une origine HTTPS publiée réelle sans /player. Capacitor HTTP sert aux API natives ; le navigateur utilise sa propre origine. Aucun secret serveur n’est embarqué. Le plugin DeviceVault chiffre l’identité avec AES-GCM et une clé Android Keystore non exportable. `android-support/` fournit activité immersive, paysage, maintien d’éveil et bannière TV. Le script génère `android/` depuis ces modèles ; ne pas committer les dépendances, sorties de compilation ni identités.
 
-Le lancement de l’activité reprend le manifeste local. Le démarrage automatique à l’allumage du téléviseur nécessite encore une configuration kiosk/device-owner ou spécifique au fabricant : Android moderne ne garantit pas un lancement universel via BOOT_COMPLETED. Aucun démarrage au boot n’est simulé.
+Le lancement de l’activité reprend le manifeste local et l’identité existante sans redemander de code de jumelage. Le démarrage natif est décrit ci-dessous ; il ne dépend pas d’une page web ouverte.
+
+## Démarrage automatique natif
+
+La préparation Capacitor inscrit `RECEIVE_BOOT_COMPLETED`, le receiver non exporté `BootReceiver` et ses événements `BOOT_COMPLETED` (allumage/redémarrage complet) et `MY_PACKAGE_REPLACED` (mise à jour de cette application uniquement). Les sources Java et la transformation idempotente du manifeste sont versionnées et incluses dans chaque APK par le workflow existant. `LOCKED_BOOT_COMPLETED` est volontairement absent : le coffre chiffré et les données WebView doivent être disponibles après le déverrouillage Android.
+
+- **Android 9 et antérieur** : le receiver tente directement d’ouvrir `MainActivity`. Certaines TV imposent une autorisation fabricant supplémentaire.
+- **Android 10 et ultérieur** : un receiver ordinaire ne peut pas imposer une ouverture en arrière-plan. La politique ne tente le lancement direct que si cette application est réellement device-owner (exception Android). Cette version ne provisionne pas un device-owner ni un administrateur ; elle ne s’attribue aucun privilège.
+- **Solution compatible recommandée sur Android moderne** : l’activité est également déclarée comme candidate **Accueil Android (HOME)**. Sur une TV dédiée, sélectionner **ScreenFlow TV** comme application d’accueil par défaut dans les réglages de la TV, ou via le choix « Toujours » proposé par le bouton Accueil. Android lance alors lui-même le Player au démarrage et au bouton Accueil, indépendamment des restrictions du receiver. Ce choix est explicite : l’application ne remplace pas silencieusement l’accueil. Pour revenir à l’accueil habituel, changer l’application par défaut dans les réglages Android.
+- Si la TV masque le choix de l’accueil, utiliser une solution de gestion dédiée (DPC/MDM device-owner) pouvant attribuer `app.screenflow.player/.MainActivity` comme accueil persistant via `DevicePolicyManager.addPersistentPreferredActivity`, ou l’option de démarrage automatique officiellement fournie par le fabricant. L’APK seul ne peut garantir le boot automatique sur ces TV verrouillées. Pas de service permanent, de faux appel/alarme plein écran ni de contournement des protections Android.
+
+Le receiver ne télécharge pas de fichiers et ne lit/efface aucun token : il ouvre seulement l’activité. Le coffre Android Keystore, l’origine API et IndexedDB sont inchangés. Une identité jumelée reprend la playlist locale puis synchronise avec le serveur ; sans réseau, seuls les médias déjà téléchargés peuvent être lus. Une révocation, l’effacement des données ou la désinstallation exigent un nouveau jumelage ; un simple redémarrage ne l’exige pas. Pour une mise à jour, installer l’APK **par-dessus** l’existant, avec le même identifiant et la même signature, sans désinstaller. Les signatures debug peuvent changer entre environnements CI : en cas de refus de mise à jour, ne pas désinstaller une TV de production sans prévoir son rejumelage ; une signature de distribution stable reste nécessaire.
+
+`singleTask` et les flags `NEW_TASK | CLEAR_TOP | SINGLE_TOP` réutilisent l’activité ; la politique filtre les actions et limite les tentatives rapprochées à une par 10 secondes dans le processus. Une exception est journalisée sans nouvelle tentative ni boucle. Le mode paysage et le maintien d’éveil restent actifs ; Android 11+ masque les barres via `WindowInsetsController`, les anciennes versions utilisent le mode immersif existant. Le fabricant peut toujours réserver certaines barres système.
+
+### Installation et validation sur TV réelle
+
+1. Relancer le workflow manuel avec `api_origin=https://screenflow.live`, télécharger l’Artifact et installer l’APK. Ouvrir l’application au moins une fois : Android ne délivre pas les broadcasts aux applications jamais lancées ou arrêtées de force.
+2. Jumeler et affecter une playlist si ce n’est pas déjà fait ; attendre son téléchargement complet. Configurer ScreenFlow TV comme Accueil par défaut sur Android moderne (ou la politique fabricant/MDM).
+3. Éteindre complètement puis rallumer la TV, et effectuer un redémarrage Android : vérifier l’ouverture sans télécommande, le paysage, les barres masquées, la reprise de la même TV dans l’administration et la lecture sans nouveau code.
+4. Refaire le démarrage hors réseau : vérifier la playlist téléchargée, puis la synchronisation après retour du réseau.
+5. Installer une mise à jour de même signature sans effacer les données ; vérifier la conservation du jumelage et le retour au Player. Sur Android moderne sans HOME/device-owner, l’événement de mise à jour seul ne force pas l’ouverture : revenir via Accueil.
+6. Vérifier qu’Accueil/réouverture et événements rapprochés ne créent pas plusieurs lecteurs. Tester aussi une TV refusant le changement d’accueil : le lancement manuel doit rester disponible. Après « Forcer l’arrêt », relancer manuellement avant de retester.
+
+Un simple réveil de veille n’est pas un boot et n’émet pas nécessairement `BOOT_COMPLETED` ; si Android conserve le Player au premier plan, il reprend à son réveil. Les événements constructeur doivent être validés sur le modèle réel. Les contrôles JVM et du manifeste ne prouvent ni la réception effective du broadcast ni l’ouverture sur une TV : ces essais matériels et la compilation complète de l’APK restent à réaliser.
+
+Références : [restrictions Android des activités en arrière-plan](https://developer.android.com/guide/components/activities/background-starts), [application HOME pour appareils dédiés](https://developer.android.com/work/dpc/dedicated-devices/cookbook).
 
 ## GitHub Actions
 

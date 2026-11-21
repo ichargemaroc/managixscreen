@@ -28,6 +28,8 @@ jobs:
           packages: 'platform-tools platforms;android-36 build-tools;35.0.0'
           accept-android-sdk-licenses: true
       - run: bun install --frozen-lockfile
+      - name: Test native auto-start policy
+        run: node scripts/test-android-autostart.mjs
       - name: Validate server address
         env:
           PLAYER_ORIGIN: ${{ inputs.api_origin }}

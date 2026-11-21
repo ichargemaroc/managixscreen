@@ -1,5 +1,10 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Démarrage automatique Android TV
+- [ ] Receiver natif BOOT_COMPLETED et MY_PACKAGE_REPLACED, permissions et intégration à la préparation Capacitor
+- [ ] Démarrage limité aux cas autorisés, alternative Accueil Android et plein écran moderne
+- [ ] Tests natifs/configuration et documentation de la reprise du jumelage ; validation physique bloquée par l’absence de TV
+
 ## Correction installation SDK Android TV
 - [x] Remplacer les packages SDK obsolètes ; SDK 36, build-tools 35.0.0 et Java 21 vérifiés avec Capacitor 8 / Gradle 8.14.3 / AGP 8.13
 - [x] YAML validé avec actionlint ; lancement manuel, api_origin et Artifact APK conservés ; nouvelle exécution GitHub non lancée
