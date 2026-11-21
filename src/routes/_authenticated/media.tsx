@@ -87,12 +87,11 @@ function MediaPage() {
             <Input className="sm:w-64" placeholder="Rechercher…" value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); onFiles(e.dataTransfer.files); }}>
-            {list.map((m) => (
+            {list.map((m, index) => (
               <Card key={m.id} className="group overflow-hidden p-0">
-                <button className="relative block aspect-video w-full bg-muted" onClick={() => setPreview(m)}>
-                  {m.type === 'webpage' ? <div className="flex size-full flex-col items-center justify-center gap-3 text-primary"><Globe className="size-10" /><span className="max-w-full truncate px-3 text-sm">{new URL(m.url).hostname}</span></div> : m.type === "image" ? <img src={m.url} alt={m.name} className="size-full object-cover" /> : <video src={m.url} className="size-full object-cover" muted />}
-                  {m.type === "video" && <Film className="absolute left-2 top-2 size-4 text-primary-foreground drop-shadow" />}
-                </button>
+                <Button variant="ghost" aria-label={`Ouvrir ${m.name}`} className="relative block h-auto aspect-video w-full overflow-hidden rounded-none bg-muted p-0" onClick={() => setPreview(m)}>
+                  {m.type === 'webpage' ? <div className="flex size-full flex-col items-center justify-center gap-3 text-primary"><Globe className="size-10" /><span className="max-w-full truncate px-3 text-sm">{new URL(m.url).hostname}</span></div> : m.type === "image" ? <img src={m.thumbnailUrl || m.url} alt={m.name} loading={index < 4 ? "eager" : "lazy"} decoding="async" width={480} height={270} className="size-full object-cover" onError={(event) => { const image = event.currentTarget; if (image.src !== m.url) image.src = m.url; }} /> : <div className="flex size-full items-center justify-center text-muted-foreground"><Film className="size-10" /></div>}
+                </Button>
                 <div className="flex items-start justify-between gap-2 p-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{m.name}</p>

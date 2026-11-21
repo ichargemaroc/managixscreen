@@ -1,5 +1,9 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Rapidité de la Médiathèque
+- [x] Aperçus privés compressés 480×270, chargement différé, vidéos téléchargées uniquement à l’ouverture, liens originaux groupés et conservés dans le cache de session
+- [x] Import/relecture connectés : aperçu de 19 Ko pour un original de 3,7 Mo, original 2800×1600 conservé, aucune vidéo téléchargée dans la grille ni nouvelle signature au retour ; téléphone sans débordement, fichiers temporaires supprimés et 158 tests réussis
+
 ## Actualisation des playlists affectées
 - [x] Réutiliser les médias locaux après modification d’ordre/durée, migrer les anciens fichiers locaux et sérialiser les remplacements du cache
 - [x] Ne pas bloquer la récupération de contenu en cas d’échec temporaire du suivi de connexion

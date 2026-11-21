@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { mediaKind, mediaStorageFilename, screenStatus } from "@/lib/signage-rules";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ export type Screen = {
   playerVersion: string | null; lastSyncAt: string | null; deviceInfo: unknown; playbackStatus: unknown;
 };
 export type DeviceCommand = { id: string; screenId: string; command: z.infer<typeof deviceCommand>; status: string; createdAt: string; deliveredAt: string | null; acknowledgedAt: string | null; expiresAt: string; error: string | null; wallId: string | null; testId: string | null; payload: unknown };
-export type Media = { id: string; name: string; type: "image" | "video" | "webpage"; size: number; duration: number | null; url: string; path: string; createdAt: string; refreshMinutes?: number; fullscreen?: boolean };
+export type Media = { id: string; name: string; type: "image" | "video" | "webpage"; size: number; duration: number | null; url: string; thumbnailUrl?: string; path: string; createdAt: string; refreshMinutes?: number; fullscreen?: boolean };
 export type PlaylistItem = { id: string; mediaId: string; duration: number };
 export type Playlist = { id: string; name: string; description: string; items: PlaylistItem[]; createdAt: string };
 export type Schedule = {
@@ -37,13 +37,42 @@ const StoreCtx = createContext<Ctx | null>(null);
 
 const EMPTY: State = { groups: [], screens: [], media: [], playlists: [], schedules: [], commands: [], walls: [], wallEvents: [] };
 
-async function signedUrl(path: string) {
-  const { data, error } = await supabase.storage.from("media").createSignedUrl(path, 60 * 60);
-  if (error) throw error;
-  return data?.signedUrl ?? "";
+// Cache private links only in the session QueryClient, below their one-hour expiry.
+// Transformations are encoded into signed tokens: rewriting an original URL does not resize it.
+export async function loadMediaUrls(queryClient: QueryClient, rows: { path: string; type: string }[]) {
+  const paths = [...new Set(rows.filter((m) => m.type !== "webpage").map((m) => m.path))].sort();
+  if (!paths.length) return new Map<string, { url: string; thumbnailUrl: string }>();
+  const [originals, thumbnails] = await Promise.all([
+    queryClient.fetchQuery({
+      queryKey: ["media-private-links", "originals", paths],
+      staleTime: 50 * 60_000,
+      queryFn: async () => {
+        const { data, error } = await supabase.storage.from("media").createSignedUrls(paths, 60 * 60);
+        if (error) throw error;
+        return (data ?? []).map((item) => ({ path: item.path ?? "", url: item.signedUrl ?? "" }));
+      },
+    }),
+    Promise.all(rows.filter((m) => m.type === "image").map(async (m) => {
+      const url = await queryClient.fetchQuery({
+        queryKey: ["media-private-links", "thumbnail", m.path],
+        staleTime: 50 * 60_000,
+        retry: false,
+        queryFn: async () => {
+          const { data, error } = await supabase.storage.from("media").createSignedUrl(m.path, 60 * 60, {
+            transform: { width: 480, height: 270, resize: "cover", quality: 70 },
+          });
+          if (error) throw error;
+          return data?.signedUrl ?? "";
+        },
+      }).catch(() => "");
+      return { path: m.path, url };
+    })),
+  ]);
+  const thumbnailByPath = new Map(thumbnails.map((m) => [m.path, m.url]));
+  return new Map(originals.map((m) => [m.path, { url: m.url, thumbnailUrl: thumbnailByPath.get(m.path) || m.url }]));
 }
 
-async function fetchAll(): Promise<State> {
+async function fetchAll(queryClient: QueryClient): Promise<State> {
   const [groups, screens, media, playlists, items, schedules, members, sessions, telemetry, commands, walls, wallMembers, wallEvents] = await Promise.all([
     supabase.from("groups").select("*").order("created_at"),
     supabase.from("screens").select("*").order("created_at"),
@@ -62,13 +91,13 @@ async function fetchAll(): Promise<State> {
   for (const r of [groups, screens, media, playlists, items, schedules, members, sessions, telemetry, commands, walls, wallMembers, wallEvents]) {
     if (r.error) throw r.error;
   }
-  const mediaRows = await Promise.all(
-    (media.data ?? []).map(async (m) => ({
+  const mediaUrls = await loadMediaUrls(queryClient, media.data ?? []);
+  const mediaRows = (media.data ?? []).map((m) => ({
       id: m.id, name: m.name, type: m.type as Media['type'], size: m.size,
-      duration: m.duration, path: m.path, url: m.type === 'webpage' ? m.webpage_url ?? '' : await signedUrl(m.path), createdAt: m.created_at,
+      duration: m.duration, path: m.path, url: m.type === 'webpage' ? m.webpage_url ?? '' : mediaUrls.get(m.path)?.url ?? '', createdAt: m.created_at,
+      thumbnailUrl: mediaUrls.get(m.path)?.thumbnailUrl ?? '',
       refreshMinutes: m.refresh_minutes, fullscreen: m.webpage_fullscreen,
-    })),
-  );
+    }));
   const itemsByPlaylist = new Map<string, PlaylistItem[]>();
   for (const it of items.data ?? []) {
     const list = itemsByPlaylist.get(it.playlist_id) ?? [];
@@ -101,7 +130,7 @@ async function fetchAll(): Promise<State> {
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const { data, isLoading, error, refetch } = useQuery({ queryKey: ["screenflow"], queryFn: fetchAll, refetchInterval: 60_000 });
+  const { data, isLoading, error, refetch } = useQuery({ queryKey: ["screenflow"], queryFn: () => fetchAll(queryClient), refetchInterval: 60_000 });
   const value = useMemo<Ctx>(() => ({
     ...(data ?? EMPTY),
     loading: isLoading,
