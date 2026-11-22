@@ -134,6 +134,13 @@
       "when": 1795342897124,
       "tag": "0018_restrict_billing_settings_read",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795344106209,
+      "tag": "0019_billing_trial_downgrade_grants",
+      "breakpoints": true
     }
   ]
 }

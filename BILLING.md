@@ -56,3 +56,9 @@ Ne sont donc pas opérationnels : paiement récurrent, mise à niveau payante, p
 La validation physique Android TV et une nouvelle compilation APK restent nécessaires pour recevoir les droits réversibles. Le lecteur web partagé a été vérifié, pas une TV réelle.
 
 Les changements sont disponibles dans l’aperçu. Publier les changements web pour les rendre disponibles sur le site public ; les migrations sont déjà appliquées à Lovable Cloud.
+## Modèle commercial (v2)
+- Tarifs initiaux MAD (modifiables) : 5→299, 10→499, 15→699, 20→899, 25→1 099, 30→1 299, 50→1 999, 100→3 499 /mois. Remise annuelle 16,67 % (2 mois offerts), grâce 7 jours.
+- Essai : `billing_settings.trial_days/trial_capacity/trial_one_per_email`; démarré par `billing_new_profile`, registre d'e-mails hachés `billing_trial_registry` (service uniquement). `billing_check_place` refuse `TRIAL_EXPIRED` sans toucher aux écrans existants.
+- Écrans offerts (`complimentary_screens`), abonnement spécial et prolongation d'essai via `billing_admin_grant` (admin).
+- Downgrade : `billing_schedule_downgrade` (client, sélection des écrans conservés) ; `billing_apply_scheduled_change` (service uniquement) à appeler par le futur gestionnaire de renouvellement — désactive sans supprimer.
+- Encore à faire : prestataire de paiement, souscription/upgrade/prorata, portail moyen de paiement, annulation, notifications d'impayé, webhooks signés, passage automatique à `past_due`/`suspended`.

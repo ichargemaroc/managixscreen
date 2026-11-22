@@ -89,6 +89,9 @@ export type Database = {
           provider: string | null
           provider_ready: boolean
           suspension_policy: string
+          trial_capacity: number
+          trial_days: number
+          trial_one_per_email: boolean
           updated_at: string
         }
         Insert: {
@@ -99,6 +102,9 @@ export type Database = {
           provider?: string | null
           provider_ready?: boolean
           suspension_policy?: string
+          trial_capacity?: number
+          trial_days?: number
+          trial_one_per_email?: boolean
           updated_at?: string
         }
         Update: {
@@ -109,7 +115,25 @@ export type Database = {
           provider?: string | null
           provider_ready?: boolean
           suspension_policy?: string
+          trial_capacity?: number
+          trial_days?: number
+          trial_one_per_email?: boolean
           updated_at?: string
+        }
+        Relationships: []
+      }
+      billing_trial_registry: {
+        Row: {
+          created_at: string
+          email_hash: string
+        }
+        Insert: {
+          created_at?: string
+          email_hash: string
+        }
+        Update: {
+          created_at?: string
+          email_hash?: string
         }
         Relationships: []
       }
@@ -797,6 +821,7 @@ export type Database = {
           amount: number | null
           cancel_at_period_end: boolean
           capacity: number
+          complimentary_screens: number
           currency: string | null
           current_period_end: string | null
           enforce_capacity: boolean
@@ -807,7 +832,11 @@ export type Database = {
           previous_status: Database["public"]["Enums"]["billing_status"] | null
           provider_customer_id: string | null
           provider_subscription_id: string | null
+          scheduled_keep_screens: string[] | null
+          scheduled_plan_id: string | null
           status: Database["public"]["Enums"]["billing_status"]
+          trial_ends_at: string | null
+          trial_started_at: string | null
           updated_at: string
           user_id: string
         }
@@ -815,6 +844,7 @@ export type Database = {
           amount?: number | null
           cancel_at_period_end?: boolean
           capacity?: number
+          complimentary_screens?: number
           currency?: string | null
           current_period_end?: string | null
           enforce_capacity?: boolean
@@ -825,7 +855,11 @@ export type Database = {
           previous_status?: Database["public"]["Enums"]["billing_status"] | null
           provider_customer_id?: string | null
           provider_subscription_id?: string | null
+          scheduled_keep_screens?: string[] | null
+          scheduled_plan_id?: string | null
           status?: Database["public"]["Enums"]["billing_status"]
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -833,6 +867,7 @@ export type Database = {
           amount?: number | null
           cancel_at_period_end?: boolean
           capacity?: number
+          complimentary_screens?: number
           currency?: string | null
           current_period_end?: string | null
           enforce_capacity?: boolean
@@ -843,7 +878,11 @@ export type Database = {
           previous_status?: Database["public"]["Enums"]["billing_status"] | null
           provider_customer_id?: string | null
           provider_subscription_id?: string | null
+          scheduled_keep_screens?: string[] | null
+          scheduled_plan_id?: string | null
           status?: Database["public"]["Enums"]["billing_status"]
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -851,6 +890,13 @@ export type Database = {
           {
             foreignKeyName: "subscriptions_plan_id_fkey"
             columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "billing_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_scheduled_plan_id_fkey"
+            columns: ["scheduled_plan_id"]
             isOneToOne: false
             referencedRelation: "billing_plans"
             referencedColumns: ["id"]
@@ -1056,6 +1102,15 @@ export type Database = {
         Returns: undefined
       }
       billing_admin_client: { Args: { p_user: string }; Returns: Json }
+      billing_admin_grant: {
+        Args: {
+          p_kind: string
+          p_until?: string
+          p_user: string
+          p_value: number
+        }
+        Returns: undefined
+      }
       billing_admin_overview: { Args: { p_page?: number }; Returns: Json }
       billing_admin_save_plan: {
         Args: {
@@ -1071,9 +1126,21 @@ export type Database = {
         Args: { p_currency: string; p_discount: number; p_grace: number }
         Returns: undefined
       }
+      billing_admin_trial_settings: {
+        Args: { p_capacity: number; p_days: number; p_one_per_email: boolean }
+        Returns: undefined
+      }
+      billing_apply_scheduled_change: {
+        Args: { p_user: string }
+        Returns: undefined
+      }
       billing_check_place: { Args: { p_user: string }; Returns: undefined }
       billing_lock_account: { Args: { p_user: string }; Returns: undefined }
       billing_my_account: { Args: never; Returns: Json }
+      billing_schedule_downgrade: {
+        Args: { p_keep: string[]; p_plan: string }
+        Returns: undefined
+      }
       claim_pairing_code: {
         Args: {
           p_code: string

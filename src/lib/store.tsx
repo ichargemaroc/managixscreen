@@ -10,8 +10,8 @@ import type { z } from "zod";
 import { saveWall, controlWall, positionTest } from "./video-wall.functions";
 import type { VideoWall, WallConfig, WallMember } from "./video-wall";
 import { webpageSchema, type WebpageConfig } from './webpage';
-import { getBillingAccount, getBillingAdmin, getBillingClient, saveBillingPlan, saveBillingSettings, changeBillingAccess, changeScreenEntitlement } from './billing.functions';
-import type { planInputSchema, settingsInputSchema } from './billing';
+import { getBillingAccount, getBillingAdmin, getBillingClient, saveBillingPlan, saveBillingSettings, changeBillingAccess, changeScreenEntitlement, saveTrialSettings, grantBillingAccess, scheduleDowngrade } from './billing.functions';
+import type { planInputSchema, settingsInputSchema, trialSettingsInputSchema, grantInputSchema } from './billing';
 
 // Données ScreenFlow lues depuis Lovable Cloud. Les pages utilisent useStore()
 // et les actions ci-dessous ; la synchronisation temps réel des écrans est
@@ -174,6 +174,9 @@ export function usePlatformAdmin() { return useQuery({ queryKey: ['platform-admi
 export const savePlan = (data: z.infer<typeof planInputSchema>) => saveBillingPlan({ data });
 export const saveBillingConfig = (data: z.infer<typeof settingsInputSchema>) => saveBillingSettings({ data });
 export const setClientAccess = (userId: string, action: 'suspend' | 'reactivate' | 'trial_plan', planId: string | null = null) => changeBillingAccess({ data: { userId, action, planId } });
+export const saveTrialConfig = (data: z.infer<typeof trialSettingsInputSchema>) => saveTrialSettings({ data });
+export const grantClientAccess = (data: z.infer<typeof grantInputSchema>) => grantBillingAccess({ data });
+export const planDowngrade = (planId: string | null, keep: string[] = []) => scheduleDowngrade({ data: { planId, keep } });
 export const setScreenEnabled = (screenId: string, active: boolean) => changeScreenEntitlement({ data: { screenId, active } });
 
 export async function revokeDeviceAccess(screenId: string) {

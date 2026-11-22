@@ -15,3 +15,19 @@ describe('Screenflow capacity rules', () => {
   it('does not expose raw database errors', () => { expect(billingError('secret 123')).not.toContain('secret 123'); });
   it('distinguishes a reversible deactivation from identity revocation', () => { expect(deviceEntitlementSchema.parse({ version: 1, active: false, revision: 2 }).active).toBe(false); });
 });
+import { trialDaysLeft as _tdl, keepSelectionNeeded as _ksn, annualAmount as _aa } from '@/lib/billing';
+describe('modèle commercial', () => {
+  it('compte les jours d’essai restants', () => {
+    const now = Date.parse('2026-11-01T00:00:00Z');
+    expect(_tdl('2026-11-15T00:00:00Z', now)).toBe(14);
+    expect(_tdl('2026-10-30T00:00:00Z', now)).toBe(0);
+  });
+  it('exige une sélection quand les écrans actifs dépassent le forfait inférieur', () => {
+    expect(_ksn(12, 10)).toBe(10);
+    expect(_ksn(8, 10)).toBe(0);
+    expect(_ksn(12, 10, 2)).toBe(0);
+  });
+  it('2 mois offerts : 10 mensualités par an', () => {
+    expect(Math.abs(_aa(29900, 100 * 2 / 12) - 299000)).toBeLessThanOrEqual(1);
+  });
+});

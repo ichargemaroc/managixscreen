@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
-import { billingAccountSchema, billingAdminSchema, billingClientSchema, billingError, planInputSchema, settingsInputSchema } from './billing';
+import { billingAccountSchema, billingAdminSchema, billingClientSchema, billingError, planInputSchema, settingsInputSchema, trialSettingsInputSchema, grantInputSchema } from './billing';
 
 export const getBillingAccount = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const { data, error } = await context.supabase.rpc('billing_my_account');
@@ -33,5 +33,17 @@ export const changeBillingAccess = createServerFn({ method: 'POST' }).middleware
 });
 export const changeScreenEntitlement = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(z.object({ screenId: z.string().uuid(), active: z.boolean() })).handler(async ({ context, data }) => {
   const result = await context.supabase.rpc('set_screen_entitlement', { p_screen: data.screenId, p_active: data.active });
+  if (result.error) throw new Error(billingError(result.error.message));
+});
+export const saveTrialSettings = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(trialSettingsInputSchema).handler(async ({ context, data }) => {
+  const result = await context.supabase.rpc('billing_admin_trial_settings', { p_days: data.days, p_capacity: data.capacity, p_one_per_email: data.onePerEmail });
+  if (result.error) throw new Error(billingError(result.error.message));
+});
+export const grantBillingAccess = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(grantInputSchema).handler(async ({ context, data }) => {
+  const result = await context.supabase.rpc('billing_admin_grant', { p_user: data.userId, p_kind: data.kind, p_value: data.value, ...(data.until ? { p_until: data.until } : {}) });
+  if (result.error) throw new Error(billingError(result.error.message));
+});
+export const scheduleDowngrade = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).inputValidator(z.object({ planId: z.string().uuid().nullable(), keep: z.array(z.string().uuid()).max(100000) })).handler(async ({ context, data }) => {
+  const result = await context.supabase.rpc('billing_schedule_downgrade', { p_plan: data.planId as string, p_keep: data.keep });
   if (result.error) throw new Error(billingError(result.error.message));
 });
