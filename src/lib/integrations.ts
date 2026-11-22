@@ -13,6 +13,7 @@ export function instagramPostUrl(input:string){
  const m=/^\/(p|reel|tv)\/([A-Za-z0-9_-]+)\/?$/.exec(url.pathname);if(!m?.[1]||!m[2])throw new Error('Choisissez une publication ou un Reel public ; les profils et Stories ne sont pas pris en charge.');
  return `https://www.instagram.com/${m[1]}/${m[2]}/`;
 }
+export function instagramEmbedUrl(input:string){return `${instagramPostUrl(input)}embed/`;}
 export const weatherLocationSchema=z.object({name:z.string().trim().min(1).max(80),latitude:z.coerce.number().finite().min(-89.9).max(89.9),longitude:z.coerce.number().finite().min(-180).max(180)});
 export const weatherDataSchema=z.object({updatedAt:z.string(),forecastAt:z.string(),temperature:z.number(),wind:z.number(),symbol:z.string(),latitude:z.number(),longitude:z.number()});
 export function roundedCoordinate(n:number){return Math.round(n*100)/100;}

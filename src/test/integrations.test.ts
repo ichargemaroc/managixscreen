@@ -1,6 +1,16 @@
 import { describe,it,expect } from 'vitest';
-import { canvaPublishedUrl,instagramPostUrl,instagramDisplayUrl,weatherDisplayUrl,weatherLocationSchema,isScreenflowDisplay,previewDisplayUrl } from '@/lib/integrations';
+import { canvaPublishedUrl,instagramPostUrl,instagramEmbedUrl,instagramDisplayUrl,weatherDisplayUrl,weatherLocationSchema,isScreenflowDisplay,previewDisplayUrl } from '@/lib/integrations';
 describe('Published sources',()=>{
+ it('uses the direct Instagram Reel embed without tracking parameters',()=>{
+  expect(instagramEmbedUrl('https://www.instagram.com/reel/Debp3aEClij/?igsh=tracking')).toBe('https://www.instagram.com/reel/Debp3aEClij/embed/');
+ });
+ it('uses the direct Instagram photo embed',()=>{
+  expect(instagramEmbedUrl('https://instagram.com/p/ABC_123/')).toBe('https://www.instagram.com/p/ABC_123/embed/');
+ });
+ it('never embeds an external host or an Instagram profile',()=>{
+  expect(()=>instagramEmbedUrl('https://instagram.com.evil.test/reel/Debp3aEClij/')).toThrow();
+  expect(()=>instagramEmbedUrl('https://www.instagram.com/cafes.carrion/')).toThrow();
+ });
  it('recognizes only owned display pages, never external sites or dashboard paths',()=>{
   expect(isScreenflowDisplay('https://screenflow.live/display/weather?name=RABAT','http://localhost:8080')).toBe(true);
   expect(isScreenflowDisplay('https://screenflow.live.evil.test/display/weather','https://screenflow.live')).toBe(false);
