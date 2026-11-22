@@ -1,5 +1,11 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Multi-zones, intégrations et gestion d’équipe
+- [ ] Ajouter des compositions d’écran à plusieurs zones, playlists indépendantes, aperçu et affectation ; conserver la diffusion standard par défaut
+- [ ] Ajouter liens Canva publiés, météo réelle et Instagram ; vérifier les possibilités d’affichage et autorisations des services
+- [ ] Ajouter invitations et accès d’équipe limités à la préparation des contenus, sans gestion des écrans ni accès administrateur plateforme
+- [ ] Vérifier l’isolation entre clients, les quotas inchangés et la diffusion multi-zones ; essais Android physiques nécessaires
+
 ## Vérification ciblée de l’administration — 22 novembre 2026
 - [x] Confirmer le rôle du compte administrateur principal et ouvrir son administration avec une session réelle, sans modifier les permissions déjà correctes
 - [x] Relire les six clients, leurs écrans, les huit forfaits et les statistiques ; vérifier les formulaires sans enregistrer de changements
