@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "settings_read" ON public.billing_settings;
+CREATE POLICY "settings_admin_read" ON public.billing_settings FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));

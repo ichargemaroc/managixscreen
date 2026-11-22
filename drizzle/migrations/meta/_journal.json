@@ -127,6 +127,13 @@
       "when": 1795340102774,
       "tag": "0017_billing_nullable_plan_parameters",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1795342897124,
+      "tag": "0018_restrict_billing_settings_read",
+      "breakpoints": true
     }
   ]
 }
