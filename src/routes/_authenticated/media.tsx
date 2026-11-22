@@ -47,7 +47,7 @@ function MediaPage() {
     let added = 0;
     try {
       for (const f of Array.from(files)) {
-        const type = mediaKind(f.type);
+        const type = mediaKind(f.type, f.name);
         if (!type) { toast.error(`Format non pris en charge : ${f.name}`); continue; }
         let duration: number | null = null;
         if (type === "video") {
@@ -72,7 +72,7 @@ function MediaPage() {
     <div className="mx-auto max-w-7xl">
       <PageHeader title="Médiathèque" description="Photos et vidéos disponibles pour vos playlists."
         action={<div className="flex gap-2"><WebpageEditor /><Button onClick={() => input.current?.click()} disabled={uploading}><Upload /> {uploading ? "Import en cours…" : "Importer"}</Button></div>} />
-      <input ref={input} type="file" accept="image/*,video/*" multiple hidden onChange={(e) => { onFiles(e.target.files); e.target.value = ""; }} />
+      <input ref={input} type="file" accept="image/*,video/*,.mp4" multiple hidden onChange={(e) => { onFiles(e.target.files); e.target.value = ""; }} />
       {media.length === 0 ? (
         <div onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); onFiles(e.dataTransfer.files); }}>
           <EmptyState icon={ImageIcon} title="Bibliothèque vide" text="Glissez vos fichiers ici ou cliquez sur Importer. Formats image et vidéo acceptés."

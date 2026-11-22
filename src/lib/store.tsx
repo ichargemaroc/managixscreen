@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { mediaKind, mediaStorageFilename, screenStatus } from "@/lib/signage-rules";
+import { mediaKind, mediaMimeType, mediaStorageFilename, screenStatus } from "@/lib/signage-rules";
 import { Button } from "@/components/ui/button";
 import { claimScreen, revokeScreen } from "@/lib/pairing.functions";
 import { enqueueCommand } from "@/lib/player.functions";
@@ -212,10 +212,12 @@ export async function setGroupMember(groupId: string, screenId: string, included
 }
 
 export async function addMedia(file: File, type: "image" | "video", duration: number | null) {
-  if (mediaKind(file.type) !== type) throw new Error("Format de média non pris en charge");
+  if (mediaKind(file.type, file.name) !== type) throw new Error("Format de média non pris en charge");
   const uidValue = await userId();
   const path = `${uidValue}/${mediaStorageFilename(file.name, crypto.randomUUID())}`;
-  const { error: upErr } = await supabase.storage.from("media").upload(path, file);
+  const { error: upErr } = await supabase.storage.from("media").upload(path, file, {
+    contentType: mediaMimeType(file.type, file.name),
+  });
   if (upErr) throw upErr;
   const { error } = await supabase.from("media").insert({ user_id: uidValue, name: file.name, type, size: file.size, duration, path });
   if (error) {
