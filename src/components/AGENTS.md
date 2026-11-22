@@ -1,1 +1,2 @@
 - Share appearance through ThemeProvider and semantic CSS tokens; persist only browser appearance locally, never alter playback media when switching dashboard themes.
+- Internal weather/Instagram preview frames may retain their origin only for allow-listed ScreenFlow display paths; external pages remain opaque-origin sandboxed to protect account storage.

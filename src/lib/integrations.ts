@@ -19,3 +19,14 @@ export function roundedCoordinate(n:number){return Math.round(n*100)/100;}
 export function displayOrigin(origin:string){const url=new URL(origin);return url.protocol==='https:'&&!url.hostname.endsWith('.localhost')&&url.hostname!=='localhost'?url.origin:'https://screenflow.live';}
 export function weatherDisplayUrl(origin:string,input:z.infer<typeof weatherLocationSchema>){const location=weatherLocationSchema.parse(input);const params=new URLSearchParams({name:location.name,lat:String(roundedCoordinate(location.latitude)),lon:String(roundedCoordinate(location.longitude))});return `${displayOrigin(origin)}/display/weather?${params}`;}
 export function instagramDisplayUrl(origin:string,input:string){return `${displayOrigin(origin)}/display/instagram?post=${encodeURIComponent(instagramPostUrl(input))}`;}
+export function isScreenflowDisplay(input:string, currentOrigin:string):boolean {
+ try {
+  const url=new URL(input);const current=new URL(currentOrigin);
+  if(url.username||url.password||!/^\/display\/(weather|instagram)$/.test(url.pathname))return false;
+  return url.origin===current.origin || url.protocol==='https:'&&['screenflow.live','www.screenflow.live','managixscreen.lovable.app'].includes(url.host);
+ } catch {return false;}
+}
+export function previewDisplayUrl(input:string,currentOrigin:string):string {
+ const url=new URL(input);
+ return isScreenflowDisplay(input,currentOrigin)?`${new URL(currentOrigin).origin}${url.pathname}${url.search}`:webpageUrl(input);
+}

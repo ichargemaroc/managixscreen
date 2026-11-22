@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { displayWebpageUrl, webpageRefreshMs, youtubeEmbedUrl, WEBPAGE_TIMEOUT_MS } from '@/lib/webpage';
 import { nativeWebpage } from './webpage-native';
+import { isScreenflowDisplay } from '@/lib/integrations';
 
 export function WebpageStage({ url, name, fullscreen = true, refreshMinutes = 0, active = true, rectangle, muted=false,onError, onState }: { url: string; name: string; fullscreen?: boolean; refreshMinutes?: number; active?: boolean; muted?:boolean;rectangle?: {x:number;y:number;width:number;height:number}; onError: () => void; onState: (state: 'buffering' | 'playing' | 'paused' | 'error') => void }) {
   const [web, setWeb] = useState(false); const [revision, setRevision] = useState(0); const [loading, setLoading] = useState(true);
@@ -38,8 +39,9 @@ export function WebpageStage({ url, name, fullscreen = true, refreshMinutes = 0,
     return () => { cancelled = true; clearTimeout(timeout.current); clearInterval(refresh); close?.(); nativeClose.current = undefined; };
   }, [url, refreshMinutes, fullscreen, active, muted]);
   const youtube = !!youtubeEmbedUrl(url);
+  const trusted=isScreenflowDisplay(url,typeof window!=='undefined'?window.location.origin:'https://screenflow.live');
   return <div className={fullscreen ? 'tv-webpage' : 'tv-webpage tv-webpage-inset'}>
-    {active && web && !failed && <iframe key={revision} title={name} src={displayWebpageUrl(url)} sandbox={youtube ? 'allow-scripts allow-same-origin allow-presentation' : 'allow-scripts allow-forms'} allow={muted?'autoplay \'none\'; encrypted-media':youtube ? 'autoplay; encrypted-media; picture-in-picture' : undefined} referrerPolicy="no-referrer" onLoad={loaded} onError={fail} />}
+    {active && web && !failed && <iframe key={revision} title={name} src={displayWebpageUrl(url)} sandbox={trusted?'allow-scripts allow-same-origin':youtube ? 'allow-scripts allow-same-origin allow-presentation' : 'allow-scripts allow-forms'} allow={muted?'autoplay \'none\'; encrypted-media':youtube ? 'autoplay; encrypted-media; picture-in-picture' : undefined} referrerPolicy="no-referrer" onLoad={loaded} onError={fail} />}
     {active && loading && <p role="status" className="tv-webpage-status">Chargement de la page…</p>}
     {active && failed && <p role="alert" className="tv-webpage-status">Page Web indisponible.</p>}
   </div>;
