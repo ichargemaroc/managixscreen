@@ -46,7 +46,7 @@ use the editor.
 - Recover stale module-import failures with at most one automatic reload per minute per tab; manual retry reloads the document because router invalidation cannot replace failed module imports.
 - Install dependency-free recovery before the module entry in the root document; bootstrap failures cannot be caught by React effects and must show a standalone retry when offline or reload-throttled.
 - Device telemetry and commands use dedicated owner-readable tables with service-only transactional RPCs; device APIs revalidate token hashes and pairing inside each RPC to isolate content and acknowledgements.
-- Content manifests expose only the assigned playlist and one-hour signed media URLs; successful manifest retrieval records synchronization without implying download, playback, or connectivity.
+- Content manifests expose only assigned playlists or zones and one-hour signed URLs; retrieval records synchronization, not download, playback or connectivity.
 - Command delivery is at-least-once until acknowledgement or expiry; native players must deduplicate command IDs before executing destructive actions.
 - The public /player route and standalone player entry share src/player modules; the native static bundle excludes admin routing and server code to preserve the dashboard.
 - Player manifests switch only after all media are stored in IndexedDB; failed downloads preserve the previous offline playlist, and cache cleanup retains command receipts.
