@@ -1,0 +1,1 @@
+- Home-screen installation uses only a manifest, local icons and shared head metadata; no service worker or offline app-shell cache, to keep previews and published navigation fresh.
