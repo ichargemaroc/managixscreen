@@ -1,5 +1,12 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Vérification ciblée de l’administration — 22 novembre 2026
+- [x] Confirmer le rôle du compte administrateur principal et ouvrir son administration avec une session réelle, sans modifier les permissions déjà correctes
+- [x] Relire les six clients, leurs écrans, les huit forfaits et les statistiques ; vérifier les formulaires sans enregistrer de changements
+- [x] Vérifier le refus des lectures et commandes administratives pour un client normal, et examiner les politiques de protection
+- [x] Rapport BILLING_AUDIT.md, 45 tests réussis, refus d’écriture directe et empreintes inchangées ; aucune correction de permissions nécessaire
+- [ ] Tests d’écriture commerciale et quota réel : environnement isolé ou autorisation de données de test nécessaires ; hors périmètre non destructif de cet audit
+
 ## Abonnements SaaS par écrans
 - [ ] Raccorder le kit de paiement personnel ultérieurement, à la demande du client ; fournisseur/documentation et tarifs attendus, Paddle non activé
 - [x] Compte administrateur désigné et confirmé : karim.gharbi@me.com
