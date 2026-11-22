@@ -1,2 +1,3 @@
 - Cache server-verified navigation identity only in the router's QueryClient for at most 30 seconds; identity invalidation and sign-out clear it, while RLS and server-handler checks remain authoritative to preserve private-data protection.
 - Media library cards use signed 480×270 compressed image transforms and video placeholders; batch and cache private links below expiry in the session QueryClient, keeping original URLs for previews and TV playback to reduce transfers without degrading sources.
+- Billing reads use isolated query keys and authenticated server functions; quotas and role checks remain transactional database rules, and reversible player entitlements never revoke credentials or erase offline media.

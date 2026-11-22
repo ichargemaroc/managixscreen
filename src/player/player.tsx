@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Cast, Maximize, RefreshCw, Wifi, WifiOff, Monitor, Play, Pause, ChevronRight, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cachedMedia, clearMediaCache, commandReceipt, downloadContent, readContent, saveReceipt } from "./cache";
+import { cachedMedia, clearMediaCache, commandReceipt, downloadContent, readContent, saveReceipt, saveEntitlement } from "./cache";
 import { contentSchema, credentialsSchema, commandsSchema, deviceApi, DeviceApiError, imageDuration, nextItem, type Content, type Credentials } from "./protocol";
 import { enterPlayerMode, keepAwake, readCredentials, saveCredentials, subscribeNetwork } from "./platform";
 import { QRCodeSVG } from "qrcode.react";
@@ -21,7 +21,7 @@ export function TVPlayer() {
   const commandBusy = useRef(false);
   const [identity, setIdentity] = useState<Credentials | null>(null);
   const [content, setContent] = useState<Content | null>(null);
-  const [phase, setPhase] = useState<"boot" | "ready" | "pairing" | "playing" | "revoked" | "storage-error">("boot");
+  const [phase, setPhase] = useState<"boot" | "ready" | "pairing" | "playing" | "disabled" | "revoked" | "storage-error">("boot");
   const [nativePlayer, setNativePlayer] = useState(false);
   const playerVersion = import.meta.env['VITE_PLAYER_VERSION_NAME'] || '1.0.0';
   // Short source revision lets support confirm which compilation is installed.
@@ -69,7 +69,7 @@ export function TVPlayer() {
         const stored = await Promise.race([readCredentials(), new Promise<never>((_, reject) => setTimeout(() => reject(vaultError("VAULT_TIMEOUT")), 20000))]);
         const cached = stored?.paired ? await timeout(readContent(), null) : null;
         if (!active) return;
-        setNativePlayer(Capacitor.isNativePlatform()); setNow(Date.now()); setIdentity(stored); setContent(cached); setPhase(stored?.paired ? "playing" : stored ? "pairing" : "ready");
+        setNativePlayer(Capacitor.isNativePlatform()); setNow(Date.now()); setIdentity(stored); setContent(cached); setPhase(stored?.paired ? cached?.entitlement?.active === false ? 'disabled' : "playing" : stored ? "pairing" : "ready");
         void subscribeNetwork(setOnline).then((stop) => { if (active) stopNetwork = stop; else stop(); }).catch(() => {}); void keepAwake().then((stop) => { if (active) stopAwake = stop; else stop(); }).catch(() => {});
         void navigator.storage?.persist?.();
       } catch (e) { if (active) { setError(vaultErrorMessage(e)); setPhase("storage-error"); } }
@@ -92,10 +92,13 @@ export function TVPlayer() {
   const sync = async (creds: Credentials) => {
     const sent = Date.now();
     const manifest = contentSchema.parse(await deviceApi("content", creds));
+    if (manifest.entitlement) await saveEntitlement(manifest.screen_id, manifest.entitlement);
+    if (manifest.entitlement?.active === false) { setPhase('disabled'); setPositionTest(null); setProgress(''); setError(''); return; }
     if (manifest.server_time) manifest.clock_offset = Date.parse(manifest.server_time) - (sent + Date.now()) / 2;
     await downloadContent(manifest, (done, total) => setProgress(`${done} / ${total}`));
     const previous = current.current.content;
     setContent(manifest);
+    setPhase('playing');
     if (previous?.playlist?.id !== manifest.playlist?.id || previous?.playlist?.updated_at !== manifest.playlist?.updated_at) setIndex(0);
     setProgress(""); setError("");
   };
@@ -138,7 +141,7 @@ export function TVPlayer() {
 
   // Independent of media downloads: position commands must also reach a player without content.
   useEffect(() => {
-    if (!identity?.paired || phase === "revoked") return;
+    if (!identity?.paired || phase === "revoked" || phase === 'disabled') return;
     let cancelled = false;
     let retryAfter = 0;
     const poll = async () => {
@@ -258,8 +261,8 @@ export function TVPlayer() {
       <div className="tv-center">
         {!qrUrl && <Monitor className="tv-display-icon" aria-hidden="true" />}
         <p className="tv-eyebrow">{phase === "playing" ? "APPAREIL JUMELÉ" : "CONNEXION DE L’ÉCRAN"}</p>
-        <h1>{phase === "boot" ? "Démarrage du lecteur" : phase === "storage-error" ? "Stockage sécurisé indisponible" : phase === "playing" ? "En attente de contenu" : phase === "pairing" && !expired ? "Jumeler cet écran" : expired ? "Code expiré" : phase === "revoked" ? "Accès révoqué" : "ScreenFlow TV"}</h1>
-        {phase === "storage-error" ? <Button autoFocus size="lg" onClick={() => window.location.reload()}><RefreshCw />Réessayer le démarrage</Button> : phase === "pairing" && !expired ? <><div className="tv-code" aria-label={`Code de jumelage ${identity?.pairing_code}`}>{identity?.pairing_code.split("").map((digit, i) => <span key={i}>{digit}</span>)}</div><p>Code valable encore {Math.max(0, Math.ceil(((identity?.expires_at ?? now) - now) / 60000))} min</p></> : phase === "playing" ? <p>{progress ? `Téléchargement des médias · ${progress}` : "Aucune playlist disponible sur cet écran."}</p> : phase !== "boot" && <Button autoFocus className="min-h-12 text-lg" size="lg" disabled={requesting || !online} onClick={() => void connect()}><Cast />{requesting ? "Connexion…" : expired ? "Obtenir un nouveau code" : "Connecter cet écran"}</Button>}
+        <h1>{phase === 'disabled' ? 'Écran désactivé' : phase === "boot" ? "Démarrage du lecteur" : phase === "storage-error" ? "Stockage sécurisé indisponible" : phase === "playing" ? "En attente de contenu" : phase === "pairing" && !expired ? "Jumeler cet écran" : expired ? "Code expiré" : phase === "revoked" ? "Accès révoqué" : "ScreenFlow TV"}</h1>
+        {phase === 'disabled' ? <p>Votre administrateur peut réactiver cet écran. L’association et le contenu local sont conservés.</p> : phase === "storage-error" ? <Button autoFocus size="lg" onClick={() => window.location.reload()}><RefreshCw />Réessayer le démarrage</Button> : phase === "pairing" && !expired ? <><div className="tv-code" aria-label={`Code de jumelage ${identity?.pairing_code}`}>{identity?.pairing_code.split("").map((digit, i) => <span key={i}>{digit}</span>)}</div><p>Code valable encore {Math.max(0, Math.ceil(((identity?.expires_at ?? now) - now) / 60000))} min</p></> : phase === "playing" ? <p>{progress ? `Téléchargement des médias · ${progress}` : "Aucune playlist disponible sur cet écran."}</p> : phase !== "boot" && <Button autoFocus className="min-h-12 text-lg" size="lg" disabled={requesting || !online} onClick={() => void connect()}><Cast />{requesting ? "Connexion…" : expired ? "Obtenir un nouveau code" : "Connecter cet écran"}</Button>}
         {qrUrl && <div className="tv-qr"><QRCodeSVG value={qrUrl} size={200} level="M" marginSize={4} fgColor="var(--qr-foreground)" bgColor="var(--qr-background)" title="QR code de jumelage" /><p>Appairage par QR code</p></div>}
         {error && <p role="alert" className="tv-error">{error}</p>}
       </div>

@@ -3,6 +3,7 @@ import { effectivePairingStatus, generateDeviceToken, generatePairingCode, hashD
 import { deviceIdentity, deviceReport, commandAck, manifestSchema, manifestMediaSchema } from "@/lib/player-protocol";
 import { wallPlaybackSchema } from "@/lib/video-wall";
 import { webpageUrl } from './webpage';
+import { deviceEntitlementSchema } from './billing';
 
 const registration = z.object({ device_name: z.string().trim().max(120).default("Android TV"), device_metadata: z.record(z.string(), z.union([z.string().max(200), z.number(), z.boolean()])).default({}) }).strict();
 
@@ -58,8 +59,12 @@ export async function handleDeviceRequest(request: Request, operation: "request"
       return reply({ last_seen: data, status: "online" });
     }
     if (operation === "content") {
+      const entitlementResult = await supabaseAdmin.rpc('device_entitlement', { p_device: input.device_id, p_hash: hash });
+      if (entitlementResult.error) return reply({ error: 'Droits indisponibles' }, 503);
+      const entitlement = deviceEntitlementSchema.parse(entitlementResult.data);
       const { data, error } = await supabaseAdmin.rpc("device_content", { p_device: input.device_id, p_hash: hash });
       if (error) return reply({ error: "Appareil non autorisé" }, 401);
+      if (!entitlement.active) { const base = manifestSchema.parse(data); return reply({ screen_id: base.screen_id, assignment_updated_at: base.assignment_updated_at, last_sync_at: new Date().toISOString(), server_time: new Date().toISOString(), entitlement, playlist: null, wall: null }); }
       const { data: wallData, error: wallError } = await supabaseAdmin.rpc("device_wall", { p_device: input.device_id, p_hash: hash });
       if (wallError) throw new Error("Wall unavailable");
       const wall = wallData ? wallPlaybackSchema.parse(wallData) : null;
@@ -83,7 +88,7 @@ export async function handleDeviceRequest(request: Request, operation: "request"
       }));
       const { data: synced, error: syncError } = await supabaseAdmin.rpc("device_record_sync", { p_device: input.device_id, p_hash: hash });
       if (syncError) return reply({ error: "Appareil non autorisé" }, 401);
-      return reply({ ...manifest, playlist: manifest.playlist ? { ...manifest.playlist, items } : null, server_time: new Date().toISOString(), last_sync_at: synced, download_urls_expire_in: 3600 });
+      return reply({ ...manifest, entitlement, playlist: manifest.playlist ? { ...manifest.playlist, items } : null, server_time: new Date().toISOString(), last_sync_at: synced, download_urls_expire_in: 3600 });
     }
     if (operation === "commands") {
       const { data, error } = await supabaseAdmin.rpc("device_poll_commands", { p_device: input.device_id, p_hash: hash });

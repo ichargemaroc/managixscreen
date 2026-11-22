@@ -1,16 +1,18 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
 ## Abonnements SaaS par écrans
-- [ ] Examiner le kit de paiement personnel du client avant raccordement ; fournisseur/documentation attendus, Paddle non activé
+- [ ] Raccorder le kit de paiement personnel ultérieurement, à la demande du client ; fournisseur/documentation et tarifs attendus, Paddle non activé
 - [x] Compte administrateur désigné et confirmé : karim.gharbi@me.com
 - [x] Examiner le store, les pages, le jumelage transactionnel, les identités Players et les tables Cloud existantes ; contrôle du fournisseur effectué
-- [ ] Faire approuver l’implémentation progressive ; pays d’exploitation et confirmation du fournisseur nécessaires avant activation des paiements
-- [x] Plan approuvé ; pays légal confirmé : Maroc, clientèle mondiale ; vérifier l’éligibilité du paiement avec ce pays
-- [ ] Ajouter catalogue centralisé, historique, droits d’écrans et paramètres, avec accès par propriétaire et rôle administrateur sécurisé ; compte administrateur à désigner
-- [ ] Intégrer quota atomique au jumelage et à la réactivation ; préserver les TV existantes, les commandes et le cache hors connexion
-- [ ] Ajouter page Abonnement et administration cohérentes avec le tableau de bord
-- [ ] Activer le fournisseur confirmé, configurer les tarifs puis intégrer paiement, portail et événements signés ; tarifs/devise/remise et règles de grâce/suspension à définir
-- [ ] Exécuter scénarios quotas, concurrence, paiements de test et isolation entre clients ; rapporter séparément tests navigateur et essais TV physiques
+- [x] Plan approuvé ; pays légal confirmé : Maroc, clientèle mondiale ; Paddle éligible mais non activé, raccordement du kit personnel reporté par le client
+- [x] Catalogue centralisé, historique, droits d’écrans et paramètres avec lecture par propriétaire et rôle administrateur séparé ; comptes existants conservés en accès historique
+- [x] Quota transactionnel au jumelage et à la réactivation, insertions directes refusées, identité unique et désactivation réversible sans effacer les médias locaux
+- [x] Pages Abonnement et Administration, accès depuis le menu/tableau de bord, tarifs et paramètres administrables, annulation/portail explicitement indisponibles sans paiement
+- [x] Client temporaire : cinq TV acceptées, sixième refusée dans le formulaire puis acceptée après passage à dix, désactivation/réactivation, concurrence à la dernière place, accès/écriture entre clients refusés, suspension/réactivation sans perte
+- [x] Catalogue : paramètres enregistrés, palier de trente créé, prix annuel relu puis données de test retirées ; 191 tests réussis, ordinateur/téléphone sans erreur observée
+- [x] Lecteur web : image réellement affectée/diffusée, désactivation et réactivation sans nouveau jumelage, reprise depuis le cache avec API appareil indisponible ; aucun démarrage web totalement hors réseau garanti
+- [ ] Paiement, portail, événements signés, renouvellements/remboursements et tests de paiement : kit personnel et prix définitifs attendus, raccordement reporté
+- [ ] Désactivation/réactivation et reprise sur Android TV physique : APK mis à jour et matériel nécessaires ; anciens APK/hors ligne peuvent conserver le contenu local
 
 ## Rapidité de la Médiathèque
 - [x] Aperçus privés compressés 480×270, chargement différé, vidéos téléchargées uniquement à l’ouverture, liens originaux groupés et conservés dans le cache de session

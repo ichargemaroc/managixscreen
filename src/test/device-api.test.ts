@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handleDeviceRequest } from "@/lib/device-api.server";
 
-const mocks = vi.hoisted(() => ({ from: vi.fn(), rpc: vi.fn(), storage: { from: vi.fn() } }));
-vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: mocks }));
+const mocks = vi.hoisted(() => ({ from: vi.fn(), rpc: vi.fn(), entitlement: vi.fn(), storage: { from: vi.fn() } }));
+vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { ...mocks, rpc: (name: string, args: unknown) => name === 'device_entitlement' ? mocks.entitlement(args) : mocks.rpc(name, args) } }));
 
 function row(data: unknown) {
   const query = { select: vi.fn(), eq: vi.fn(), is: vi.fn(), maybeSingle: vi.fn().mockResolvedValue({ data }) };
@@ -16,7 +16,7 @@ function request(token?: string, fields = {}) {
 }
 
 describe("Device API isolation", () => {
-  beforeEach(() => vi.resetAllMocks());
+  beforeEach(() => { vi.resetAllMocks(); mocks.entitlement.mockResolvedValue({ data: { version: 1, active: true, revision: 1 } }); });
   it("rejects an anonymous device before reading any data", async () => {
     expect((await handleDeviceRequest(request(), "status")).status).toBe(401);
     expect(mocks.from).not.toHaveBeenCalled();
@@ -112,6 +112,24 @@ describe("Device API isolation", () => {
     expect(mocks.rpc).toHaveBeenLastCalledWith("device_poll_commands", { p_device: deviceId, p_hash: expect.any(String) });
     expect(mocks.rpc).toHaveBeenCalledTimes(2);
   });
+  it('does not sign or sync disabled screen content and keeps identity valid', async () => {
+    mocks.from.mockReturnValue(row({ device_id: deviceId }));
+    mocks.entitlement.mockResolvedValue({ data: { version: 1, active: false, revision: 2 } });
+    mocks.rpc.mockResolvedValueOnce({ data: true }).mockResolvedValueOnce({ data: { screen_id: deviceId, assignment_updated_at: 'now', playlist: null } });
+    const response = await handleDeviceRequest(request('a'.repeat(64)), 'content');
+    expect(response.status).toBe(200);
+    expect((await response.json()).entitlement.active).toBe(false);
+    expect(mocks.storage.from).not.toHaveBeenCalled();
+    expect(mocks.rpc).not.toHaveBeenCalledWith('device_record_sync', expect.anything());
+    expect(mocks.entitlement).toHaveBeenCalledWith({ p_device: deviceId, p_hash: expect.stringMatching(/^[a-f0-9]{64}$/) });
+  });
+  it('fails closed on unavailable entitlements without revoking the identity', async () => {
+    mocks.from.mockReturnValue(row({ device_id: deviceId }));
+    mocks.rpc.mockResolvedValue({ data: true });
+    mocks.entitlement.mockResolvedValue({ error: { message: 'Unavailable' } });
+    expect((await handleDeviceRequest(request('a'.repeat(64)), 'content')).status).toBe(503);
+    expect(mocks.storage.from).not.toHaveBeenCalled();
+  });
 });
 describe("Device API access from the Android app", () => {
   it("answers the Android WebView preflight without cookies", async () => {
@@ -125,7 +143,7 @@ describe("Device API access from the Android app", () => {
 });
 
 describe("Video wall device manifests", () => {
-  beforeEach(() => vi.resetAllMocks());
+  beforeEach(() => { vi.resetAllMocks(); mocks.entitlement.mockResolvedValue({ data: { version: 1, active: true, revision: 1 } }); });
   it("overrides a standard playlist with only the device wall and strips private fields", async () => {
     vi.stubEnv("VITE_SUPABASE_URL", "https://storage.example.test");
     mocks.from.mockReturnValue(row({ device_id: deviceId }));

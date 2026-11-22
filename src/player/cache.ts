@@ -1,4 +1,6 @@
 import { cacheKey, legacyCacheKey, contentSchema, type Content, type Item } from "./protocol";
+import { deviceEntitlementSchema } from '@/lib/billing';
+import type { z } from 'zod';
 
 // IndexedDB is shared by the browser route and the bundled Android WebView.
 const dbName = "screenflow-player-v1";
@@ -19,8 +21,12 @@ async function write(store: string, key: string, value: unknown) {
 }
 export async function readContent(): Promise<Content | null> {
   const value = await read<unknown>("state", "manifest");
-  const parsed = contentSchema.safeParse(value); return parsed.success ? parsed.data : null;
+  const parsed = contentSchema.safeParse(value);
+  if (!parsed.success) return null;
+  const entitlement = deviceEntitlementSchema.safeParse(await read<unknown>('state', `entitlement:${parsed.data.screen_id}`));
+  return entitlement.success ? { ...parsed.data, entitlement: entitlement.data } : parsed.data;
 }
+export async function saveEntitlement(screenId: string, value: z.infer<typeof deviceEntitlementSchema>) { await write('state', `entitlement:${screenId}`, deviceEntitlementSchema.parse(value)); }
 export async function cachedMedia(content: Content, item: Item) {
   const stored = await read<Blob>("media", cacheKey(content, item)) ?? await read<Blob>("media", legacyCacheKey(content, item));
   if (stored) return stored;

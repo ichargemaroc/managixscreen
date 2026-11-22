@@ -26,6 +26,8 @@ export const Route = createFileRoute("/auth")({
     { name: "description", content: "Vos photos, vidéos et pages Web réunies sur vos TV Android avec ScreenFlow." },
     { property: "og:title", content: "ScreenFlow — Vos contenus sur grand écran" },
     { property: "og:description", content: "Vos contenus, vos écrans, un seul espace ScreenFlow." },
+    { property: 'og:image', content: heroAsset.url },
+    { name: 'twitter:image', content: heroAsset.url },
   ] }),
   component: AuthPage,
 });
