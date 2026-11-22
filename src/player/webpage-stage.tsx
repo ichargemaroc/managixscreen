@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { displayWebpageUrl, webpageRefreshMs, youtubeEmbedUrl, WEBPAGE_TIMEOUT_MS } from '@/lib/webpage';
 import { nativeWebpage } from './webpage-native';
 
-export function WebpageStage({ url, name, fullscreen = true, refreshMinutes = 0, active = true, onError, onState }: { url: string; name: string; fullscreen?: boolean; refreshMinutes?: number; active?: boolean; onError: () => void; onState: (state: 'buffering' | 'playing' | 'paused' | 'error') => void }) {
+export function WebpageStage({ url, name, fullscreen = true, refreshMinutes = 0, active = true, rectangle, muted=false,onError, onState }: { url: string; name: string; fullscreen?: boolean; refreshMinutes?: number; active?: boolean; muted?:boolean;rectangle?: {x:number;y:number;width:number;height:number}; onError: () => void; onState: (state: 'buffering' | 'playing' | 'paused' | 'error') => void }) {
   const [web, setWeb] = useState(false); const [revision, setRevision] = useState(0); const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const handlers = useRef({ onError, onState }); handlers.current = { onError, onState };
@@ -24,7 +24,7 @@ export function WebpageStage({ url, name, fullscreen = true, refreshMinutes = 0,
           close = () => { void listener.remove(); void native.close(session).catch(() => {}); };
           nativeClose.current = close;
           if (cancelled) { close(); return; }
-          await native.open({ url: safeUrl, session, fullscreen, timeoutMs: WEBPAGE_TIMEOUT_MS });
+          await native.open({ url: safeUrl, session, fullscreen, timeoutMs: WEBPAGE_TIMEOUT_MS, ...(muted?{muted:true}:{}),...(rectangle ? {rectangle} : {}) });
           if (cancelled) { close(); return; }
           const interval = webpageRefreshMs(refreshMinutes);
           if (interval) refresh = setInterval(() => { if (rejected.current) return; completed.current = false; setLoading(true); timeout.current = setTimeout(fail, WEBPAGE_TIMEOUT_MS); void native.reload(session).catch(fail); }, interval);
@@ -36,10 +36,10 @@ export function WebpageStage({ url, name, fullscreen = true, refreshMinutes = 0,
       } catch { if (!cancelled) fail(); }
     })();
     return () => { cancelled = true; clearTimeout(timeout.current); clearInterval(refresh); close?.(); nativeClose.current = undefined; };
-  }, [url, refreshMinutes, fullscreen, active]);
+  }, [url, refreshMinutes, fullscreen, active, muted]);
   const youtube = !!youtubeEmbedUrl(url);
   return <div className={fullscreen ? 'tv-webpage' : 'tv-webpage tv-webpage-inset'}>
-    {active && web && !failed && <iframe key={revision} title={name} src={displayWebpageUrl(url)} sandbox={youtube ? 'allow-scripts allow-same-origin allow-presentation' : 'allow-scripts allow-forms'} allow={youtube ? 'autoplay; encrypted-media; picture-in-picture' : undefined} referrerPolicy="no-referrer" onLoad={loaded} onError={fail} />}
+    {active && web && !failed && <iframe key={revision} title={name} src={displayWebpageUrl(url)} sandbox={youtube ? 'allow-scripts allow-same-origin allow-presentation' : 'allow-scripts allow-forms'} allow={muted?'autoplay \'none\'; encrypted-media':youtube ? 'autoplay; encrypted-media; picture-in-picture' : undefined} referrerPolicy="no-referrer" onLoad={loaded} onError={fail} />}
     {active && loading && <p role="status" className="tv-webpage-status">Chargement de la page…</p>}
     {active && failed && <p role="alert" className="tv-webpage-status">Page Web indisponible.</p>}
   </div>;

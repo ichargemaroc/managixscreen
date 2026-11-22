@@ -1,10 +1,12 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
 ## Multi-zones, intégrations et gestion d’équipe
-- [ ] Ajouter des compositions d’écran à plusieurs zones, playlists indépendantes, aperçu et affectation ; conserver la diffusion standard par défaut
-- [ ] Ajouter liens Canva publiés, météo réelle et Instagram ; vérifier les possibilités d’affichage et autorisations des services
-- [ ] Ajouter invitations et accès d’équipe limités à la préparation des contenus, sans gestion des écrans ni accès administrateur plateforme
-- [ ] Vérifier l’isolation entre clients, les quotas inchangés et la diffusion multi-zones ; essais Android physiques nécessaires
+- [x] Compositions de deux à quatre zones, playlists indépendantes, aperçu, proportions, une zone sonore et affectation ; manifeste et cache atomique vérifiés
+- [x] Sources Canva publiées, météo MET Norway réelle et Instagram public ; aucun compte fournisseur fictivement connecté, restrictions de publication documentées
+- [x] Invitations expi­rantes, collaborateurs de préparation, propositions, aperçu et validation propriétaire ; copie des médias, révocation et isolation vérifiées sur deux comptes temporaires
+- [x] 206 tests réussis ; composition enregistrée/affectée/relue, deux photos diffusées et reprise, météo enregistrée/affichée, droits tiers refusés ; données temporaires nettoyées
+- [ ] Multi-zones et pages intégrées sur Android TV physique : nouvelle compilation APK et matériel nécessaires
+- [ ] Affichage Canva/Instagram réel du client : liens publiés autorisant l’intégration nécessaires ; aucune connexion OAuth ni flux de compte automatisé
 
 ## Vérification ciblée de l’administration — 22 novembre 2026
 - [x] Confirmer le rôle du compte administrateur principal et ouvrir son administration avec une session réelle, sans modifier les permissions déjà correctes

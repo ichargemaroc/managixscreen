@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, FolderTree, Settings, PanelsTopLeft, CreditCard, Shield } from "lucide-react";
+import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, FolderTree, Settings, PanelsTopLeft, CreditCard, Shield, PanelsLeftBottom,Plug,Users } from "lucide-react";
 import { usePlatformAdmin } from '@/lib/store';
 import markAsset from "@/assets/screenflow-mark.webp.asset.json";
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -14,10 +14,13 @@ const nav = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
   { title: "Écrans", url: "/screens", icon: Monitor },
   { title: "Murs d’images", url: "/video-walls", icon: PanelsTopLeft },
+  { title: 'Multi-zones',url:'/multi-zones',icon:PanelsLeftBottom },
   { title: "Médiathèque", url: "/media", icon: Image },
   { title: "Playlists", url: "/playlists", icon: ListVideo },
   { title: "Programmation", url: "/schedule", icon: CalendarClock },
   { title: "Groupes", url: "/groups", icon: FolderTree },
+  { title:'Intégrations',url:'/integrations',icon:Plug },
+  { title:'Équipe',url:'/team',icon:Users },
   { title: "Paramètres", url: "/settings", icon: Settings },
   { title: 'Abonnement', url: '/subscription', icon: CreditCard },
 ] as const;

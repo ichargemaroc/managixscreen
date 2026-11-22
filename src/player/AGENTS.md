@@ -3,3 +3,5 @@
 - Web walls repeat a whole page on each assigned screen rather than promising canvas cropping or synchronized DOM rendering.
 - Key immutable local media by ID/type/size rather than playlist revision and migrate legacy keys; serialize cache commits to prevent overlapping refreshes from discarding current playback.
 - Keep content retrieval independent of transient heartbeat failures while stopping on revoked device access; telemetry must not block playlist updates.
+- Multi-zone manifests commit only after every local zone asset downloads; independent zone timers share one audio-enabled zone and do not restart for renewed signed links.
+- Native web zones have separate session-keyed WebViews with bounded rectangles and no bridge; silenced zones require a media gesture, and closing one session must not destroy others.

@@ -141,6 +141,27 @@
       "when": 1795344106209,
       "tag": "0019_billing_trial_downgrade_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1795345481609,
+      "tag": "0020_multi_zone_compositions",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1795345584358,
+      "tag": "0021_content_preparation_teams",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1795345614702,
+      "tag": "0022_bound_content_team_invitations",
+      "breakpoints": true
     }
   ]
 }

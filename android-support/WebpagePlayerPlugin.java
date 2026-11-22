@@ -22,14 +22,13 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 /** External content uses a separate WebView with NO Capacitor bridge or JavascriptInterface. */
 @CapacitorPlugin(name = "WebpagePlayer")
 public class WebpagePlayerPlugin extends Plugin {
-  private WebView page;
-  private FrameLayout layer;
-  private String session;
+  private final java.util.Map<String, PageState> pages = new java.util.HashMap<>();
+  private static class PageState {
+    WebView page; FrameLayout layer; String session; Runnable deadline; boolean loadFailed; boolean silent;
+  }
   private final Handler timer = new Handler(Looper.getMainLooper());
-  private Runnable deadline;
-  private boolean loadFailed;
-  private void event(String state) {
-    JSObject data = new JSObject(); data.put("session", session); data.put("state", state);
+  private void event(PageState p, String state) {
+    JSObject data = new JSObject(); data.put("session", p.session); data.put("state", state);
     notifyListeners("webpageState", data);
   }
   private boolean allowed(String value) {
@@ -41,15 +40,15 @@ public class WebpagePlayerPlugin extends Plugin {
         !host.matches("^(127\\.|10\\.|192\\.168\\.|169\\.254\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.|0\\.).*");
     } catch (Exception ignored) { return false; }
   }
-  private void cancelDeadline() { if (deadline != null) timer.removeCallbacks(deadline); }
-  private void armDeadline() {
-    cancelDeadline(); deadline = () -> { if (page != null) { loadFailed = true; page.stopLoading(); event("error"); } };
-    timer.postDelayed(deadline, 15000);
+  private void cancelDeadline(PageState p) { if (p.deadline != null) timer.removeCallbacks(p.deadline); }
+  private void armDeadline(PageState p) {
+    cancelDeadline(p); p.deadline = () -> { if (p.page != null) { p.loadFailed = true; p.page.stopLoading(); event(p, "error"); } };
+    timer.postDelayed(p.deadline, 15000);
   }
-  private void destroyPage() {
-    cancelDeadline();
-    if (page != null) { page.stopLoading(); page.loadUrl("about:blank"); page.destroy(); page = null; }
-    if (layer != null) { ViewGroup parent = (ViewGroup) layer.getParent(); if (parent != null) parent.removeView(layer); layer = null; }
+  private void destroyPage(PageState p) {
+    cancelDeadline(p); pages.remove(p.session);
+    if (p.page != null) { p.page.stopLoading(); p.page.loadUrl("about:blank"); p.page.destroy(); p.page = null; }
+    if (p.layer != null) { ViewGroup parent = (ViewGroup) p.layer.getParent(); if (parent != null) parent.removeView(p.layer); p.layer = null; }
     getBridge().getWebView().requestFocus();
   }
   @SuppressLint("SetJavaScriptEnabled")
@@ -57,14 +56,17 @@ public class WebpagePlayerPlugin extends Plugin {
     String url = call.getString("url"); String requested = call.getString("session");
     if (url == null || requested == null || !allowed(url)) { call.reject("WEBPAGE_INVALID_URL"); return; }
     getActivity().runOnUiThread(() -> {
-      destroyPage(); session = requested;
-      layer = new FrameLayout(getActivity()); page = new WebView(getActivity());
+      PageState old = pages.get(requested); if (old != null) destroyPage(old);
+      if (pages.size() >= 4) { call.reject("WEBPAGE_LIMIT"); return; }
+      PageState p = new PageState(); p.session = requested; p.silent = Boolean.TRUE.equals(call.getBoolean("muted", false));
+      p.layer = new FrameLayout(getActivity()); p.page = new WebView(getActivity()); pages.put(requested, p);
+      WebView page = p.page; FrameLayout layer = p.layer;
       WebSettings settings = page.getSettings();
       settings.setJavaScriptEnabled(true); settings.setDomStorageEnabled(true);
       settings.setAllowFileAccess(false); settings.setAllowContentAccess(false);
       settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
       settings.setJavaScriptCanOpenWindowsAutomatically(false); settings.setSupportMultipleWindows(false);
-      settings.setMediaPlaybackRequiresUserGesture(false); settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+      settings.setMediaPlaybackRequiresUserGesture(p.silent); settings.setCacheMode(WebSettings.LOAD_DEFAULT);
       page.setWebViewClient(new WebViewClient() {
         @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) { return !allowed(request.getUrl().toString()); }
         @Override public boolean shouldOverrideUrlLoading(WebView view, String target) { return !allowed(target); }
@@ -72,15 +74,15 @@ public class WebpagePlayerPlugin extends Plugin {
           if (!allowed(request.getUrl().toString())) return new android.webkit.WebResourceResponse("text/plain", "UTF-8", new java.io.ByteArrayInputStream(new byte[0]));
           return null;
         }
-        @Override public void onPageStarted(WebView view, String target, Bitmap icon) { loadFailed = false; armDeadline(); }
-        @Override public void onPageFinished(WebView view, String target) { if (view == page && !loadFailed && !"about:blank".equals(target)) { cancelDeadline(); event("loaded"); } }
-        @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) { if (request.isForMainFrame()) { loadFailed = true; cancelDeadline(); event("error"); } }
-        @Override public void onReceivedHttpError(WebView view, WebResourceRequest request, android.webkit.WebResourceResponse response) { if (request.isForMainFrame() && response.getStatusCode() >= 400) { loadFailed = true; cancelDeadline(); event("error"); } }
+        @Override public void onPageStarted(WebView view, String target, Bitmap icon) { p.loadFailed = false; armDeadline(p); }
+        @Override public void onPageFinished(WebView view, String target) { if (view == p.page && !p.loadFailed && !"about:blank".equals(target)) { cancelDeadline(p); if (p.silent) view.evaluateJavascript("document.querySelectorAll('video,audio').forEach(function(e){e.muted=true;});", null); event(p,"loaded"); } }
+        @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) { if (request.isForMainFrame()) { p.loadFailed = true; cancelDeadline(p); event(p,"error"); } }
+        @Override public void onReceivedHttpError(WebView view, WebResourceRequest request, android.webkit.WebResourceResponse response) { if (request.isForMainFrame() && response.getStatusCode() >= 400) { p.loadFailed = true; cancelDeadline(p); event(p,"error"); } }
       });
       page.setDownloadListener((a,b,c,d,e) -> {});
       page.setOnKeyListener((view, key, event) -> {
         if (key == KeyEvent.KEYCODE_BACK || key == KeyEvent.KEYCODE_MENU || key == KeyEvent.KEYCODE_MEDIA_NEXT) {
-          if (event.getAction() == KeyEvent.ACTION_UP) { event("back"); destroyPage(); }
+          if (event.getAction() == KeyEvent.ACTION_UP) { event(p,"back"); destroyPage(p); }
           return true;
         }
         return false; // D-pad and Enter navigate within the displayed page.
@@ -89,11 +91,22 @@ public class WebpagePlayerPlugin extends Plugin {
       int inset = fullscreen ? 0 : Math.round(32 * getContext().getResources().getDisplayMetrics().density);
       FrameLayout.LayoutParams content = new FrameLayout.LayoutParams(-1, -1); content.setMargins(inset, inset, inset, inset);
       layer.addView(page, content);
-      getActivity().addContentView(layer, new ViewGroup.LayoutParams(-1, -1));
-      page.requestFocus(); armDeadline(); page.loadUrl(url); call.resolve();
+      JSObject rect = call.getObject("rectangle");
+      if (rect == null) getActivity().addContentView(layer, new ViewGroup.LayoutParams(-1, -1));
+      else {
+        android.view.View decor = getActivity().getWindow().getDecorView();
+        double x = rect.optDouble("x", 0), y = rect.optDouble("y", 0), w = rect.optDouble("width", 1), h = rect.optDouble("height", 1);
+        if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(w) || !Double.isFinite(h) || x < 0 || y < 0 || w <= 0 || h <= 0 || x+w > 1.001 || y+h > 1.001) { destroyPage(p); call.reject("WEBPAGE_INVALID_RECT"); return; }
+        int width = decor.getWidth(), height = decor.getHeight();
+        if (width <= 0 || height <= 0) { destroyPage(p); call.reject("WEBPAGE_INVALID_RECT"); return; }
+        FrameLayout.LayoutParams bounds = new FrameLayout.LayoutParams(Math.round((float)(width*w)), Math.round((float)(height*h)));
+        bounds.leftMargin = Math.round((float)(width*x)); bounds.topMargin = Math.round((float)(height*y));
+        getActivity().addContentView(layer, bounds);
+      }
+      page.requestFocus(); armDeadline(p); page.loadUrl(url); call.resolve();
     });
   }
-  @PluginMethod public void close(PluginCall call) { getActivity().runOnUiThread(() -> { if (session != null && session.equals(call.getString("session"))) destroyPage(); call.resolve(); }); }
-  @PluginMethod public void reload(PluginCall call) { getActivity().runOnUiThread(() -> { if (page != null && session != null && session.equals(call.getString("session"))) { armDeadline(); page.reload(); } call.resolve(); }); }
-  @Override protected void handleOnDestroy() { getActivity().runOnUiThread(this::destroyPage); }
+  @PluginMethod public void close(PluginCall call) { getActivity().runOnUiThread(() -> { PageState p = pages.get(call.getString("session")); if (p != null) destroyPage(p); call.resolve(); }); }
+  @PluginMethod public void reload(PluginCall call) { getActivity().runOnUiThread(() -> { PageState p = pages.get(call.getString("session")); if (p != null && p.page != null) { armDeadline(p); p.page.reload(); } call.resolve(); }); }
+  @Override protected void handleOnDestroy() { getActivity().runOnUiThread(() -> { for (PageState p : new java.util.ArrayList<>(pages.values())) destroyPage(p); }); }
 }

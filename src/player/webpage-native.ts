@@ -1,7 +1,7 @@
 import { webpageUrl } from '@/lib/webpage';
 
 export type WebpageEvent = { session: string; state: 'loaded' | 'error' | 'back' };
-type Plugin = { open(options: { url: string; session: string; fullscreen: boolean; timeoutMs: number }): Promise<void>; close(options: { session: string }): Promise<void>; reload(options: { session: string }): Promise<void>; addListener(name: 'webpageState', callback: (event: WebpageEvent) => void): Promise<{ remove(): Promise<void> }> };
+type Plugin = { open(options: { url: string; session: string; fullscreen: boolean; timeoutMs: number; muted?:boolean;rectangle?: {x:number;y:number;width:number;height:number} }): Promise<void>; close(options: { session: string }): Promise<void>; reload(options: { session: string }): Promise<void>; addListener(name: 'webpageState', callback: (event: WebpageEvent) => void): Promise<{ remove(): Promise<void> }> };
 export async function nativeWebpage() {
   const { Capacitor, registerPlugin } = await import('@capacitor/core');
   if (!Capacitor.isNativePlatform()) return null;

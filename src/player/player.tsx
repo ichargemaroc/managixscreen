@@ -15,6 +15,7 @@ import { flushSync } from "react-dom";
 import { focusPlayerButton, subscribePlayerBack } from "./tv-navigation";
 import { vaultError, vaultErrorMessage } from "./vault-errors";
 import { WebpageStage } from './webpage-stage';
+import { MultiZoneStage } from './multi-zone-stage';
 
 export function TVPlayer() {
   const [positionTest, setPositionTest] = useState<PositionTest | null>(null);
@@ -232,14 +233,14 @@ export function TVPlayer() {
       if ((event.key === " " || event.key === "MediaPlayPause") && phase === "playing" && !content?.wall) { event.preventDefault(); togglePlayback(); }
       else if (event.key.startsWith("Arrow")) {
         event.preventDefault();
-        if (phase === "playing" && source && !controlsOpen.current) setControls(true);
+        if (phase === "playing" && (source || content?.layout) && !controlsOpen.current) setControls(true);
         else focusPlayerButton(event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1);
-      } else if (event.key === "Enter" && phase === "playing" && source && !controlsOpen.current) {
+      } else if (event.key === "Enter" && phase === "playing" && (source || content?.layout) && !controlsOpen.current) {
         event.preventDefault(); setControls(true);
       }
     };
     window.addEventListener("keydown", key); return () => window.removeEventListener("keydown", key);
-  }, [phase, source, content?.wall?.id, positionTest, paused, playbackBlocked]);
+  }, [phase, source, content?.wall?.id,content?.layout?.id, positionTest, paused, playbackBlocked]);
   useEffect(() => {
     if (!controls) return;
     const frame = requestAnimationFrame(() => {
@@ -254,7 +255,7 @@ export function TVPlayer() {
   const expired = identity && !identity.paired && now >= identity.expires_at;
   const qrUrl = phase === "pairing" && identity && !expired ? pairingUrl(import.meta.env['VITE_PLAYER_API_ORIGIN'] || window.location.origin, identity.pairing_code) : "";
   return <main className="tv-player text-xl" onPointerMove={() => phase === "playing" && setControls(true)}>
-    {phase === "playing" && source && item ? <div className="tv-stage">
+    {phase === 'playing' && content?.layout ? <div className="tv-stage"><MultiZoneStage content={content} paused={paused || !!positionTest} /></div> : phase === "playing" && source && item ? <div className="tv-stage">
       {item.media.type === 'webpage' ? <WebpageStage key={`${item.id}:${content?.playlist?.updated_at}`} url={source} name={item.media.name} fullscreen={item.media.webpage_fullscreen ?? true} refreshMinutes={item.media.refresh_minutes ?? 0} active={!paused && !positionTest && (!content?.wall || content.wall.state === 'playing' && now + (content.clock_offset ?? 0) >= Date.parse(content.wall.epoch))} onState={state => { playback.current = state; }} onError={() => { setError('Page Web indisponible ; passage au contenu suivant.'); if (!content?.wall) setIndex(value => nextItem(value, items.length)); }} /> : content?.wall ? <WallStage wall={content.wall} source={source} type={item.media.type} clockOffset={content.clock_offset ?? 0} onState={(state) => { playback.current = state; }} /> : item.media.type === "image" ? <img src={source} alt={item.media.name} /> : <video ref={video} src={source} autoPlay playsInline loop={items.length === 1} onPlaying={() => { playback.current = "playing"; if (playbackBlocked) { setPlaybackBlocked(false); setError(""); } }} onEnded={() => setIndex((value) => nextItem(value, items.length))} onError={() => { playback.current = "error"; setError("Format vidéo non pris en charge par cet appareil."); setTimeout(() => setIndex((value) => nextItem(value, items.length)), 3000); }} />}
     </div> : <div className="tv-enrollment">
       <header className="tv-brand"><img src={markUrl} alt="" className="tv-brand-mark" /><span>ScreenFlow <small>TV PLAYER</small></span></header>
@@ -268,8 +269,8 @@ export function TVPlayer() {
       </div>
       <footer className="tv-footer"><span className="text-base">{online ? <Wifi /> : <WifiOff />}{online ? "Réseau disponible" : "Hors connexion"}</span><span className="text-base">{nativePlayer ? "LECTEUR ANDROID TV" : "LECTEUR WEB"} · {playerVersion}{playerBuild ? ` · ${playerBuild}` : ""}</span><Button className="min-h-12 min-w-12" variant="ghost" size="icon" aria-label="Plein écran" onClick={() => void enterPlayerMode()}><Maximize /></Button></footer>
     </div>}
-    {phase === "playing" && source && controls && <div className="tv-controls"><span>{online ? <Wifi /> : <WifiOff />}{content?.playlist?.name} · {index + 1}/{items.length}{progress && ` · ${progress}`}</span><div><Button disabled={Boolean(content?.wall)} variant="ghost" size="icon" aria-label={paused || playbackBlocked ? "Lecture" : "Pause"} onClick={togglePlayback}>{paused || playbackBlocked ? <Play /> : <Pause />}</Button><Button disabled={Boolean(content?.wall)} variant="ghost" size="icon" aria-label="Média suivant" onClick={() => setIndex((value) => nextItem(value, items.length))}><ChevronRight /></Button><Button variant="ghost" size="icon" aria-label="Synchroniser" disabled={busy.current || !identity || !online} onClick={() => { if (identity && !busy.current) { busy.current = true; void sync(identity).catch(() => setError("Synchronisation indisponible.")).finally(() => { busy.current = false; }); } }}><RefreshCw /></Button><Button variant="ghost" size="icon" aria-label="Plein écran" onClick={() => void enterPlayerMode()}><Maximize /></Button></div>{error && <p role="alert">{error}</p>}</div>}
-    {phase === "playing" && source && !controls && <Button className="tv-menu" variant="ghost" size="icon" aria-label="Commandes de lecture" onClick={() => setControls(true)}><Settings2 /></Button>}
+    {phase === "playing" && (source || content?.layout) && controls && <div className="tv-controls"><span>{online ? <Wifi /> : <WifiOff />}{content?.layout?.name ?? content?.playlist?.name}{!content?.layout && ` · ${index + 1}/${items.length}`}{progress && ` · ${progress}`}</span><div><Button disabled={Boolean(content?.wall)} variant="ghost" size="icon" aria-label={paused || playbackBlocked ? "Lecture" : "Pause"} onClick={togglePlayback}>{paused || playbackBlocked ? <Play /> : <Pause />}</Button><Button disabled={Boolean(content?.wall || content?.layout)} variant="ghost" size="icon" aria-label="Média suivant" onClick={() => setIndex((value) => nextItem(value, items.length))}><ChevronRight /></Button><Button variant="ghost" size="icon" aria-label="Synchroniser" disabled={busy.current || !identity || !online} onClick={() => { if (identity && !busy.current) { busy.current = true; void sync(identity).catch(() => setError("Synchronisation indisponible.")).finally(() => { busy.current = false; }); } }}><RefreshCw /></Button><Button variant="ghost" size="icon" aria-label="Plein écran" onClick={() => void enterPlayerMode()}><Maximize /></Button></div>{error && <p role="alert">{error}</p>}</div>}
+    {phase === "playing" && (source || content?.layout) && !controls && <Button className="tv-menu" variant="ghost" size="icon" aria-label="Commandes de lecture" onClick={() => setControls(true)}><Settings2 /></Button>}
     {positionTest && <PositionStage test={positionTest} now={now} />}
   </main>;
 }

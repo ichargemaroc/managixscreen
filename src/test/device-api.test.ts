@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handleDeviceRequest } from "@/lib/device-api.server";
 
-const mocks = vi.hoisted(() => ({ from: vi.fn(), rpc: vi.fn(), entitlement: vi.fn(), storage: { from: vi.fn() } }));
-vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { ...mocks, rpc: (name: string, args: unknown) => name === 'device_entitlement' ? mocks.entitlement(args) : mocks.rpc(name, args) } }));
+const mocks = vi.hoisted(() => ({ from: vi.fn(), rpc: vi.fn(), layout:vi.fn(),entitlement: vi.fn(), storage: { from: vi.fn() } }));
+vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { ...mocks, rpc: (name: string, args: unknown) => name === 'device_layout' ? mocks.layout(args) : name === 'device_entitlement' ? mocks.entitlement(args) : mocks.rpc(name, args) } }));
 
 function row(data: unknown) {
   const query = { select: vi.fn(), eq: vi.fn(), is: vi.fn(), maybeSingle: vi.fn().mockResolvedValue({ data }) };
@@ -16,7 +16,7 @@ function request(token?: string, fields = {}) {
 }
 
 describe("Device API isolation", () => {
-  beforeEach(() => { vi.resetAllMocks(); mocks.entitlement.mockResolvedValue({ data: { version: 1, active: true, revision: 1 } }); });
+  beforeEach(() => { vi.resetAllMocks(); mocks.layout.mockResolvedValue({data:null});mocks.entitlement.mockResolvedValue({ data: { version: 1, active: true, revision: 1 } }); });
   it("rejects an anonymous device before reading any data", async () => {
     expect((await handleDeviceRequest(request(), "status")).status).toBe(401);
     expect(mocks.from).not.toHaveBeenCalled();
@@ -143,7 +143,7 @@ describe("Device API access from the Android app", () => {
 });
 
 describe("Video wall device manifests", () => {
-  beforeEach(() => { vi.resetAllMocks(); mocks.entitlement.mockResolvedValue({ data: { version: 1, active: true, revision: 1 } }); });
+  beforeEach(() => { vi.resetAllMocks(); mocks.layout.mockResolvedValue({data:null});mocks.entitlement.mockResolvedValue({ data: { version: 1, active: true, revision: 1 } }); });
   it("overrides a standard playlist with only the device wall and strips private fields", async () => {
     vi.stubEnv("VITE_SUPABASE_URL", "https://storage.example.test");
     mocks.from.mockReturnValue(row({ device_id: deviceId }));

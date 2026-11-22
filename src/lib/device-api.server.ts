@@ -4,6 +4,7 @@ import { deviceIdentity, deviceReport, commandAck, manifestSchema, manifestMedia
 import { wallPlaybackSchema } from "@/lib/video-wall";
 import { webpageUrl } from './webpage';
 import { deviceEntitlementSchema } from './billing';
+import { zoneSchema } from './multi-zone';
 
 const registration = z.object({ device_name: z.string().trim().max(120).default("Android TV"), device_metadata: z.record(z.string(), z.union([z.string().max(200), z.number(), z.boolean()])).default({}) }).strict();
 
@@ -70,10 +71,13 @@ export async function handleDeviceRequest(request: Request, operation: "request"
       const wall = wallData ? wallPlaybackSchema.parse(wallData) : null;
       const wallMedia = wallData ? z.object({ media: manifestMediaSchema.nullable() }).parse(wallData).media : null;
       const base = manifestSchema.parse(data);
+      const layoutResult = await supabaseAdmin.rpc('device_layout', { p_device: input.device_id, p_hash: hash });
+      if (layoutResult.error) throw new Error('Layout unavailable');
+      const layout = !wall && layoutResult.data ? z.object({ id:z.string().uuid(),name:z.string(),revision:z.number(),zones:z.array(zoneSchema.extend({playlist:manifestSchema.shape.playlist})).min(2).max(4) }).parse(layoutResult.data) : null;
       // An assigned wall is an explicit playback mode, even when stopped or without media.
       // Media ID, not control revision, keys the offline cache so pause/resume never redownloads.
-      const manifest = { ...base, wall, playlist: wall ? wallMedia ? { id: wall.id, name: wall.name, updated_at: wallMedia.type === 'webpage' ? `${wallMedia.id}:${wallMedia.webpage_url ?? ''}:${wallMedia.refresh_minutes}:${wallMedia.webpage_fullscreen}` : wallMedia.id, items: [{ id: wallMedia.id, position: 0, display_duration: wallMedia.duration ?? 10, media: wallMedia }] } : null : base.playlist };
-      const items = await Promise.all((manifest.playlist?.items ?? []).map(async ({ media, ...item }) => {
+      const manifest = { ...base, wall, playlist: wall ? wallMedia ? { id: wall.id, name: wall.name, updated_at: wallMedia.type === 'webpage' ? `${wallMedia.id}:${wallMedia.webpage_url ?? ''}:${wallMedia.refresh_minutes}:${wallMedia.webpage_fullscreen}` : wallMedia.id, items: [{ id: wallMedia.id, position: 0, display_duration: wallMedia.duration ?? 10, media: wallMedia }] } : null : layout ? null : base.playlist };
+      const signItem = async ({ media, ...item }: NonNullable<typeof base.playlist>['items'][number]) => {
         const { path, ...metadata } = media;
         if (media.type === 'webpage') return { ...item, media: { ...metadata, webpage_url: webpageUrl(media.webpage_url ?? '') } };
         const { data: url, error: urlError } = await supabaseAdmin.storage.from("media").createSignedUrl(path, 3600);
@@ -85,10 +89,12 @@ export async function handleDeviceRequest(request: Request, operation: "request"
         const publicUrl = new URL(publicHost);
         download.protocol = publicUrl.protocol; download.host = publicUrl.host;
         return { ...item, media: { ...metadata, download_url: download.toString() } };
-      }));
+      };
+      const items = await Promise.all((manifest.playlist?.items ?? []).map(signItem));
+      const signedLayout = layout ? { ...layout,zones:await Promise.all(layout.zones.map(async zone => ({ ...zone,playlist:zone.playlist ? { ...zone.playlist,items:await Promise.all(zone.playlist.items.map(signItem)) } : null }))) } : null;
       const { data: synced, error: syncError } = await supabaseAdmin.rpc("device_record_sync", { p_device: input.device_id, p_hash: hash });
       if (syncError) return reply({ error: "Appareil non autorisé" }, 401);
-      return reply({ ...manifest, entitlement, playlist: manifest.playlist ? { ...manifest.playlist, items } : null, server_time: new Date().toISOString(), last_sync_at: synced, download_urls_expire_in: 3600 });
+      return reply({ ...manifest, layout:signedLayout, entitlement, playlist: manifest.playlist ? { ...manifest.playlist, items } : null, server_time: new Date().toISOString(), last_sync_at: synced, download_urls_expire_in: 3600 });
     }
     if (operation === "commands") {
       const { data, error } = await supabaseAdmin.rpc("device_poll_commands", { p_device: input.device_id, p_hash: hash });

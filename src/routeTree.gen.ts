@@ -14,17 +14,24 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as PairRouteImport } from './routes/pair'
 import { Route as PlayerRouteImport } from './routes/player'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as TeamInviteRouteImport } from './routes/team-invite'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedBillingAdminRouteImport } from './routes/_authenticated/billing-admin'
 import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated/groups'
+import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
 import { Route as AuthenticatedMediaRouteImport } from './routes/_authenticated/media'
+import { Route as AuthenticatedMultiZonesRouteImport } from './routes/_authenticated/multi-zones'
 import { Route as AuthenticatedPlaylistsRouteImport } from './routes/_authenticated/playlists'
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedScreensRouteImport } from './routes/_authenticated/screens'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
+import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 import { Route as AuthenticatedVideoWallsRouteImport } from './routes/_authenticated/video-walls'
+import { Route as DisplayInstagramRouteImport } from './routes/display.instagram'
+import { Route as DisplayWeatherRouteImport } from './routes/display.weather'
 import { Route as AuthenticatedScreensScreenIdRouteImport } from './routes/_authenticated/screens_.$screenId'
+import { Route as ApiPublicWeatherRouteImport } from './routes/api/public/weather'
 import { Route as ApiPublicDevicesCommandsRouteImport } from './routes/api/public/devices/commands'
 import { Route as ApiPublicDevicesContentRouteImport } from './routes/api/public/devices/content'
 import { Route as ApiPublicDevicesHeartbeatRouteImport } from './routes/api/public/devices/heartbeat'
@@ -56,6 +63,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TeamInviteRoute = TeamInviteRouteImport.update({
+  id: '/team-invite',
+  path: '/team-invite',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -72,9 +84,20 @@ const AuthenticatedGroupsRoute = AuthenticatedGroupsRouteImport.update({
   path: '/groups',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedIntegrationsRoute =
+  AuthenticatedIntegrationsRouteImport.update({
+    id: '/integrations',
+    path: '/integrations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMediaRoute = AuthenticatedMediaRouteImport.update({
   id: '/media',
   path: '/media',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMultiZonesRoute = AuthenticatedMultiZonesRouteImport.update({
+  id: '/multi-zones',
+  path: '/multi-zones',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPlaylistsRoute = AuthenticatedPlaylistsRouteImport.update({
@@ -103,10 +126,25 @@ const AuthenticatedSubscriptionRoute =
     path: '/subscription',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedVideoWallsRoute = AuthenticatedVideoWallsRouteImport.update({
   id: '/video-walls',
   path: '/video-walls',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const DisplayInstagramRoute = DisplayInstagramRouteImport.update({
+  id: '/display/instagram',
+  path: '/display/instagram',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DisplayWeatherRoute = DisplayWeatherRouteImport.update({
+  id: '/display/weather',
+  path: '/display/weather',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedScreensScreenIdRoute =
   AuthenticatedScreensScreenIdRouteImport.update({
@@ -114,6 +152,11 @@ const AuthenticatedScreensScreenIdRoute =
     path: '/screens/$screenId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicWeatherRoute = ApiPublicWeatherRouteImport.update({
+  id: '/api/public/weather',
+  path: '/api/public/weather',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicDevicesCommandsRoute =
   ApiPublicDevicesCommandsRouteImport.update({
     id: '/api/public/devices/commands',
@@ -154,16 +197,23 @@ export interface FileRoutesByFullPath {
   '/pair': typeof PairRoute
   '/player': typeof PlayerRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/team-invite': typeof TeamInviteRoute
   '/billing-admin': typeof AuthenticatedBillingAdminRoute
   '/groups': typeof AuthenticatedGroupsRoute
+  '/integrations': typeof AuthenticatedIntegrationsRoute
   '/media': typeof AuthenticatedMediaRoute
+  '/multi-zones': typeof AuthenticatedMultiZonesRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/screens': typeof AuthenticatedScreensRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
+  '/team': typeof AuthenticatedTeamRoute
   '/video-walls': typeof AuthenticatedVideoWallsRoute
+  '/display/instagram': typeof DisplayInstagramRoute
+  '/display/weather': typeof DisplayWeatherRoute
   '/screens/$screenId': typeof AuthenticatedScreensScreenIdRoute
+  '/api/public/weather': typeof ApiPublicWeatherRoute
   '/api/public/devices/commands': typeof ApiPublicDevicesCommandsRouteWithChildren
   '/api/public/devices/content': typeof ApiPublicDevicesContentRoute
   '/api/public/devices/heartbeat': typeof ApiPublicDevicesHeartbeatRoute
@@ -176,17 +226,24 @@ export interface FileRoutesByTo {
   '/pair': typeof PairRoute
   '/player': typeof PlayerRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/team-invite': typeof TeamInviteRoute
   '/billing-admin': typeof AuthenticatedBillingAdminRoute
   '/groups': typeof AuthenticatedGroupsRoute
+  '/integrations': typeof AuthenticatedIntegrationsRoute
   '/media': typeof AuthenticatedMediaRoute
+  '/multi-zones': typeof AuthenticatedMultiZonesRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/screens': typeof AuthenticatedScreensRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
+  '/team': typeof AuthenticatedTeamRoute
   '/video-walls': typeof AuthenticatedVideoWallsRoute
+  '/display/instagram': typeof DisplayInstagramRoute
+  '/display/weather': typeof DisplayWeatherRoute
   '/': typeof AuthenticatedIndexRoute
   '/screens/$screenId': typeof AuthenticatedScreensScreenIdRoute
+  '/api/public/weather': typeof ApiPublicWeatherRoute
   '/api/public/devices/commands': typeof ApiPublicDevicesCommandsRouteWithChildren
   '/api/public/devices/content': typeof ApiPublicDevicesContentRoute
   '/api/public/devices/heartbeat': typeof ApiPublicDevicesHeartbeatRoute
@@ -201,17 +258,24 @@ export interface FileRoutesById {
   '/pair': typeof PairRoute
   '/player': typeof PlayerRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/team-invite': typeof TeamInviteRoute
   '/_authenticated/billing-admin': typeof AuthenticatedBillingAdminRoute
   '/_authenticated/groups': typeof AuthenticatedGroupsRoute
+  '/_authenticated/integrations': typeof AuthenticatedIntegrationsRoute
   '/_authenticated/media': typeof AuthenticatedMediaRoute
+  '/_authenticated/multi-zones': typeof AuthenticatedMultiZonesRoute
   '/_authenticated/playlists': typeof AuthenticatedPlaylistsRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/screens': typeof AuthenticatedScreensRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
+  '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/_authenticated/video-walls': typeof AuthenticatedVideoWallsRoute
+  '/display/instagram': typeof DisplayInstagramRoute
+  '/display/weather': typeof DisplayWeatherRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/screens_/$screenId': typeof AuthenticatedScreensScreenIdRoute
+  '/api/public/weather': typeof ApiPublicWeatherRoute
   '/api/public/devices/commands': typeof ApiPublicDevicesCommandsRouteWithChildren
   '/api/public/devices/content': typeof ApiPublicDevicesContentRoute
   '/api/public/devices/heartbeat': typeof ApiPublicDevicesHeartbeatRoute
@@ -227,16 +291,23 @@ export interface FileRouteTypes {
     | '/pair'
     | '/player'
     | '/reset-password'
+    | '/team-invite'
     | '/billing-admin'
     | '/groups'
+    | '/integrations'
     | '/media'
+    | '/multi-zones'
     | '/playlists'
     | '/schedule'
     | '/screens'
     | '/settings'
     | '/subscription'
+    | '/team'
     | '/video-walls'
+    | '/display/instagram'
+    | '/display/weather'
     | '/screens/$screenId'
+    | '/api/public/weather'
     | '/api/public/devices/commands'
     | '/api/public/devices/content'
     | '/api/public/devices/heartbeat'
@@ -249,17 +320,24 @@ export interface FileRouteTypes {
     | '/pair'
     | '/player'
     | '/reset-password'
+    | '/team-invite'
     | '/billing-admin'
     | '/groups'
+    | '/integrations'
     | '/media'
+    | '/multi-zones'
     | '/playlists'
     | '/schedule'
     | '/screens'
     | '/settings'
     | '/subscription'
+    | '/team'
     | '/video-walls'
+    | '/display/instagram'
+    | '/display/weather'
     | '/'
     | '/screens/$screenId'
+    | '/api/public/weather'
     | '/api/public/devices/commands'
     | '/api/public/devices/content'
     | '/api/public/devices/heartbeat'
@@ -273,17 +351,24 @@ export interface FileRouteTypes {
     | '/pair'
     | '/player'
     | '/reset-password'
+    | '/team-invite'
     | '/_authenticated/billing-admin'
     | '/_authenticated/groups'
+    | '/_authenticated/integrations'
     | '/_authenticated/media'
+    | '/_authenticated/multi-zones'
     | '/_authenticated/playlists'
     | '/_authenticated/schedule'
     | '/_authenticated/screens'
     | '/_authenticated/settings'
     | '/_authenticated/subscription'
+    | '/_authenticated/team'
     | '/_authenticated/video-walls'
+    | '/display/instagram'
+    | '/display/weather'
     | '/_authenticated/'
     | '/_authenticated/screens_/$screenId'
+    | '/api/public/weather'
     | '/api/public/devices/commands'
     | '/api/public/devices/content'
     | '/api/public/devices/heartbeat'
@@ -298,6 +383,10 @@ export interface RootRouteChildren {
   PairRoute: typeof PairRoute
   PlayerRoute: typeof PlayerRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  TeamInviteRoute: typeof TeamInviteRoute
+  DisplayInstagramRoute: typeof DisplayInstagramRoute
+  DisplayWeatherRoute: typeof DisplayWeatherRoute
+  ApiPublicWeatherRoute: typeof ApiPublicWeatherRoute
   ApiPublicDevicesCommandsRoute: typeof ApiPublicDevicesCommandsRouteWithChildren
   ApiPublicDevicesContentRoute: typeof ApiPublicDevicesContentRoute
   ApiPublicDevicesHeartbeatRoute: typeof ApiPublicDevicesHeartbeatRoute
@@ -342,6 +431,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/team-invite': {
+      id: '/team-invite'
+      path: '/team-invite'
+      fullPath: '/team-invite'
+      preLoaderRoute: typeof TeamInviteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/': {
       id: '/_authenticated/'
       path: '/'
@@ -363,11 +459,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGroupsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/integrations': {
+      id: '/_authenticated/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof AuthenticatedIntegrationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/media': {
       id: '/_authenticated/media'
       path: '/media'
       fullPath: '/media'
       preLoaderRoute: typeof AuthenticatedMediaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/multi-zones': {
+      id: '/_authenticated/multi-zones'
+      path: '/multi-zones'
+      fullPath: '/multi-zones'
+      preLoaderRoute: typeof AuthenticatedMultiZonesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/playlists': {
@@ -405,6 +515,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSubscriptionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/team': {
+      id: '/_authenticated/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof AuthenticatedTeamRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/video-walls': {
       id: '/_authenticated/video-walls'
       path: '/video-walls'
@@ -412,12 +529,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVideoWallsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/display/instagram': {
+      id: '/display/instagram'
+      path: '/display/instagram'
+      fullPath: '/display/instagram'
+      preLoaderRoute: typeof DisplayInstagramRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/display/weather': {
+      id: '/display/weather'
+      path: '/display/weather'
+      fullPath: '/display/weather'
+      preLoaderRoute: typeof DisplayWeatherRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/screens_/$screenId': {
       id: '/_authenticated/screens_/$screenId'
       path: '/screens/$screenId'
       fullPath: '/screens/$screenId'
       preLoaderRoute: typeof AuthenticatedScreensScreenIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/weather': {
+      id: '/api/public/weather'
+      path: '/api/public/weather'
+      fullPath: '/api/public/weather'
+      preLoaderRoute: typeof ApiPublicWeatherRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/devices/commands': {
       id: '/api/public/devices/commands'
@@ -467,12 +605,15 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBillingAdminRoute: typeof AuthenticatedBillingAdminRoute
   AuthenticatedGroupsRoute: typeof AuthenticatedGroupsRoute
+  AuthenticatedIntegrationsRoute: typeof AuthenticatedIntegrationsRoute
   AuthenticatedMediaRoute: typeof AuthenticatedMediaRoute
+  AuthenticatedMultiZonesRoute: typeof AuthenticatedMultiZonesRoute
   AuthenticatedPlaylistsRoute: typeof AuthenticatedPlaylistsRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedScreensRoute: typeof AuthenticatedScreensRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
+  AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
   AuthenticatedVideoWallsRoute: typeof AuthenticatedVideoWallsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedScreensScreenIdRoute: typeof AuthenticatedScreensScreenIdRoute
@@ -481,12 +622,15 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBillingAdminRoute: AuthenticatedBillingAdminRoute,
   AuthenticatedGroupsRoute: AuthenticatedGroupsRoute,
+  AuthenticatedIntegrationsRoute: AuthenticatedIntegrationsRoute,
   AuthenticatedMediaRoute: AuthenticatedMediaRoute,
+  AuthenticatedMultiZonesRoute: AuthenticatedMultiZonesRoute,
   AuthenticatedPlaylistsRoute: AuthenticatedPlaylistsRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedScreensRoute: AuthenticatedScreensRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
+  AuthenticatedTeamRoute: AuthenticatedTeamRoute,
   AuthenticatedVideoWallsRoute: AuthenticatedVideoWallsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedScreensScreenIdRoute: AuthenticatedScreensScreenIdRoute,
@@ -515,6 +659,10 @@ const rootRouteChildren: RootRouteChildren = {
   PairRoute: PairRoute,
   PlayerRoute: PlayerRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  TeamInviteRoute: TeamInviteRoute,
+  DisplayInstagramRoute: DisplayInstagramRoute,
+  DisplayWeatherRoute: DisplayWeatherRoute,
+  ApiPublicWeatherRoute: ApiPublicWeatherRoute,
   ApiPublicDevicesCommandsRoute: ApiPublicDevicesCommandsRouteWithChildren,
   ApiPublicDevicesContentRoute: ApiPublicDevicesContentRoute,
   ApiPublicDevicesHeartbeatRoute: ApiPublicDevicesHeartbeatRoute,

@@ -1,0 +1,12 @@
+import { createFileRoute,Link } from '@tanstack/react-router';
+import { useEffect,useState } from 'react';
+import { Users,Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { acceptCollaboration } from '@/lib/store';
+import { supabase } from '@/integrations/supabase/client';
+
+export const Route=createFileRoute('/team-invite')({head:()=>({meta:[{title:'Invitation d’équipe — ScreenFlow'},{name:'description',content:'Acceptez une invitation à préparer les contenus d’une équipe ScreenFlow.'},{property:'og:title',content:'Invitation d’équipe — ScreenFlow'},{property:'og:description',content:'Rejoindre un espace de préparation des contenus.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'}]}),component:TeamInvite});
+function TeamInvite(){const [identity,setIdentity]=useState<boolean|null>(null);const [invite,setInvite]=useState<{id:string;token:string}|null>(null);const [busy,setBusy]=useState(false);const [done,setDone]=useState(false);const [error,setError]=useState('');
+ useEffect(()=>{const match=/^#([a-f0-9-]{36}):([a-f0-9]{64})$/.exec(window.location.hash);if(match?.[1]&&match[2])setInvite({id:match[1],token:match[2]});else setError('Lien d’invitation invalide.');void supabase.auth.getUser().then(r=>setIdentity(!!r.data.user));},[]);
+ return <main className="mx-auto flex min-h-screen max-w-lg flex-col justify-center gap-6 p-8"><Users className="size-12 text-primary"/><h1 className="text-3xl">Invitation ScreenFlow</h1><p className="text-muted-foreground">Préparation des contenus · validation du propriétaire avant diffusion</p>{error&&<p role="alert" className="text-destructive">{error}</p>}{done?<><p className="flex gap-2 text-success"><Check/>Invitation acceptée</p><Button asChild><Link to="/team">Ouvrir l’équipe</Link></Button></>:identity===false?<><p>Connectez-vous avec l’adresse destinataire, puis rouvrez ce lien pour accepter l’invitation.</p><Button asChild><Link to="/auth">Se connecter</Link></Button></>:identity&&invite?<Button disabled={busy} onClick={async()=>{setBusy(true);setError('');try{await acceptCollaboration(invite.id,invite.token);window.history.replaceState(null,'','/team-invite');setDone(true);}catch(e){setError(e instanceof Error?e.message:'Invitation refusée');}finally{setBusy(false);}}}>Accepter l’invitation</Button>:!error&&<p role="status">Vérification du compte…</p>}</main>;
+}

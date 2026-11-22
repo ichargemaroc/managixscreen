@@ -12,6 +12,10 @@ import type { VideoWall, WallConfig, WallMember } from "./video-wall";
 import { webpageSchema, type WebpageConfig } from './webpage';
 import { getBillingAccount, getBillingAdmin, getBillingClient, saveBillingPlan, saveBillingSettings, changeBillingAccess, changeScreenEntitlement, saveTrialSettings, grantBillingAccess, scheduleDowngrade } from './billing.functions';
 import type { planInputSchema, settingsInputSchema, trialSettingsInputSchema, grantInputSchema } from './billing';
+import { readLayouts, writeLayout, linkLayout } from './multi-zone.functions';
+import type { layoutInput } from './multi-zone';
+import { readTeam,inviteTeam,acceptTeam,revokeTeam,proposeContent,reviewContent } from './team.functions';
+import type { draftInputSchema } from './team';
 
 // Données ScreenFlow lues depuis Lovable Cloud. Les pages utilisent useStore()
 // et les actions ci-dessous ; la synchronisation temps réel des écrans est
@@ -178,6 +182,15 @@ export const saveTrialConfig = (data: z.infer<typeof trialSettingsInputSchema>) 
 export const grantClientAccess = (data: z.infer<typeof grantInputSchema>) => grantBillingAccess({ data });
 export const planDowngrade = (planId: string | null, keep: string[] = []) => scheduleDowngrade({ data: { planId, keep } });
 export const setScreenEnabled = (screenId: string, active: boolean) => changeScreenEntitlement({ data: { screenId, active } });
+export const layoutsOptions = queryOptions({ queryKey: ['screen-layouts'], queryFn: () => readLayouts(), staleTime: 15_000 });
+export const saveComposition = (data: z.infer<typeof layoutInput>) => writeLayout({ data });
+export const assignComposition = (screenId: string, layoutId: string | null) => linkLayout({ data: { screenId, layoutId } });
+export const teamOptions = queryOptions({queryKey:['content-team'],queryFn:()=>readTeam(),staleTime:15_000});
+export const inviteCollaborator = (email:string)=>inviteTeam({data:{email}});
+export const acceptCollaboration = (id:string,token:string)=>acceptTeam({data:{id,token}});
+export const revokeCollaborator = (memberId:string|null,inviteId:string|null)=>revokeTeam({data:{memberId,inviteId}});
+export const submitContentProposal = (data:z.infer<typeof draftInputSchema>)=>proposeContent({data});
+export const reviewContentProposal = (id:string,approve:boolean)=>reviewContent({data:{id,approve}});
 
 export async function revokeDeviceAccess(screenId: string) {
   await revokeScreen({ data: { screenId } });

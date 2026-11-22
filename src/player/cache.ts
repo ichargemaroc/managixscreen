@@ -1,4 +1,4 @@
-import { cacheKey, legacyCacheKey, contentSchema, type Content, type Item } from "./protocol";
+import { cacheKey, legacyCacheKey, contentSchema, contentItems, type Content, type Item } from "./protocol";
 import { deviceEntitlementSchema } from '@/lib/billing';
 import type { z } from 'zod';
 
@@ -31,7 +31,7 @@ export async function cachedMedia(content: Content, item: Item) {
   const stored = await read<Blob>("media", cacheKey(content, item)) ?? await read<Blob>("media", legacyCacheKey(content, item));
   if (stored) return stored;
   const previous = await readContent();
-  const previousItem = previous?.playlist?.items.find(candidate => candidate.media.id === item.media.id && candidate.media.size === item.media.size && candidate.media.type === item.media.type);
+  const previousItem = previous ? contentItems(previous).find(candidate => candidate.media.id === item.media.id && candidate.media.size === item.media.size && candidate.media.type === item.media.type) : undefined;
   return previous && previousItem ? read<Blob>('media', legacyCacheKey(previous, previousItem)) : undefined;
 }
 // Command polling and scheduled synchronization can overlap; commit/prune replacements in order.
@@ -42,7 +42,7 @@ export function downloadContent(content: Content, progress: (done: number, total
   return pending;
 }
 async function storeContent(content: Content, progress: (done: number, total: number) => void) {
-  const items = content.playlist?.items ?? [];
+  const items = contentItems(content);
   // Download the complete replacement before switching playback; keep the old manifest on failure.
   for (let i = 0; i < items.length; i++) {
     const item = items[i]; if (!item) continue;

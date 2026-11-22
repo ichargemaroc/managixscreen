@@ -137,6 +137,101 @@ export type Database = {
         }
         Relationships: []
       }
+      content_team_drafts: {
+        Row: {
+          author_id: string
+          created_at: string
+          id: string
+          items: Json
+          name: string
+          owner_id: string
+          playlist_id: string | null
+          reviewed_at: string | null
+          status: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          id?: string
+          items: Json
+          name: string
+          owner_id: string
+          playlist_id?: string | null
+          reviewed_at?: string | null
+          status?: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          id?: string
+          items?: Json
+          name?: string
+          owner_id?: string
+          playlist_id?: string | null
+          reviewed_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_team_drafts_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_team_invites: {
+        Row: {
+          accepted_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          owner_id: string
+          revoked_at: string | null
+          token_hash: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          email: string
+          expires_at?: string
+          id?: string
+          owner_id: string
+          revoked_at?: string | null
+          token_hash: string
+        }
+        Update: {
+          accepted_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          owner_id?: string
+          revoked_at?: string | null
+          token_hash?: string
+        }
+        Relationships: []
+      }
+      content_team_members: {
+        Row: {
+          joined_at: string
+          member_id: string
+          owner_id: string
+          revoked_at: string | null
+        }
+        Insert: {
+          joined_at?: string
+          member_id: string
+          owner_id: string
+          revoked_at?: string | null
+        }
+        Update: {
+          joined_at?: string
+          member_id?: string
+          owner_id?: string
+          revoked_at?: string | null
+        }
+        Relationships: []
+      }
       device_commands: {
         Row: {
           acknowledged_at: string | null
@@ -722,6 +817,69 @@ export type Database = {
           },
         ]
       }
+      screen_layout_assignments: {
+        Row: {
+          layout_id: string
+          screen_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          layout_id: string
+          screen_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          layout_id?: string
+          screen_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "screen_layout_assignments_layout_id_fkey"
+            columns: ["layout_id"]
+            isOneToOne: false
+            referencedRelation: "screen_layouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "screen_layout_assignments_screen_id_fkey"
+            columns: ["screen_id"]
+            isOneToOne: true
+            referencedRelation: "screens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      screen_layouts: {
+        Row: {
+          id: string
+          name: string
+          revision: number
+          updated_at: string
+          user_id: string
+          zones: Json
+        }
+        Insert: {
+          id?: string
+          name: string
+          revision?: number
+          updated_at?: string
+          user_id: string
+          zones: Json
+        }
+        Update: {
+          id?: string
+          name?: string
+          revision?: number
+          updated_at?: string
+          user_id?: string
+          zones?: Json
+        }
+        Relationships: []
+      }
       screens: {
         Row: {
           assignment_updated_at: string
@@ -1097,6 +1255,14 @@ export type Database = {
       }
     }
     Functions: {
+      accept_content_invite: {
+        Args: { p_id: string; p_token: string }
+        Returns: undefined
+      }
+      assign_screen_layout: {
+        Args: { p_layout: string; p_screen: string }
+        Returns: undefined
+      }
       billing_admin_access: {
         Args: { p_action: string; p_plan?: string; p_user: string }
         Returns: undefined
@@ -1163,6 +1329,7 @@ export type Database = {
         Args: { p_key: string; p_max: number; p_seconds: number }
         Returns: boolean
       }
+      content_team_data: { Args: never; Returns: Json }
       control_video_wall: {
         Args: { p_action: string; p_wall: string }
         Returns: undefined
@@ -1193,6 +1360,10 @@ export type Database = {
         Args: { p_device: string; p_hash: string }
         Returns: string
       }
+      device_layout: {
+        Args: { p_device: string; p_hash: string }
+        Returns: Json
+      }
       device_poll_commands: {
         Args: { p_device: string; p_hash: string }
         Returns: Json
@@ -1221,6 +1392,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      invite_content_member: { Args: { p_email: string }; Returns: Json }
       manifest_media: {
         Args: { m: Database["public"]["Tables"]["media"]["Row"] }
         Returns: Json
@@ -1240,7 +1412,19 @@ export type Database = {
         Args: { p_items: Json; p_playlist_id: string }
         Returns: undefined
       }
+      review_content_draft: {
+        Args: { p_approve: boolean; p_id: string; p_items: Json }
+        Returns: string
+      }
+      revoke_content_access: {
+        Args: { p_invite: string; p_member: string }
+        Returns: undefined
+      }
       revoke_screen_device: { Args: { p_screen: string }; Returns: undefined }
+      save_screen_layout: {
+        Args: { p_id: string; p_name: string; p_zones: Json }
+        Returns: string
+      }
       save_video_wall: {
         Args: { p_config: Json; p_id: string; p_members: Json }
         Returns: string
@@ -1248,6 +1432,15 @@ export type Database = {
       set_screen_entitlement: {
         Args: { p_active: boolean; p_screen: string }
         Returns: undefined
+      }
+      submit_content_draft: {
+        Args: {
+          p_items: Json
+          p_name: string
+          p_owner: string
+          p_playlist: string
+        }
+        Returns: string
       }
     }
     Enums: {

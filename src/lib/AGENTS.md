@@ -1,3 +1,6 @@
 - Cache server-verified navigation identity only in the router's QueryClient for at most 30 seconds; identity invalidation and sign-out clear it, while RLS and server-handler checks remain authoritative to preserve private-data protection.
 - Media library cards use signed 480×270 compressed image transforms and video placeholders; batch and cache private links below expiry in the session QueryClient, keeping original URLs for previews and TV playback to reduce transfers without degrading sources.
 - Billing reads use isolated query keys and authenticated server functions; quotas and role checks remain transactional database rules, and reversible player entitlements never revoke credentials or erase offline media.
+- Screen compositions use owner-scoped transactional RPCs and token-revalidated device manifests; they do not add screens or bypass existing entitlements, and wall/composition assignments are mutually exclusive.
+- Content teams use separate owner/member rows, expiring hashed invitations and pending proposals; only the owner can approve live playlist changes, and cross-owner media are copied to owner-scoped storage after authorization.
+- Published Canva links and public Instagram embeds do not imply account connections; weather fetches use fixed MET Norway endpoints, bounded coordinates, attribution and fail-closed persistent abuse counters.
