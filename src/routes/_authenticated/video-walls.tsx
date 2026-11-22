@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
-import { PanelsTopLeft, Plus, Pencil, Trash2, Play, Pause, Square, Save } from 'lucide-react';
+import { Grid2X2, Plus, Pencil, Trash2, Play, Pause, Square, Save } from 'lucide-react';
 import { PageHeader, EmptyState, StatusBadge } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,9 +34,9 @@ function WallsPage(){
   const save=async(launch=false)=>{const parsed=wallConfigSchema.safeParse(config);if(!parsed.success){setError(parsed.error.issues[0]?.message??'Configuration invalide.');return;}setBusy(true);setError('');try{const id=await saveVideoWall(editing,parsed.data,members);setSelected(id);setEditing(id);refresh();if(launch)await controlVideoWall(id,'play');setOpen(false);toast.success('Mur enregistré');}catch(e){setError(e instanceof Error?e.message:'Enregistrement impossible.');}finally{setBusy(false);}};
   return <div className="mx-auto max-w-7xl">
     <PageHeader title="Murs d’images" description="Diffusion commune" action={<Button onClick={()=>begin()}><Plus/>Nouveau mur</Button>}/>
-    {!walls.length?<EmptyState icon={PanelsTopLeft} title="Aucun mur d’images" text="Aucun écran affecté." action={<Button onClick={()=>begin()}><Plus/>Créer un mur</Button>}/>:<>
+    {!walls.length?<EmptyState icon={Grid2X2} title="Aucun mur d’images" text="Aucun écran affecté." action={<Button onClick={()=>begin()}><Plus/>Créer un mur</Button>}/>:<>
       <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{walls.map(w=>{const connected=w.members.filter(m=>screens.find(s=>s.id===m.screen_id)?.status==='online').length;return <Button key={w.id} variant="outline" onClick={()=>setSelected(w.id)} className={`h-auto min-w-0 flex-col items-stretch whitespace-normal rounded-lg p-4 text-left ${active?.id===w.id?'border-primary bg-secondary':'text-foreground'}`}>
-        <div className="flex items-center justify-between gap-2"><span className="truncate font-medium">{w.name}</span><PanelsTopLeft className="shrink-0"/></div>
+        <div className="flex items-center justify-between gap-2"><span className="truncate font-medium">{w.name}</span><Grid2X2 className="shrink-0"/></div>
         <div className="mt-3"><Preview config={w} media={media.find(m=>m.id===w.media_id)}/></div>
         <span className="mt-3 text-xs text-muted-foreground">{w.columns} colonnes × {w.rows} lignes · {w.members.length}/{w.columns*w.rows} écrans · {connected} en ligne</span>
       </Button>;})}</div>
