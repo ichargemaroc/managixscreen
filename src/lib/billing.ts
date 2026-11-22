@@ -16,7 +16,10 @@ export type BillingPlan = z.infer<typeof billingPlanSchema>;
 export const BILLING_LABELS: Record<z.infer<typeof billingStatus>, string> = { active: 'Actif', trial: 'Essai / accès accordé', past_due: 'Paiement en retard', suspended: 'Suspendu', cancelled: 'Annulé', expired: 'Expiré' };
 export const planInputSchema = z.object({ id: z.string().uuid().nullable(), name: z.string().trim().min(1).max(80), capacity: z.number().int().min(5).max(100000).multipleOf(5), amount: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).nullable(), published: z.boolean() });
 export const settingsInputSchema = z.object({ currency: z.string().regex(/^[A-Z]{3}$/), discount: z.number().min(0).max(100), grace: z.number().int().min(0).max(90) });
-export function nextCapacity(capacity: number) { return Math.max(5, Math.ceil(capacity / 5) * 5 + 5); }
+export function nextCapacity(capacity: number, plans: ReadonlyArray<Pick<BillingPlan, 'capacity' | 'published'>>) {
+  const higher = plans.filter((plan) => plan.published && plan.capacity > capacity);
+  return higher.length ? Math.min(...higher.map((plan) => plan.capacity)) : null;
+}
 export function availablePlaces(capacity: number, used: number) { return Math.max(0, capacity - used); }
 export function capacityAllows(capacity: number, used: number) { return used < capacity; }
 export function minorUnit(currency: string) { return 10 ** (new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2); }
@@ -25,7 +28,7 @@ export function annualAmount(monthly: number, discount: number) { return Math.ro
 export function billingDate(value: string | null) { return value ? new Date(value).toLocaleDateString('fr-FR') : '—'; }
 export function billingError(message: string) {
   const quota = /SCREEN_LIMIT:(\d+)/.exec(message)?.[1];
-  if (quota) return `Vous avez atteint la limite de ${quota} écrans de votre abonnement. Passez à l’offre ${Number(quota) + 5} écrans pour ajouter de nouveaux Players.`;
+  if (quota) return `Vous avez atteint la limite de ${quota} écrans de votre abonnement. Consultez les forfaits disponibles dans Abonnement ou contactez l’administrateur pour augmenter votre capacité.`;
   if (message.includes('TRIAL_EXPIRED')) return 'Votre essai gratuit est terminé. Vos écrans et contenus sont conservés ; choisissez un forfait pour ajouter de nouveaux Players.';
   const keep = /KEEP_SELECTION_REQUIRED:(\d+)/.exec(message)?.[1];
   if (keep) return `Sélectionnez exactement ${keep} écrans à conserver avant ce changement de forfait.`;
