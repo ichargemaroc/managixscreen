@@ -1,5 +1,14 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Abonnements SaaS par écrans
+- [x] Examiner le store, les pages, le jumelage transactionnel, les identités Players et les tables Cloud existantes ; contrôle du fournisseur effectué
+- [ ] Faire approuver l’implémentation progressive ; pays d’exploitation et confirmation du fournisseur nécessaires avant activation des paiements
+- [ ] Ajouter catalogue centralisé, historique, droits d’écrans et paramètres, avec accès par propriétaire et rôle administrateur sécurisé ; compte administrateur à désigner
+- [ ] Intégrer quota atomique au jumelage et à la réactivation ; préserver les TV existantes, les commandes et le cache hors connexion
+- [ ] Ajouter page Abonnement et administration cohérentes avec le tableau de bord
+- [ ] Activer le fournisseur confirmé, configurer les tarifs puis intégrer paiement, portail et événements signés ; tarifs/devise/remise et règles de grâce/suspension à définir
+- [ ] Exécuter scénarios quotas, concurrence, paiements de test et isolation entre clients ; rapporter séparément tests navigateur et essais TV physiques
+
 ## Rapidité de la Médiathèque
 - [x] Aperçus privés compressés 480×270, chargement différé, vidéos téléchargées uniquement à l’ouverture, liens originaux groupés et conservés dans le cache de session
 - [x] Import/relecture connectés : aperçu de 19 Ko pour un original de 3,7 Mo, original 2800×1600 conservé, aucune vidéo téléchargée dans la grille ni nouvelle signature au retour ; téléphone sans débordement, fichiers temporaires supprimés et 158 tests réussis
