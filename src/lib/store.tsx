@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
-import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { mediaKind, mediaMimeType, mediaStorageFilename, screenStatus } from "@/lib/signage-rules";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import type { z } from "zod";
 import { saveWall, controlWall, positionTest } from "./video-wall.functions";
 import type { VideoWall, WallConfig, WallMember } from "./video-wall";
 import { webpageSchema, type WebpageConfig } from './webpage';
+import { getBillingAccount, getBillingAdmin, getBillingClient, saveBillingPlan, saveBillingSettings, changeBillingAccess, changeScreenEntitlement } from './billing.functions';
+import type { planInputSchema, settingsInputSchema } from './billing';
 
 // Données ScreenFlow lues depuis Lovable Cloud. Les pages utilisent useStore()
 // et les actions ci-dessous ; la synchronisation temps réel des écrans est
@@ -19,7 +21,7 @@ export type Group = { id: string; name: string; location: string; screenIds: str
 export type Screen = {
   id: string; name: string; pairingCode: string; groupId: string | null;
   status: "online" | "offline" | "pending"; lastSeen: string | null; playlistId: string | null; location: string; deviceId: string | null; revoked: boolean;
-  playerVersion: string | null; lastSyncAt: string | null; deviceInfo: unknown; playbackStatus: unknown;
+  playerVersion: string | null; lastSyncAt: string | null; deviceInfo: unknown; playbackStatus: unknown; enabled?: boolean;
 };
 export type DeviceCommand = { id: string; screenId: string; command: z.infer<typeof deviceCommand>; status: string; createdAt: string; deliveredAt: string | null; acknowledgedAt: string | null; expiresAt: string; error: string | null; wallId: string | null; testId: string | null; payload: unknown };
 export type Media = { id: string; name: string; type: "image" | "video" | "webpage"; size: number; duration: number | null; url: string; thumbnailUrl?: string; path: string; createdAt: string; refreshMinutes?: number; fullscreen?: boolean };
@@ -73,7 +75,7 @@ export async function loadMediaUrls(queryClient: QueryClient, rows: { path: stri
 }
 
 async function fetchAll(queryClient: QueryClient): Promise<State> {
-  const [groups, screens, media, playlists, items, schedules, members, sessions, telemetry, commands, walls, wallMembers, wallEvents] = await Promise.all([
+  const [groups, screens, media, playlists, items, schedules, members, sessions, telemetry, commands, walls, wallMembers, wallEvents, entitlements] = await Promise.all([
     supabase.from("groups").select("*").order("created_at"),
     supabase.from("screens").select("*").order("created_at"),
     supabase.from("media").select("*").order("created_at", { ascending: false }),
@@ -87,8 +89,9 @@ async function fetchAll(queryClient: QueryClient): Promise<State> {
     supabase.from("video_walls").select("*").order("created_at"),
     supabase.from("video_wall_screens").select("*"),
     supabase.from("video_wall_events").select("id,wall_id,action,effective_at,created_at").order("created_at", { ascending: false }).limit(100),
+    supabase.from('screen_entitlements').select('screen_id,active'),
   ]);
-  for (const r of [groups, screens, media, playlists, items, schedules, members, sessions, telemetry, commands, walls, wallMembers, wallEvents]) {
+  for (const r of [groups, screens, media, playlists, items, schedules, members, sessions, telemetry, commands, walls, wallMembers, wallEvents, entitlements]) {
     if (r.error) throw r.error;
   }
   const mediaUrls = await loadMediaUrls(queryClient, media.data ?? []);
@@ -113,6 +116,7 @@ async function fetchAll(queryClient: QueryClient): Promise<State> {
       status: sessions.data?.some((p) => p.screen_id === s.id && p.status === "revoked") ? "offline" : screenStatus(s.status, s.last_seen), lastSeen: s.last_seen, playlistId: s.playlist_id, location: s.location,
       deviceId: sessions.data?.find((p) => p.screen_id === s.id)?.device_id ?? null,
       revoked: sessions.data?.some((p) => p.screen_id === s.id && p.status === "revoked") ?? false,
+      enabled: entitlements.data?.find((e) => e.screen_id === s.id)?.active ?? true,
       playerVersion: telemetry.data?.find((t) => sessions.data?.some((p) => p.screen_id === s.id && p.device_id === t.device_id))?.player_version ?? null,
       lastSyncAt: telemetry.data?.find((t) => sessions.data?.some((p) => p.screen_id === s.id && p.device_id === t.device_id))?.last_sync_at ?? null,
       deviceInfo: telemetry.data?.find((t) => sessions.data?.some((p) => p.screen_id === s.id && p.device_id === t.device_id))?.device_info ?? {},
@@ -161,6 +165,16 @@ async function userId() {
 export async function addScreen(name: string, pairingCode: string, groupId: string | null, location = "") {
   return claimScreen({ data: { code: pairingCode, name, groupId, location } });
 }
+
+export const billingQueryOptions = queryOptions({ queryKey: ['billing-account'], queryFn: () => getBillingAccount(), staleTime: 15_000 });
+export const billingAdminOptions = (page: number) => queryOptions({ queryKey: ['billing-admin', page], queryFn: () => getBillingAdmin({ data: { page } }), staleTime: 15_000 });
+export const billingClientOptions = (userId: string) => queryOptions({ queryKey: ['billing-client', userId], queryFn: () => getBillingClient({ data: { userId } }), staleTime: 15_000 });
+export function useBillingStore() { return useQuery(billingQueryOptions); }
+export function usePlatformAdmin() { return useQuery({ queryKey: ['platform-admin'], staleTime: 60_000, queryFn: async () => { const { data, error } = await supabase.from('user_roles').select('role'); if (error) throw error; return data?.some((r) => r.role === 'admin') ?? false; } }); }
+export const savePlan = (data: z.infer<typeof planInputSchema>) => saveBillingPlan({ data });
+export const saveBillingConfig = (data: z.infer<typeof settingsInputSchema>) => saveBillingSettings({ data });
+export const setClientAccess = (userId: string, action: 'suspend' | 'reactivate' | 'trial_plan', planId: string | null = null) => changeBillingAccess({ data: { userId, action, planId } });
+export const setScreenEnabled = (screenId: string, active: boolean) => changeScreenEntitlement({ data: { screenId, active } });
 
 export async function revokeDeviceAccess(screenId: string) {
   await revokeScreen({ data: { screenId } });

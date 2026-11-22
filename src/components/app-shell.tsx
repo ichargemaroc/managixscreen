@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, FolderTree, Settings, PanelsTopLeft } from "lucide-react";
+import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, FolderTree, Settings, PanelsTopLeft, CreditCard, Shield } from "lucide-react";
+import { usePlatformAdmin } from '@/lib/store';
 import markAsset from "@/assets/screenflow-mark.webp.asset.json";
 import { ThemeToggle } from '@/components/theme-toggle';
 import { SignOutButton } from '@/components/sign-out-button';
@@ -18,10 +19,12 @@ const nav = [
   { title: "Programmation", url: "/schedule", icon: CalendarClock },
   { title: "Groupes", url: "/groups", icon: FolderTree },
   { title: "Paramètres", url: "/settings", icon: Settings },
+  { title: 'Abonnement', url: '/subscription', icon: CreditCard },
 ] as const;
 
 function NavLinks({ currentUrl, onNavigate }: { currentUrl: string | undefined; onNavigate: () => void }) {
   const { setOpenMobile } = useSidebar();
+  const { data: isAdmin } = usePlatformAdmin();
   const handleClick = () => {
     setOpenMobile(false);
     onNavigate();
@@ -38,6 +41,7 @@ function NavLinks({ currentUrl, onNavigate }: { currentUrl: string | undefined; 
           </SidebarMenuButton>
         </SidebarMenuItem>
       ))}
+      {isAdmin && <SidebarMenuItem><SidebarMenuButton asChild isActive={currentUrl === '/billing-admin'} tooltip="Administration"><Link to="/billing-admin" onClick={handleClick} aria-label="Administration"><Shield /><span>Administration</span></Link></SidebarMenuButton></SidebarMenuItem>}
     </SidebarMenu>
   );
 }
@@ -87,7 +91,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <SidebarContent>
           <SidebarGroup className="px-3 pt-4">
             <SidebarGroupContent>
-              <NavLinks currentUrl={current?.url} onNavigate={closeMenu} />
+              <NavLinks currentUrl={path === '/billing-admin' ? path : current?.url} onNavigate={closeMenu} />
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>

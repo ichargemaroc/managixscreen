@@ -1,8 +1,11 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
 ## Abonnements SaaS par écrans
+- [ ] Examiner le kit de paiement personnel du client avant raccordement ; fournisseur/documentation attendus, Paddle non activé
+- [x] Compte administrateur désigné et confirmé : karim.gharbi@me.com
 - [x] Examiner le store, les pages, le jumelage transactionnel, les identités Players et les tables Cloud existantes ; contrôle du fournisseur effectué
 - [ ] Faire approuver l’implémentation progressive ; pays d’exploitation et confirmation du fournisseur nécessaires avant activation des paiements
+- [x] Plan approuvé ; pays légal confirmé : Maroc, clientèle mondiale ; vérifier l’éligibilité du paiement avec ce pays
 - [ ] Ajouter catalogue centralisé, historique, droits d’écrans et paramètres, avec accès par propriétaire et rôle administrateur sécurisé ; compte administrateur à désigner
 - [ ] Intégrer quota atomique au jumelage et à la réactivation ; préserver les TV existantes, les commandes et le cache hors connexion
 - [ ] Ajouter page Abonnement et administration cohérentes avec le tableau de bord

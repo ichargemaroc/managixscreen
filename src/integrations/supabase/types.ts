@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      billing_events: {
+        Row: {
+          error_code: string | null
+          id: string
+          occurred_at: string | null
+          processed_at: string | null
+          provider: string
+          provider_event_id: string
+          status: string
+        }
+        Insert: {
+          error_code?: string | null
+          id?: string
+          occurred_at?: string | null
+          processed_at?: string | null
+          provider: string
+          provider_event_id: string
+          status?: string
+        }
+        Update: {
+          error_code?: string | null
+          id?: string
+          occurred_at?: string | null
+          processed_at?: string | null
+          provider?: string
+          provider_event_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      billing_plans: {
+        Row: {
+          capacity: number
+          id: string
+          monthly_amount: number | null
+          name: string
+          price_revision: number
+          provider_annual_price: string | null
+          provider_monthly_price: string | null
+          published: boolean
+          updated_at: string
+        }
+        Insert: {
+          capacity: number
+          id?: string
+          monthly_amount?: number | null
+          name: string
+          price_revision?: number
+          provider_annual_price?: string | null
+          provider_monthly_price?: string | null
+          published?: boolean
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number
+          id?: string
+          monthly_amount?: number | null
+          name?: string
+          price_revision?: number
+          provider_annual_price?: string | null
+          provider_monthly_price?: string | null
+          published?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      billing_settings: {
+        Row: {
+          annual_discount_percent: number | null
+          currency: string | null
+          grace_days: number | null
+          id: boolean
+          provider: string | null
+          provider_ready: boolean
+          suspension_policy: string
+          updated_at: string
+        }
+        Insert: {
+          annual_discount_percent?: number | null
+          currency?: string | null
+          grace_days?: number | null
+          id?: boolean
+          provider?: string | null
+          provider_ready?: boolean
+          suspension_policy?: string
+          updated_at?: string
+        }
+        Update: {
+          annual_discount_percent?: number | null
+          currency?: string | null
+          grace_days?: number | null
+          id?: boolean
+          provider?: string | null
+          provider_ready?: boolean
+          suspension_policy?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       device_commands: {
         Row: {
           acknowledged_at: string | null
@@ -306,6 +405,45 @@ export type Database = {
           },
         ]
       }
+      payment_records: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          hosted_url: string | null
+          id: string
+          kind: string
+          paid_at: string | null
+          provider_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency: string
+          hosted_url?: string | null
+          id?: string
+          kind: string
+          paid_at?: string | null
+          provider_id: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          hosted_url?: string | null
+          id?: string
+          kind?: string
+          paid_at?: string | null
+          provider_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       playlist_items: {
         Row: {
           created_at: string
@@ -482,6 +620,41 @@ export type Database = {
           },
         ]
       }
+      screen_entitlements: {
+        Row: {
+          active: boolean
+          device_id: string
+          revision: number
+          screen_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          device_id: string
+          revision?: number
+          screen_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          device_id?: string
+          revision?: number
+          screen_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "screen_entitlements_screen_id_fkey"
+            columns: ["screen_id"]
+            isOneToOne: true
+            referencedRelation: "screens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       screen_group_members: {
         Row: {
           created_at: string
@@ -591,6 +764,116 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscription_history: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          details: Json
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          amount: number | null
+          cancel_at_period_end: boolean
+          capacity: number
+          currency: string | null
+          current_period_end: string | null
+          enforce_capacity: boolean
+          grace_until: string | null
+          interval: string
+          legacy_access: boolean
+          plan_id: string | null
+          previous_status: Database["public"]["Enums"]["billing_status"] | null
+          provider_customer_id: string | null
+          provider_subscription_id: string | null
+          status: Database["public"]["Enums"]["billing_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          cancel_at_period_end?: boolean
+          capacity?: number
+          currency?: string | null
+          current_period_end?: string | null
+          enforce_capacity?: boolean
+          grace_until?: string | null
+          interval?: string
+          legacy_access?: boolean
+          plan_id?: string | null
+          previous_status?: Database["public"]["Enums"]["billing_status"] | null
+          provider_customer_id?: string | null
+          provider_subscription_id?: string | null
+          status?: Database["public"]["Enums"]["billing_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          cancel_at_period_end?: boolean
+          capacity?: number
+          currency?: string | null
+          current_period_end?: string | null
+          enforce_capacity?: boolean
+          grace_until?: string | null
+          interval?: string
+          legacy_access?: boolean
+          plan_id?: string | null
+          previous_status?: Database["public"]["Enums"]["billing_status"] | null
+          provider_customer_id?: string | null
+          provider_subscription_id?: string | null
+          status?: Database["public"]["Enums"]["billing_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "billing_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
       }
       video_wall_events: {
         Row: {
@@ -768,6 +1051,29 @@ export type Database = {
       }
     }
     Functions: {
+      billing_admin_access: {
+        Args: { p_action: string; p_plan?: string; p_user: string }
+        Returns: undefined
+      }
+      billing_admin_client: { Args: { p_user: string }; Returns: Json }
+      billing_admin_overview: { Args: { p_page?: number }; Returns: Json }
+      billing_admin_save_plan: {
+        Args: {
+          p_amount?: number
+          p_capacity?: number
+          p_id?: string
+          p_name?: string
+          p_published?: boolean
+        }
+        Returns: string
+      }
+      billing_admin_settings: {
+        Args: { p_currency: string; p_discount: number; p_grace: number }
+        Returns: undefined
+      }
+      billing_check_place: { Args: { p_user: string }; Returns: undefined }
+      billing_lock_account: { Args: { p_user: string }; Returns: undefined }
+      billing_my_account: { Args: never; Returns: Json }
       claim_pairing_code: {
         Args: {
           p_code: string
@@ -812,6 +1118,10 @@ export type Database = {
         Args: { p_device: string; p_hash: string }
         Returns: Json
       }
+      device_entitlement: {
+        Args: { p_device: string; p_hash: string }
+        Returns: Json
+      }
       device_heartbeat: {
         Args: { p_device: string; p_hash: string }
         Returns: string
@@ -837,6 +1147,13 @@ export type Database = {
         Args: { p_command: string; p_screen: string }
         Returns: string
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       manifest_media: {
         Args: { m: Database["public"]["Tables"]["media"]["Row"] }
         Returns: Json
@@ -861,9 +1178,20 @@ export type Database = {
         Args: { p_config: Json; p_id: string; p_members: Json }
         Returns: string
       }
+      set_screen_entitlement: {
+        Args: { p_active: boolean; p_screen: string }
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin"
+      billing_status:
+        | "active"
+        | "trial"
+        | "past_due"
+        | "suspended"
+        | "cancelled"
+        | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -990,6 +1318,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin"],
+      billing_status: [
+        "active",
+        "trial",
+        "past_due",
+        "suspended",
+        "cancelled",
+        "expired",
+      ],
+    },
   },
 } as const

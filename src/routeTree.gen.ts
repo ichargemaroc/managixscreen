@@ -15,12 +15,14 @@ import { Route as PairRouteImport } from './routes/pair'
 import { Route as PlayerRouteImport } from './routes/player'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedBillingAdminRouteImport } from './routes/_authenticated/billing-admin'
 import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated/groups'
 import { Route as AuthenticatedMediaRouteImport } from './routes/_authenticated/media'
 import { Route as AuthenticatedPlaylistsRouteImport } from './routes/_authenticated/playlists'
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedScreensRouteImport } from './routes/_authenticated/screens'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
 import { Route as AuthenticatedVideoWallsRouteImport } from './routes/_authenticated/video-walls'
 import { Route as AuthenticatedScreensScreenIdRouteImport } from './routes/_authenticated/screens_.$screenId'
 import { Route as ApiPublicDevicesCommandsRouteImport } from './routes/api/public/devices/commands'
@@ -59,6 +61,12 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBillingAdminRoute =
+  AuthenticatedBillingAdminRouteImport.update({
+    id: '/billing-admin',
+    path: '/billing-admin',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedGroupsRoute = AuthenticatedGroupsRouteImport.update({
   id: '/groups',
   path: '/groups',
@@ -89,6 +97,12 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSubscriptionRoute =
+  AuthenticatedSubscriptionRouteImport.update({
+    id: '/subscription',
+    path: '/subscription',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedVideoWallsRoute = AuthenticatedVideoWallsRouteImport.update({
   id: '/video-walls',
   path: '/video-walls',
@@ -140,12 +154,14 @@ export interface FileRoutesByFullPath {
   '/pair': typeof PairRoute
   '/player': typeof PlayerRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/billing-admin': typeof AuthenticatedBillingAdminRoute
   '/groups': typeof AuthenticatedGroupsRoute
   '/media': typeof AuthenticatedMediaRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/screens': typeof AuthenticatedScreensRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/subscription': typeof AuthenticatedSubscriptionRoute
   '/video-walls': typeof AuthenticatedVideoWallsRoute
   '/screens/$screenId': typeof AuthenticatedScreensScreenIdRoute
   '/api/public/devices/commands': typeof ApiPublicDevicesCommandsRouteWithChildren
@@ -160,12 +176,14 @@ export interface FileRoutesByTo {
   '/pair': typeof PairRoute
   '/player': typeof PlayerRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/billing-admin': typeof AuthenticatedBillingAdminRoute
   '/groups': typeof AuthenticatedGroupsRoute
   '/media': typeof AuthenticatedMediaRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/screens': typeof AuthenticatedScreensRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/subscription': typeof AuthenticatedSubscriptionRoute
   '/video-walls': typeof AuthenticatedVideoWallsRoute
   '/': typeof AuthenticatedIndexRoute
   '/screens/$screenId': typeof AuthenticatedScreensScreenIdRoute
@@ -183,12 +201,14 @@ export interface FileRoutesById {
   '/pair': typeof PairRoute
   '/player': typeof PlayerRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/billing-admin': typeof AuthenticatedBillingAdminRoute
   '/_authenticated/groups': typeof AuthenticatedGroupsRoute
   '/_authenticated/media': typeof AuthenticatedMediaRoute
   '/_authenticated/playlists': typeof AuthenticatedPlaylistsRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/screens': typeof AuthenticatedScreensRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
   '/_authenticated/video-walls': typeof AuthenticatedVideoWallsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/screens_/$screenId': typeof AuthenticatedScreensScreenIdRoute
@@ -207,12 +227,14 @@ export interface FileRouteTypes {
     | '/pair'
     | '/player'
     | '/reset-password'
+    | '/billing-admin'
     | '/groups'
     | '/media'
     | '/playlists'
     | '/schedule'
     | '/screens'
     | '/settings'
+    | '/subscription'
     | '/video-walls'
     | '/screens/$screenId'
     | '/api/public/devices/commands'
@@ -227,12 +249,14 @@ export interface FileRouteTypes {
     | '/pair'
     | '/player'
     | '/reset-password'
+    | '/billing-admin'
     | '/groups'
     | '/media'
     | '/playlists'
     | '/schedule'
     | '/screens'
     | '/settings'
+    | '/subscription'
     | '/video-walls'
     | '/'
     | '/screens/$screenId'
@@ -249,12 +273,14 @@ export interface FileRouteTypes {
     | '/pair'
     | '/player'
     | '/reset-password'
+    | '/_authenticated/billing-admin'
     | '/_authenticated/groups'
     | '/_authenticated/media'
     | '/_authenticated/playlists'
     | '/_authenticated/schedule'
     | '/_authenticated/screens'
     | '/_authenticated/settings'
+    | '/_authenticated/subscription'
     | '/_authenticated/video-walls'
     | '/_authenticated/'
     | '/_authenticated/screens_/$screenId'
@@ -323,6 +349,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/billing-admin': {
+      id: '/_authenticated/billing-admin'
+      path: '/billing-admin'
+      fullPath: '/billing-admin'
+      preLoaderRoute: typeof AuthenticatedBillingAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/groups': {
       id: '/_authenticated/groups'
       path: '/groups'
@@ -363,6 +396,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/subscription': {
+      id: '/_authenticated/subscription'
+      path: '/subscription'
+      fullPath: '/subscription'
+      preLoaderRoute: typeof AuthenticatedSubscriptionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/video-walls': {
@@ -425,24 +465,28 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBillingAdminRoute: typeof AuthenticatedBillingAdminRoute
   AuthenticatedGroupsRoute: typeof AuthenticatedGroupsRoute
   AuthenticatedMediaRoute: typeof AuthenticatedMediaRoute
   AuthenticatedPlaylistsRoute: typeof AuthenticatedPlaylistsRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedScreensRoute: typeof AuthenticatedScreensRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSubscriptionRoute: typeof AuthenticatedSubscriptionRoute
   AuthenticatedVideoWallsRoute: typeof AuthenticatedVideoWallsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedScreensScreenIdRoute: typeof AuthenticatedScreensScreenIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBillingAdminRoute: AuthenticatedBillingAdminRoute,
   AuthenticatedGroupsRoute: AuthenticatedGroupsRoute,
   AuthenticatedMediaRoute: AuthenticatedMediaRoute,
   AuthenticatedPlaylistsRoute: AuthenticatedPlaylistsRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedScreensRoute: AuthenticatedScreensRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSubscriptionRoute: AuthenticatedSubscriptionRoute,
   AuthenticatedVideoWallsRoute: AuthenticatedVideoWallsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedScreensScreenIdRoute: AuthenticatedScreensScreenIdRoute,

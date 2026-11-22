@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Monitor, Wifi, WifiOff, Image, Film, ListVideo } from "lucide-react";
+import { Monitor, Wifi, WifiOff, Image, Film, ListVideo, CreditCard } from "lucide-react";
 import { PageHeader, EmptyState, StatusBadge } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
@@ -30,7 +30,7 @@ function Dashboard() {
   const recent = [...screens].filter((s) => s.lastSeen).sort((a, b) => (b.lastSeen ?? "").localeCompare(a.lastSeen ?? "")).slice(0, 5);
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader title="Tableau de bord" description="État de votre réseau d'affichage en un coup d'œil." action={<Button asChild><Link to="/screens"><Monitor /> Gérer les écrans</Link></Button>} />
+      <PageHeader title="Tableau de bord" description="État de votre réseau d'affichage en un coup d'œil." action={<div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link to="/subscription"><CreditCard /> Abonnement</Link></Button><Button asChild><Link to="/screens"><Monitor /> Gérer les écrans</Link></Button></div>} />
       <div className="grid grid-cols-2 gap-x-6 gap-y-8 border-b pb-9 md:grid-cols-3 xl:grid-cols-6">
         {stats.map((s) => (
           <div key={s.label}>

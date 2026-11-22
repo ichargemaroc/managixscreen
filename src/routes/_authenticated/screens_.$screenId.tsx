@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ShieldOff, Trash2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { PageHeader, StatusBadge } from "@/components/app-shell";
-import { useStore, updateScreen, deleteScreen, revokeDeviceAccess, sendDeviceCommand, type Screen, type DeviceCommand } from "@/lib/store";
+import { useStore, updateScreen, deleteScreen, revokeDeviceAccess, sendDeviceCommand, setScreenEnabled, type Screen, type DeviceCommand } from "@/lib/store";
 import { COMMAND_LABELS, COMMAND_STATUSES } from "@/lib/player-protocol";
 
 export const Route = createFileRoute("/_authenticated/screens_/$screenId")({
@@ -34,17 +35,20 @@ function ScreenDetails() {
 function Details({ screen }: { screen: Screen }) {
   const { groups, playlists, commands, refresh } = useStore();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [name, setName] = useState(screen.name);
   const [location, setLocation] = useState(screen.location);
   const [playlistId, setPlaylistId] = useState(screen.playlistId ?? "none");
   const [command, setCommand] = useState<DeviceCommand["command"]>("refresh_content");
   const [busy, setBusy] = useState(false);
-  const [confirm, setConfirm] = useState<"revoke" | "delete" | null>(null);
+  const [confirm, setConfirm] = useState<"revoke" | "delete" | 'disable' | 'enable' | null>(null);
   const act = async () => {
     setBusy(true);
     try {
       if (confirm === "delete") { await deleteScreen(screen.id); refresh(); await navigate({ to: "/screens" }); }
+      else if (confirm === 'disable' || confirm === 'enable') { await setScreenEnabled(screen.id, confirm === 'enable'); refresh(); toast.success(confirm === 'enable' ? 'Écran réactivé' : 'Écran désactivé, place libérée'); }
       else { await revokeDeviceAccess(screen.id); refresh(); toast.success("Accès de l’appareil révoqué"); }
+      void queryClient.invalidateQueries({ queryKey: ['billing-account'] });
       setConfirm(null);
     } catch (error) { toast.error(error instanceof Error ? error.message : "La modification a échoué"); }
     finally { setBusy(false); }
@@ -79,11 +83,12 @@ function Details({ screen }: { screen: Screen }) {
       {!commands.some((c) => c.screenId === screen.id) && <p className="mt-4 text-sm text-muted-foreground">Aucune commande envoyée.</p>}
     </section>
     <div className="mt-8 flex flex-wrap gap-3 border-t pt-6">
+      <Button variant="outline" disabled={!screen.deviceId || screen.revoked} onClick={() => setConfirm(screen.enabled === false ? 'enable' : 'disable')}>{screen.enabled === false ? 'Réactiver l’écran' : 'Désactiver l’écran'}</Button>
       <Button variant="outline" disabled={!screen.deviceId || screen.revoked} onClick={() => setConfirm("revoke")}><ShieldOff /> Révoquer l’accès</Button>
       <Button variant="outline" className="text-destructive" onClick={() => setConfirm("delete")}><Trash2 /> Supprimer l’écran</Button>
     </div>
     <Dialog open={confirm !== null} onOpenChange={(open) => { if (!open && !busy) setConfirm(null); }}><DialogContent>
-      <DialogHeader><DialogTitle>{confirm === "delete" ? "Supprimer cet écran ?" : "Révoquer l’accès ?"}</DialogTitle><DialogDescription>L’appareil perdra immédiatement son accès. Un nouveau jumelage sera nécessaire.</DialogDescription></DialogHeader>
+      <DialogHeader><DialogTitle>{confirm === 'disable' ? 'Désactiver cet écran ?' : confirm === 'enable' ? 'Réactiver cet écran ?' : confirm === "delete" ? "Supprimer cet écran ?" : "Révoquer l’accès ?"}</DialogTitle><DialogDescription>{confirm === 'disable' ? 'Une place sera libérée et la synchronisation suspendue. Le lecteur mis à jour affichera la désactivation, sans effacer son identité ni son cache. Les anciens APK et les TV hors ligne peuvent conserver la lecture locale.' : confirm === 'enable' ? 'La capacité du forfait sera vérifiée. Aucun nouveau jumelage n’est nécessaire.' : 'L’appareil perdra immédiatement son accès. Un nouveau jumelage sera nécessaire.'}</DialogDescription></DialogHeader>
       <DialogFooter><Button variant="outline" disabled={busy} onClick={() => setConfirm(null)}>Annuler</Button><Button variant="destructive" disabled={busy} onClick={() => void act()}>Confirmer</Button></DialogFooter>
     </DialogContent></Dialog>
   </div>;

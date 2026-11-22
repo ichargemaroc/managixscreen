@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQueryClient } from '@tanstack/react-query';
 import { Monitor, Plus, MoreHorizontal, ScanLine } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, EmptyState, StatusBadge } from "@/components/app-shell";
@@ -12,7 +13,8 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useStore, isValidPairingCode, addScreen, updateScreen, deleteScreen, type Screen } from "@/lib/store";
+import { useStore, useBillingStore, isValidPairingCode, addScreen, updateScreen, deleteScreen, type Screen } from "@/lib/store";
+import { availablePlaces } from '@/lib/billing';
 import { PairingScanner } from "@/components/pairing-scanner";
 
 export const Route = createFileRoute("/_authenticated/screens")({
@@ -31,6 +33,8 @@ const NONE = "__none";
 
 function Screens() {
   const { screens, groups, playlists, refresh } = useStore();
+  const queryClient = useQueryClient();
+  const { data: billing } = useBillingStore();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Screen | null>(null);
   const [filter, setFilter] = useState("all");
@@ -44,6 +48,7 @@ function Screens() {
     <div className="mx-auto max-w-7xl">
       <PageHeader title="Écrans" description="Vos téléviseurs Android et leur connexion à ScreenFlow."
         action={<Button onClick={() => setAdding(true)}><Plus /> Ajouter une TV</Button>} />
+      {billing?.subscription.enforce_capacity && <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b pb-4 text-sm"><p>{billing.used} / {billing.subscription.capacity} écrans utilisés · {availablePlaces(billing.subscription.capacity, billing.used)} places disponibles</p><Button variant="outline" asChild><Link to="/subscription">Gérer l’abonnement</Link></Button></div>}
       {screens.length === 0 ? (
         <EmptyState icon={Monitor} title="Aucune TV jumelée" text="Le lecteur Android TV n’est pas encore disponible. Aucun appareil n’est connecté."
           action={<Button onClick={() => setAdding(true)}><Plus /> Ajouter une TV</Button>} />
@@ -70,7 +75,7 @@ function Screens() {
                   const g = groups.find((x) => x.id === s.groupId);
                   return (
                     <TableRow key={s.id}>
-                      <TableCell className="font-medium"><Link to="/screens/$screenId" params={{ screenId: s.id }} className="hover:underline">{s.name}</Link><div className="text-xs text-muted-foreground">{s.revoked ? "Accès révoqué" : s.deviceId ? "Jumelé" : "Non jumelé"}</div></TableCell>
+                      <TableCell className="font-medium"><Link to="/screens/$screenId" params={{ screenId: s.id }} className="hover:underline">{s.name}</Link><div className="text-xs text-muted-foreground">{s.revoked ? "Accès révoqué" : s.enabled === false ? 'Désactivé' : s.deviceId ? "Jumelé" : "Non jumelé"}</div></TableCell>
                       <TableCell><StatusBadge status={s.status} /></TableCell>
                       <TableCell>{[g?.name, s.location || g?.location].filter(Boolean).join(" · ") || "—"}</TableCell>
                       <TableCell className="text-muted-foreground">{s.lastSeen ? new Date(s.lastSeen).toLocaleString("fr-FR") : "Jamais"}</TableCell>
@@ -96,6 +101,7 @@ function Screens() {
       <AddDialog open={adding} onOpenChange={setAdding} onAdd={async (name, code, groupId, location) => {
         await addScreen(name, code, groupId, location);
         refresh();
+        void queryClient.invalidateQueries({ queryKey: ['billing-account'] });
         toast.success("TV jumelée — en attente de sa première connexion");
       }} />
       {editing && (
