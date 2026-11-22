@@ -91,6 +91,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "apple-mobile-web-app-title", content: "Screenflow" },
       { title: "ScreenFlow — Digital Signage" },
       { name: "description", content: "Gérez vos écrans Android à distance : médias, playlists et programmation." },
       { property: "og:title", content: "ScreenFlow — Digital Signage" },
@@ -107,6 +108,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png?v=1", sizes: "180x180" },
     ],
   }),
   shellComponent: RootShell,
