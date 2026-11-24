@@ -190,6 +190,13 @@
       "when": 1795553157228,
       "tag": "0026_screen_background_music",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1795555177929,
+      "tag": "0027_screen_custom_pairing_code",
+      "breakpoints": true
     }
   ]
 }

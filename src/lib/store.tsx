@@ -220,7 +220,7 @@ export async function sendDeviceCommand(screenId: string, command: DeviceCommand
   return enqueueCommand({ data: { screenId, command } });
 }
 
-export async function updateScreen(id: string, patch: { name?: string; groupId?: string | null; playlistId?: string | null; location?: string; displayRotation?: DisplayRotation; slideTransition?: SlideTransition }) {
+export async function updateScreen(id: string, patch: { name?: string; groupId?: string | null; playlistId?: string | null; location?: string; displayRotation?: DisplayRotation; slideTransition?: SlideTransition; pairingCode?: string }) {
   const row: { name?: string; group_id?: string | null; playlist_id?: string | null; location?: string; display_rotation?: DisplayRotation; slide_transition?: SlideTransition } = {};
   if (patch.slideTransition !== undefined) row.slide_transition = slideTransitionSchema.parse(patch.slideTransition);
   if (patch.displayRotation !== undefined) row.display_rotation = displayRotationSchema.parse(patch.displayRotation);
@@ -228,7 +228,12 @@ export async function updateScreen(id: string, patch: { name?: string; groupId?:
   if (patch.name !== undefined) row.name = patch.name;
   if (patch.groupId !== undefined) row.group_id = patch.groupId;
   if (patch.playlistId !== undefined) row.playlist_id = patch.playlistId;
-  const { error } = await supabase.from("screens").update(row).eq("id", id);
+  if (patch.pairingCode !== undefined) {
+    if (!/^\d{6}$/.test(patch.pairingCode)) throw new Error("Le code d’appairage doit contenir 6 chiffres.");
+    const { error: codeError } = await supabase.rpc("set_screen_pairing_code", { p_screen: id, p_code: patch.pairingCode });
+    if (codeError) throw new Error(codeError.message.includes("DUPLICATE_CODE") ? "Ce code est déjà utilisé par un autre de vos écrans." : "Le code d’appairage n’a pas pu être enregistré.");
+  }
+  const { error } = Object.keys(row).length ? await supabase.from("screens").update(row).eq("id", id) : { error: null };
   if (error) throw error;
   // Wake the TV within ~5 s instead of waiting for its next periodic check; best effort.
   if (patch.playlistId !== undefined || patch.displayRotation !== undefined || patch.slideTransition !== undefined) void enqueueCommand({ data: { screenId: id, command: "refresh_content" } }).catch(() => {});

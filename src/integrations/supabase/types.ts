@@ -1493,6 +1493,10 @@ export type Database = {
         Args: { p_active: boolean; p_screen: string }
         Returns: undefined
       }
+      set_screen_pairing_code: {
+        Args: { p_code: string; p_screen: string }
+        Returns: undefined
+      }
       submit_content_draft: {
         Args: {
           p_items: Json

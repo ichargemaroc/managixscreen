@@ -114,7 +114,7 @@ function Screens() {
         <Dialog open onOpenChange={() => setEditing(null)}>
           <DialogContent>
             <DialogHeader><DialogTitle>Gérer la TV</DialogTitle></DialogHeader>
-            <EditForm screen={editing} onSave={async (p) => { await update(editing.id, p); setEditing(null); toast.success("TV mise à jour"); }} />
+            <EditForm screen={editing} onSave={async (p) => { try { await update(editing.id, p); setEditing(null); toast.success("TV mise à jour"); } catch (err) { toast.error(err instanceof Error ? err.message : "Enregistrement impossible"); } }} />
           </DialogContent>
         </Dialog>
       )}
@@ -174,10 +174,12 @@ function EditForm({ screen, onSave }: { screen: Screen; onSave: (p: Partial<Scre
   const [location, setLocation] = useState(screen.location);
   const [rotation, setRotation] = useState<DisplayRotation>(screen.displayRotation ?? 0);
   const [transition, setTransition] = useState<SlideTransition>(screen.slideTransition ?? 'default');
+  const [code, setCode] = useState(screen.pairingCode);
   const [name, setName] = useState(screen.name); const [group, setGroup] = useState(screen.groupId); const [pl, setPl] = useState(screen.playlistId);
   return (
     <div className="space-y-4">
       <div className="space-y-2"><Label>Nom</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+      <div className="space-y-2"><Label htmlFor="screen-pairing-code">Code d’appairage</Label><Input id="screen-pairing-code" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} /><p className="text-xs text-muted-foreground">6 chiffres, enregistré sur le serveur et unique parmi vos écrans.</p></div>
       <div className="space-y-2"><Label>Lieu</Label><Input value={location} onChange={(e) => setLocation(e.target.value)} /></div>
       <div className="space-y-2"><Label>Groupe</Label><GroupSelect value={group} onChange={setGroup} /></div>
       <div className="space-y-2"><Label>Playlist affectée</Label>
@@ -188,7 +190,7 @@ function EditForm({ screen, onSave }: { screen: Screen; onSave: (p: Partial<Scre
       </div>
       <DisplayRotationPicker value={rotation} onChange={setRotation} />
       <SlideTransitionSelect value={transition} onChange={setTransition} />
-      <DialogFooter><Button disabled={!name.trim()} onClick={() => onSave({ name: name.trim(), groupId: group, playlistId: pl, location, displayRotation: rotation, slideTransition: transition })}>Enregistrer</Button></DialogFooter>
+      <DialogFooter><Button disabled={!name.trim() || !/^\d{6}$/.test(code)} onClick={() => onSave({ ...(code !== screen.pairingCode ? { pairingCode: code } : {}), name: name.trim(), groupId: group, playlistId: pl, location, displayRotation: rotation, slideTransition: transition })}>Enregistrer</Button></DialogFooter>
     </div>
   );
 }
