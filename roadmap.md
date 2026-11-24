@@ -4,6 +4,8 @@
 - [x] Connexion normale vérifiée ; erreurs réseau simultanées et ancien contenu de démarrage repérés dans les journaux
 - [x] Centraliser la récupération des erreurs interceptées, sans rechargement automatique hors ligne ni accès au stockage avant protection
 - [x] 21 tests réussis ; téléchargement réellement bloqué puis connexion rouverte avec Réessayer au format téléphone ; onglet personnel indisponible à l’inspection directe
+- [x] Vérification étendue : l’entrée du lecteur indépendant ne proposait pas de secours avant démarrage ; injection du même mécanisme ajoutée sans modifier son identité ni son cache
+- [x] 17 tests réussis ; sept pages publiques et accueil connecté ouverts sans erreur ; HTML du lecteur indépendant testé avec téléchargement bloqué ; compilation APK et TV physique non vérifiées
 
 ## Écran blanc après connexion
 - [x] Reproduire l’erreur AuthenticatedLayout avec un ancien module de données sans StoreContent
