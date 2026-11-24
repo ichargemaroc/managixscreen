@@ -24,7 +24,7 @@ import { musicSettingsSchema, validateMusicFile, type MusicSettings } from './ba
 // et les actions ci-dessous ; la synchronisation temps réel des écrans est
 // branchée dans RealtimeSync (src/components/realtime-sync.tsx).
 
-export type Group = { id: string; name: string; location: string; screenIds: string[] };
+export type Group = { id: string; name: string; location: string; screenIds: string[]; playlistId: string | null };
 export type Screen = {
   id: string; name: string; pairingCode: string; groupId: string | null;
   status: "online" | "offline" | "pending"; lastSeen: string | null; playlistId: string | null; location: string; deviceId: string | null; revoked: boolean;
@@ -129,7 +129,7 @@ export async function fetchAll(queryClient: QueryClient, scope: StoreScope = 'me
   return {
     walls: (walls.data ?? []).map((w) => ({ ...w, orientation: w.orientation as VideoWall["orientation"], state: w.state as VideoWall["state"], members: (wallMembers.data ?? []).filter((m) => m.wall_id === w.id) })),
     wallEvents: wallEvents.data ?? [],
-    groups: (groups.data ?? []).map((g) => ({ id: g.id, name: g.name, location: g.location, screenIds: (members.data ?? []).filter((m) => m.group_id === g.id).map((m) => m.screen_id) })),
+    groups: (groups.data ?? []).map((g) => ({ id: g.id, name: g.name, location: g.location, playlistId: g.playlist_id ?? null, screenIds: (members.data ?? []).filter((m) => m.group_id === g.id).map((m) => m.screen_id) })),
     screens: (screens.data ?? []).map((s) => ({
       id: s.id, name: s.name, pairingCode: s.pairing_code, groupId: s.group_id,
       displayRotation: displayRotationSchema.parse(s.display_rotation ?? 0),

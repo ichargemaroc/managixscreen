@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { ListVideo, Plus, GripVertical, Trash2, Film, ArrowLeft, Globe } from "lucide-react";
+import { ListVideo, Plus, GripVertical, Trash2, Film, ArrowLeft, Globe, Users, MonitorPlay } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { resolveAssignmentTargets } from "@/lib/assignment-targets";
+import { resolveAssignmentTargets, resolvePlaylistAudience } from "@/lib/assignment-targets";
 import { PlaylistMusicPanel } from "@/components/screen-music-panel";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useStore, formatDuration, createPlaylist, renamePlaylist, deletePlaylist, savePlaylistItems, assignPlaylistMany, type Playlist, type PlaylistItem } from "@/lib/store";
@@ -63,7 +63,10 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
   const [drag, setDrag] = useState<number | null>(null);
   const [pickedScreens, setPickedScreens] = useState<string[]>([]);
   const [pickedGroups, setPickedGroups] = useState<string[]>([]);
-  const resolved = resolveAssignmentTargets(screens, pickedScreens, pickedGroups);
+  const audience = resolvePlaylistAudience(groups, screens, playlist.id);
+  const assignedGroupIds = audience.groups.map((g) => g.id);
+  const audienceScreenIds = [...audience.directScreens, ...audience.inheritedScreens].map((s) => s.id);
+  const resolved = resolveAssignmentTargets(screens, pickedScreens, [...pickedGroups, ...assignedGroupIds]);
   const toggle = (list: string[], id: string, on: boolean) => on ? [...list, id] : list.filter((x) => x !== id);
   const [name, setName] = useState(playlist.name);
   const [description, setDescription] = useState(playlist.description);
@@ -130,12 +133,47 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
         </CardContent></Card>
         <div className="space-y-6">
           <Card><CardContent className="space-y-3 p-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold">Diffusée sur</h2>
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{audienceScreenIds.length} TV</span>
+            </div>
+            {audienceScreenIds.length === 0 && audience.groups.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucune TV ni groupe enregistré sur cette playlist. Cochez ci-dessous pour l’affecter.</p>
+            ) : (
+              <>
+                {audience.groups.length > 0 && <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Groupes ({audience.groups.length})</p>
+                  {audience.groups.map((g) => (
+                    <div key={g.id} className="flex items-center gap-2 rounded-lg border bg-muted/40 px-2 py-1.5 text-sm">
+                      <Users className="size-4 shrink-0 text-primary" />
+                      <span className="min-w-0 flex-1 truncate">{g.name}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">{g.screenIds.length} TV</span>
+                    </div>
+                  ))}
+                </div>}
+                {audienceScreenIds.length > 0 && <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">TV ({audienceScreenIds.length})</p>
+                  <div className="max-h-52 space-y-1 overflow-y-auto">
+                    {[...audience.directScreens, ...audience.inheritedScreens].map((sc) => (
+                      <div key={sc.id} className="flex items-center gap-2 rounded-lg border px-2 py-1.5 text-sm">
+                        <MonitorPlay className="size-4 shrink-0 text-primary" />
+                        <span className="min-w-0 flex-1 truncate">{sc.name}</span>
+                        {audience.inheritedScreens.some((x) => x.id === sc.id) && <span className="shrink-0 text-xs text-muted-foreground">via son groupe</span>}
+                        <span className={`shrink-0 text-xs ${sc.status === "online" ? "text-primary" : "text-muted-foreground"}`}>{sc.status === "online" ? "En ligne" : "Hors ligne"}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>}
+              </>
+            )}
+          </CardContent></Card>
+          <Card><CardContent className="space-y-3 p-4">
             <h2 className="text-sm font-semibold">Affecter</h2>
             {groups.length > 0 && <div className="space-y-2"><p className="text-xs font-medium text-muted-foreground">Groupes</p>
-              {groups.map((g) => <label key={g.id} className="flex items-center gap-2 text-sm"><Checkbox checked={pickedGroups.includes(g.id)} onCheckedChange={(v) => setPickedGroups((l) => toggle(l, g.id, v === true))} /><span className="truncate">{g.name}</span></label>)}
+              {groups.map((g) => { const assigned = assignedGroupIds.includes(g.id); return <label key={g.id} className="flex items-center gap-2 text-sm"><Checkbox disabled={assigned} checked={assigned || pickedGroups.includes(g.id)} onCheckedChange={(v) => setPickedGroups((l) => toggle(l, g.id, v === true))} /><span className="truncate">{g.name}</span>{assigned && <span className="ml-auto shrink-0 text-xs text-muted-foreground">déjà affecté</span>}</label>; })}
             </div>}
             {screens.length > 0 && <div className="max-h-60 space-y-2 overflow-y-auto"><p className="text-xs font-medium text-muted-foreground">TV</p>
-              {screens.map((sc) => { const covered = resolved.coveredScreenIds.includes(sc.id); return <label key={sc.id} className="flex items-center gap-2 text-sm"><Checkbox disabled={covered} checked={covered || pickedScreens.includes(sc.id)} onCheckedChange={(v) => setPickedScreens((l) => toggle(l, sc.id, v === true))} /><span className="truncate">{sc.name}</span>{covered && <span className="ml-auto shrink-0 text-xs text-muted-foreground">via son groupe</span>}</label>; })}
+              {screens.map((sc) => { const covered = resolved.coveredScreenIds.includes(sc.id); const assigned = audienceScreenIds.includes(sc.id); return <label key={sc.id} className="flex items-center gap-2 text-sm"><Checkbox disabled={covered || assigned} checked={covered || assigned || pickedScreens.includes(sc.id)} onCheckedChange={(v) => setPickedScreens((l) => toggle(l, sc.id, v === true))} /><span className="truncate">{sc.name}</span>{covered && <span className="ml-auto shrink-0 text-xs text-muted-foreground">via son groupe</span>}{!covered && assigned && <span className="ml-auto shrink-0 text-xs text-muted-foreground">déjà affectée</span>}</label>; })}
             </div>}
             <Button className="w-full" disabled={!resolved.groupIds.length && !resolved.screenIds.length} onClick={() => { void assign().catch((error) => toast.error(error instanceof Error ? error.message : "L’affectation a échoué")); }}>Affecter la playlist</Button>
           </CardContent></Card>
