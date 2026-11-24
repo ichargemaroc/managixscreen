@@ -18,14 +18,14 @@ on:
         default: false
         type: boolean
       version_code:
-        description: "Positive version code; increase for every Play upload"
-        required: true
-        default: "1"
+        description: "Leave empty to increment automatically from the latest GitHub Release"
+        required: false
+        default: ""
         type: string
       version_name:
-        description: "Public version (for example 1.0.0)"
-        required: true
-        default: "1.0.0"
+        description: "Leave empty to derive automatically (1.0.<version_code>)"
+        required: false
+        default: ""
         type: string
 permissions:
   contents: write
@@ -33,11 +33,24 @@ jobs:
   apk:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      PLAYER_VERSION_CODE: ${{ inputs.version_code }}
-      PLAYER_VERSION_NAME: ${{ inputs.version_name }}
     steps:
       - uses: actions/checkout@v4
+      - name: Compute player version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_CODE: ${{ inputs.version_code }}
+          INPUT_NAME: ${{ inputs.version_name }}
+        run: |
+          CODE="$INPUT_CODE"
+          if [ -z "$CODE" ]; then
+            LAST=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName --jq '[.[].tagName | select(test("^player-[0-9]+$")) | ltrimstr("player-") | tonumber] | max // 1')
+            CODE=$((LAST + 1))
+          fi
+          NAME="$INPUT_NAME"
+          if [ -z "$NAME" ]; then NAME="1.0.$CODE"; fi
+          echo "PLAYER_VERSION_CODE=$CODE" >> "$GITHUB_ENV"
+          echo "PLAYER_VERSION_NAME=$NAME" >> "$GITHUB_ENV"
+          echo "Version $NAME (code $CODE)"
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.4.4"
@@ -85,7 +98,7 @@ jobs:
       - run: bun run player:build
         env:
           VITE_PLAYER_API_ORIGIN: ${{ inputs.api_origin }}
-          VITE_PLAYER_VERSION_NAME: ${{ inputs.version_name }}
+          VITE_PLAYER_VERSION_NAME: ${{ env.PLAYER_VERSION_NAME }}
           VITE_PLAYER_BUILD: ${{ github.sha }}
       - run: bun run android:prepare
       - run: bun run android:sync
