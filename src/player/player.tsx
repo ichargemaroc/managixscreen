@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Cast, Maximize, RefreshCw, Wifi, WifiOff, Monitor, Play, Pause, ChevronRight, Settings2 } from "lucide-react";
-import { resolveSlideTransition } from '@/lib/slide-transition';
+import { resolveSlideTransition, slideTransitionSchema } from '@/lib/slide-transition';
 import { Button } from "@/components/ui/button";
 import { cachedMedia, clearMediaCache, commandReceipt, downloadContent, readContent, saveReceipt, saveEntitlement } from "./cache";
 import { installApkUpdate } from "./apk-updater";
@@ -277,7 +277,7 @@ export function TVPlayer() {
   const qrUrl = phase === "pairing" && identity && !expired ? pairingUrl(import.meta.env['VITE_PLAYER_API_ORIGIN'] || window.location.origin, identity.pairing_code) : "";
   return <main className="tv-player text-xl" onPointerMove={() => phase === "playing" && setControls(true)}>
     <div className="tv-display" data-rotation={content?.display_rotation ?? 0}>
-    {phase === 'playing' && content?.layout ? <div className="tv-stage"><MultiZoneStage content={content} paused={paused || !!positionTest} /></div> : phase === "playing" && source && item ? <div className="tv-stage" key={content?.wall ? 'wall' : `${index}:${item.id}`} data-transition={content?.wall ? 'default' : resolveSlideTransition(content?.slide_transition ?? 'default', `${index}:${item.id}`)}>
+    {phase === 'playing' && content?.layout ? <div className="tv-stage"><MultiZoneStage content={content} paused={paused || !!positionTest} /></div> : phase === "playing" && source && item ? <div className="tv-stage" key={content?.wall ? 'wall' : `${index}:${item.id}`} data-transition={content?.wall ? 'default' : resolveSlideTransition(slideTransitionSchema.catch('default').parse(content?.slide_transition), `${index}:${item.id}`)}>
       {item.media.type === 'webpage' ? <WebpageStage key={`${item.id}:${content?.playlist?.updated_at}`} url={source} name={item.media.name} rotation={content?.display_rotation ?? 0} fullscreen={item.media.webpage_fullscreen ?? true} refreshMinutes={item.media.refresh_minutes ?? 0} active={!paused && !positionTest && (!content?.wall || content.wall.state === 'playing' && now + (content.clock_offset ?? 0) >= Date.parse(content.wall.epoch))} onState={state => { playback.current = state; }} onError={() => { setError('Page Web indisponible ; passage au contenu suivant.'); if (!content?.wall) setIndex(value => nextItem(value, items.length)); }} /> : content?.wall ? <WallStage wall={content.wall} source={source} type={item.media.type} clockOffset={content.clock_offset ?? 0} onState={(state) => { playback.current = state; }} /> : item.media.type === "image" ? <img src={source} alt={item.media.name} /> : <video ref={video} src={source} autoPlay playsInline loop={items.length === 1} onPlaying={() => { playback.current = "playing"; if (playbackBlocked) { setPlaybackBlocked(false); setError(""); } }} onEnded={() => setIndex((value) => nextItem(value, items.length))} onError={() => { playback.current = "error"; setError("Format vidéo non pris en charge par cet appareil."); setTimeout(() => setIndex((value) => nextItem(value, items.length)), 3000); }} />}
     </div> : <div className="tv-enrollment">
       <header className="tv-brand"><img src={markUrl} alt="" className="tv-brand-mark" /><span>ScreenFlow <small>TV PLAYER</small></span></header>
