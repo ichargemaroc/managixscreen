@@ -21,6 +21,10 @@ import { MultiZoneStage } from './multi-zone-stage';
 
 export function TVPlayer() {
   const [positionTest, setPositionTest] = useState<PositionTest | null>(null);
+  // Previous image stays underneath while the next slide animates in; ready gates the animation until decode.
+  const [prevFrame, setPrevFrame] = useState("");
+  const [readyKey, setReadyKey] = useState("");
+  const shownImage = useRef("");
   const commandBusy = useRef(false);
   const [identity, setIdentity] = useState<Credentials | null>(null);
   const [content, setContent] = useState<Content | null>(null);
@@ -220,10 +224,10 @@ export function TVPlayer() {
 
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
   useEffect(() => {
-    let active = true; let url = ""; setSource(""); playback.current = "idle";
+    let active = true; let url = ""; setPrevFrame(shownImage.current); shownImage.current = ""; setSource(""); playback.current = "idle";
     if (item?.media.type === 'webpage') { setSource(item.media.webpage_url ?? ''); return; }
     if (content && item) void cachedMedia(content, item).then((blob) => { if (active && blob) { url = URL.createObjectURL(blob); setSource(url); } }).catch(() => setError("Le média local est indisponible."));
-    return () => { active = false; if (url) URL.revokeObjectURL(url); };
+    return () => { active = false; if (url) { const old = url; setTimeout(() => URL.revokeObjectURL(old), 3000); } };
   }, [content?.playlist?.id, content?.playlist?.updated_at, item?.id]);
   useEffect(() => {
     if (positionTest || content?.wall || !item || !source || paused || item.media.type !== 'webpage') return;
@@ -277,9 +281,9 @@ export function TVPlayer() {
   const qrUrl = phase === "pairing" && identity && !expired ? pairingUrl(import.meta.env['VITE_PLAYER_API_ORIGIN'] || window.location.origin, identity.pairing_code) : "";
   return <main className="tv-player text-xl" onPointerMove={() => phase === "playing" && setControls(true)}>
     <div className="tv-display" data-rotation={content?.display_rotation ?? 0}>
-    {phase === 'playing' && content?.layout ? <div className="tv-stage"><MultiZoneStage content={content} paused={paused || !!positionTest} /></div> : phase === "playing" && source && item ? <div className="tv-stage" key={content?.wall ? 'wall' : `${index}:${item.id}`} data-transition={content?.wall ? 'default' : resolveSlideTransition(slideTransitionSchema.catch('default').parse(content?.slide_transition), `${index}:${item.id}`)}>
-      {item.media.type === 'webpage' ? <WebpageStage key={`${item.id}:${content?.playlist?.updated_at}`} url={source} name={item.media.name} rotation={content?.display_rotation ?? 0} fullscreen={item.media.webpage_fullscreen ?? true} refreshMinutes={item.media.refresh_minutes ?? 0} active={!paused && !positionTest && (!content?.wall || content.wall.state === 'playing' && now + (content.clock_offset ?? 0) >= Date.parse(content.wall.epoch))} onState={state => { playback.current = state; }} onError={() => { setError('Page Web indisponible ; passage au contenu suivant.'); if (!content?.wall) setIndex(value => nextItem(value, items.length)); }} /> : content?.wall ? <WallStage wall={content.wall} source={source} type={item.media.type} clockOffset={content.clock_offset ?? 0} onState={(state) => { playback.current = state; }} /> : item.media.type === "image" ? <img src={source} alt={item.media.name} /> : <video ref={video} src={source} autoPlay playsInline loop={items.length === 1} onPlaying={() => { playback.current = "playing"; if (playbackBlocked) { setPlaybackBlocked(false); setError(""); } }} onEnded={() => setIndex((value) => nextItem(value, items.length))} onError={() => { playback.current = "error"; setError("Format vidéo non pris en charge par cet appareil."); setTimeout(() => setIndex((value) => nextItem(value, items.length)), 3000); }} />}
-    </div> : <div className="tv-enrollment">
+    {phase === 'playing' && content?.layout ? <div className="tv-stage"><MultiZoneStage content={content} paused={paused || !!positionTest} /></div> : phase === "playing" && source && item ? <>{prevFrame && !content?.wall && <img className="tv-stage-prev" src={prevFrame} alt="" />}<div className="tv-stage" key={content?.wall ? 'wall' : `${index}:${item.id}`} data-ready={content?.wall || item.media.type === 'webpage' || readyKey === `${index}:${item.id}`} onAnimationEnd={() => setPrevFrame("")} data-transition={content?.wall ? 'default' : resolveSlideTransition(slideTransitionSchema.catch('default').parse(content?.slide_transition), `${index}:${item.id}`)}>
+      {item.media.type === 'webpage' ? <WebpageStage key={`${item.id}:${content?.playlist?.updated_at}`} url={source} name={item.media.name} rotation={content?.display_rotation ?? 0} fullscreen={item.media.webpage_fullscreen ?? true} refreshMinutes={item.media.refresh_minutes ?? 0} active={!paused && !positionTest && (!content?.wall || content.wall.state === 'playing' && now + (content.clock_offset ?? 0) >= Date.parse(content.wall.epoch))} onState={state => { playback.current = state; }} onError={() => { setError('Page Web indisponible ; passage au contenu suivant.'); if (!content?.wall) setIndex(value => nextItem(value, items.length)); }} /> : content?.wall ? <WallStage wall={content.wall} source={source} type={item.media.type} clockOffset={content.clock_offset ?? 0} onState={(state) => { playback.current = state; }} /> : item.media.type === "image" ? <img src={source} alt={item.media.name} onLoad={() => { shownImage.current = source; setReadyKey(`${index}:${item.id}`); if (resolveSlideTransition(slideTransitionSchema.catch('default').parse(content?.slide_transition), `${index}:${item.id}`) === 'default') setPrevFrame(""); else setTimeout(() => setPrevFrame(""), 1500); }} /> : <video ref={video} src={source} onLoadedData={() => { setReadyKey(`${index}:${item.id}`); setTimeout(() => setPrevFrame(""), 1500); }} autoPlay playsInline loop={items.length === 1} onPlaying={() => { playback.current = "playing"; if (playbackBlocked) { setPlaybackBlocked(false); setError(""); } }} onEnded={() => setIndex((value) => nextItem(value, items.length))} onError={() => { playback.current = "error"; setError("Format vidéo non pris en charge par cet appareil."); setTimeout(() => setIndex((value) => nextItem(value, items.length)), 3000); }} />}
+    </div></> : <div className="tv-enrollment">
       <header className="tv-brand"><img src={markUrl} alt="" className="tv-brand-mark" /><span>ScreenFlow <small>TV PLAYER</small></span></header>
       <div className="tv-center">
         {!qrUrl && <Monitor className="tv-display-icon" aria-hidden="true" />}

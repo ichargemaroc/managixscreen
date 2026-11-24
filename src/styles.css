@@ -290,6 +290,9 @@
 @media (max-height: 600px), (max-width: 640px) { .tv-position-test strong { font-size: 110px; } .tv-position-test p { font-size: 18px; } .tv-position-test .position-label { font-size: 22px; } .tv-position-test { gap: 8px; } }
 
 /* Player slide transitions (playback-only, per screen). */
+.tv-stage-prev { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.tv-stage[data-transition] { position: relative; z-index: 1; }
+.tv-stage[data-ready="false"] { opacity: 0; animation: none !important; }
 .tv-stage[data-transition="fade"] { animation: sf-fade .8s ease both; }
 .tv-stage[data-transition="zoom"] { animation: sf-zoom .8s ease both; }
 .tv-stage[data-transition="spin"] { animation: sf-spin .9s ease both; }
