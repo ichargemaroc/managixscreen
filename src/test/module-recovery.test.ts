@@ -2,6 +2,24 @@ import { describe, expect, it, vi } from "vitest";
 import { isModuleLoadFailure, recoverModuleLoad, moduleRecoveryBootstrap } from "@/lib/module-recovery";
 
 describe("Module loading recovery", () => {
+  it('shows recovery for a router-caught import failure when reload is throttled', () => {
+    sessionStorage.setItem('screenflow-module-recovery', String(Date.now()));
+    window.eval(moduleRecoveryBootstrap);
+    window.dispatchEvent(new CustomEvent('screenflow:module-load-error', { detail: new TypeError('Importing a module script failed.') }));
+    expect(document.getElementById('module-startup-recovery')).not.toBeNull();
+    document.getElementById('module-startup-recovery')?.remove();
+    sessionStorage.clear();
+  });
+  it('shows recovery for a router-caught failure offline without recording an automatic reload', () => {
+    const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    sessionStorage.clear();
+    window.eval(moduleRecoveryBootstrap);
+    window.dispatchEvent(new CustomEvent('screenflow:module-load-error', { detail: new TypeError('Importing a module script failed.') }));
+    expect(document.getElementById('module-startup-recovery')).not.toBeNull();
+    expect(sessionStorage.getItem('screenflow-module-recovery')).toBeNull();
+    document.getElementById('module-startup-recovery')?.remove();
+    online.mockRestore();
+  });
   const staleLayout = 'Element type is invalid: expected a string but got: undefined. Check the render method of `AuthenticatedLayout`.';
   it('reloads an already mounted stale authenticated layout once per minute', () => {
     const values = new Map<string, string>();

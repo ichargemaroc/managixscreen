@@ -1,5 +1,10 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Téléchargement interrompu sur la connexion
+- [x] Connexion normale vérifiée ; erreurs réseau simultanées et ancien contenu de démarrage repérés dans les journaux
+- [x] Centraliser la récupération des erreurs interceptées, sans rechargement automatique hors ligne ni accès au stockage avant protection
+- [x] 21 tests réussis ; téléchargement réellement bloqué puis connexion rouverte avec Réessayer au format téléphone ; onglet personnel indisponible à l’inspection directe
+
 ## Écran blanc après connexion
 - [x] Reproduire l’erreur AuthenticatedLayout avec un ancien module de données sans StoreContent
 - [x] Isoler l’affichage de chargement dans son propre module sans changer les accès ni les données

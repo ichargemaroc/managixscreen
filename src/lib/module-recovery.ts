@@ -30,6 +30,8 @@ export const moduleRecoveryBootstrap = `(() => {
     show();
   };
   window.addEventListener("unhandledrejection", e => { if (matches(e.reason)) recover(); });
+  // Router boundaries catch import errors: they never reach unhandledrejection.
+  window.addEventListener("screenflow:module-load-error", e => { if (matches(e.detail)) recover(); });
   // Vite otherwise rethrows the failed import after recovery, blanking the route.
   window.addEventListener("vite:preloadError", e => { if (matches(e.payload)) { e.preventDefault(); recover(); } });
   window.addEventListener("error", e => {

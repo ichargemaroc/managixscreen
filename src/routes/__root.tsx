@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
-import { isModuleLoadFailure, recoverModuleLoad, moduleRecoveryBootstrap } from "@/lib/module-recovery";
+import { isModuleLoadFailure, moduleRecoveryBootstrap } from "@/lib/module-recovery";
 
 function NotFoundComponent() {
   return (
@@ -44,7 +44,8 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
-    recoverModuleLoad(error, window.sessionStorage, () => window.location.reload());
+    // One pre-entry recovery owner handles offline state, unavailable storage and throttling.
+    window.dispatchEvent(new CustomEvent('screenflow:module-load-error', { detail: error }));
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
@@ -125,7 +126,7 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="fr">
       <head>
-        <script dangerouslySetInnerHTML={{ __html: moduleRecoveryBootstrap }} />
+        <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: moduleRecoveryBootstrap }} />
         <HeadContent />
       </head>
       <body>
@@ -139,20 +140,6 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
-  useEffect(() => {
-    const recover = (event: Event) => {
-      const error = event instanceof PromiseRejectionEvent ? event.reason : event instanceof ErrorEvent ? event.error ?? event.message : (event as Event & { payload?: unknown }).payload;
-      recoverModuleLoad(error, window.sessionStorage, () => window.location.reload());
-    };
-    window.addEventListener("vite:preloadError", recover);
-    window.addEventListener("unhandledrejection", recover);
-    window.addEventListener("error", recover);
-    return () => {
-      window.removeEventListener("vite:preloadError", recover);
-      window.removeEventListener("unhandledrejection", recover);
-      window.removeEventListener("error", recover);
-    };
-  }, []);
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event) => {
       if (!["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED"].includes(event)) return;
