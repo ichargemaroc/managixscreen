@@ -1,7 +1,29 @@
 import { describe, expect, it, vi } from "vitest";
-import { recoverModuleLoad, moduleRecoveryBootstrap } from "@/lib/module-recovery";
+import { isModuleLoadFailure, recoverModuleLoad, moduleRecoveryBootstrap } from "@/lib/module-recovery";
 
 describe("Module loading recovery", () => {
+  const staleLayout = 'Element type is invalid: expected a string but got: undefined. Check the render method of `AuthenticatedLayout`.';
+  it('reloads an already mounted stale authenticated layout once per minute', () => {
+    const values = new Map<string, string>();
+    const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
+    const reload = vi.fn();
+    expect(recoverModuleLoad(new Error(staleLayout), storage, reload, 100_000)).toBe(true);
+    expect(recoverModuleLoad(new Error(staleLayout), storage, reload, 100_001)).toBe(false);
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(recoverModuleLoad(new Error(staleLayout), storage, reload, 160_001)).toBe(true);
+  });
+  it('does not classify undefined components elsewhere as stale authenticated layouts', () => {
+    expect(isModuleLoadFailure(staleLayout.replace('AuthenticatedLayout', 'MediaPage'))).toBe(false);
+    expect(isModuleLoadFailure('Element type is invalid: got: object. Check the render method of `AuthenticatedLayout`.')).toBe(false);
+  });
+  it('offers document reload for stale layouts when automatic recovery is throttled', () => {
+    sessionStorage.setItem('screenflow-module-recovery', String(Date.now()));
+    window.eval(moduleRecoveryBootstrap);
+    window.dispatchEvent(new ErrorEvent('error', { error: new Error(staleLayout) }));
+    expect(document.getElementById('module-startup-recovery')).not.toBeNull();
+    document.getElementById('module-startup-recovery')?.remove();
+    sessionStorage.clear();
+  });
   it("cancels Vite's rethrow for a failed lazy route import", () => {
     sessionStorage.setItem("screenflow-module-recovery", String(Date.now()));
     window.eval(moduleRecoveryBootstrap);

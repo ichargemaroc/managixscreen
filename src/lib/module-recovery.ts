@@ -3,7 +3,11 @@ const RETRY_WINDOW = 60_000;
 
 // Runs before the module entry: React effects cannot recover a failure that prevents React itself from starting.
 export const moduleRecoveryBootstrap = `(() => {
-  const matches = value => /Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module|Loading chunk .+ failed/i.test(value && value.message || String(value || ""));
+  const matches = value => {
+    const message = value && value.message || String(value || "");
+    return /Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module|Loading chunk .+ failed/i.test(message) ||
+      /Element type is invalid:[\\s\\S]*got: undefined[\\s\\S]*render method of .AuthenticatedLayout./i.test(message);
+  };
   let failed = false;
   const show = () => {
     if (!document.body || document.getElementById("module-startup-recovery")) return;
@@ -37,7 +41,8 @@ export const moduleRecoveryBootstrap = `(() => {
 
 export function isModuleLoadFailure(error: unknown): boolean {
   const message = error instanceof Error ? error.message : typeof error === "string" ? error : "";
-  return /Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module|Loading chunk .+ failed/i.test(message);
+  return /Importing a module script failed|Failed to fetch dynamically imported module|error loading dynamically imported module|Loading chunk .+ failed/i.test(message) ||
+    /Element type is invalid:[\s\S]*got: undefined[\s\S]*render method of .AuthenticatedLayout./i.test(message);
 }
 
 export function recoverModuleLoad(error: unknown, storage: Pick<Storage, "getItem" | "setItem">, reload: () => void, now = Date.now()): boolean {

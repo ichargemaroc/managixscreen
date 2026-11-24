@@ -4,6 +4,8 @@
 - [x] Reproduire l’erreur AuthenticatedLayout avec un ancien module de données sans StoreContent
 - [x] Isoler l’affichage de chargement dans son propre module sans changer les accès ni les données
 - [x] 16 tests réussis ; accueil connecté → écrans → accueil vérifié sur ordinateur et téléphone sans erreur ; aucune donnée client modifiée
+- [x] Pages partageant l’espace connecté et entrées publiques relues ; récupération bornée ajoutée pour les onglets conservant l’ancien affichage
+- [x] 24 tests réussis ; treize affichages connectés relus dans le navigateur sans erreur, administration refusée au compte non administrateur ; onglet personnel inaccessible à la vérification directe
 
 ## Correction connexion iPhone
 - [x] Supprimer la dépendance au helper de connexion et rendre la mise en cache facultative sans modifier la session ni les contrôles d’accès
