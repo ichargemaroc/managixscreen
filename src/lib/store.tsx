@@ -17,6 +17,7 @@ import type { layoutInput } from './multi-zone';
 import { readTeam,inviteTeam,acceptTeam,revokeTeam,proposeContent,reviewContent } from './team.functions';
 import type { draftInputSchema } from './team';
 import { displayRotationSchema, type DisplayRotation } from './display-rotation';
+import { slideTransitionSchema, type SlideTransition } from './slide-transition';
 
 // Données ScreenFlow lues depuis Lovable Cloud. Les pages utilisent useStore()
 // et les actions ci-dessous ; la synchronisation temps réel des écrans est
@@ -28,6 +29,7 @@ export type Screen = {
   status: "online" | "offline" | "pending"; lastSeen: string | null; playlistId: string | null; location: string; deviceId: string | null; revoked: boolean;
   playerVersion: string | null; lastSyncAt: string | null; deviceInfo: unknown; playbackStatus: unknown; enabled?: boolean;
   displayRotation?: DisplayRotation;
+  slideTransition?: SlideTransition;
 };
 export type DeviceCommand = { id: string; screenId: string; command: z.infer<typeof deviceCommand>; status: string; createdAt: string; deliveredAt: string | null; acknowledgedAt: string | null; expiresAt: string; error: string | null; wallId: string | null; testId: string | null; payload: unknown };
 export type Media = { id: string; name: string; type: "image" | "video" | "webpage"; size: number; duration: number | null; url: string; thumbnailUrl?: string; path: string; createdAt: string; refreshMinutes?: number; fullscreen?: boolean };
@@ -130,6 +132,7 @@ export async function fetchAll(queryClient: QueryClient, scope: StoreScope = 'me
     screens: (screens.data ?? []).map((s) => ({
       id: s.id, name: s.name, pairingCode: s.pairing_code, groupId: s.group_id,
       displayRotation: displayRotationSchema.parse(s.display_rotation ?? 0),
+      slideTransition: slideTransitionSchema.catch('default').parse(s.slide_transition),
       status: sessions.data?.some((p) => p.screen_id === s.id && p.status === "revoked") ? "offline" : screenStatus(s.status, s.last_seen), lastSeen: s.last_seen, playlistId: s.playlist_id, location: s.location,
       deviceId: sessions.data?.find((p) => p.screen_id === s.id)?.device_id ?? null,
       revoked: sessions.data?.some((p) => p.screen_id === s.id && p.status === "revoked") ?? false,
@@ -216,8 +219,9 @@ export async function sendDeviceCommand(screenId: string, command: DeviceCommand
   return enqueueCommand({ data: { screenId, command } });
 }
 
-export async function updateScreen(id: string, patch: { name?: string; groupId?: string | null; playlistId?: string | null; location?: string; displayRotation?: DisplayRotation }) {
-  const row: { name?: string; group_id?: string | null; playlist_id?: string | null; location?: string; display_rotation?: DisplayRotation } = {};
+export async function updateScreen(id: string, patch: { name?: string; groupId?: string | null; playlistId?: string | null; location?: string; displayRotation?: DisplayRotation; slideTransition?: SlideTransition }) {
+  const row: { name?: string; group_id?: string | null; playlist_id?: string | null; location?: string; display_rotation?: DisplayRotation; slide_transition?: SlideTransition } = {};
+  if (patch.slideTransition !== undefined) row.slide_transition = slideTransitionSchema.parse(patch.slideTransition);
   if (patch.displayRotation !== undefined) row.display_rotation = displayRotationSchema.parse(patch.displayRotation);
   if (patch.location !== undefined) row.location = patch.location;
   if (patch.name !== undefined) row.name = patch.name;
@@ -226,7 +230,7 @@ export async function updateScreen(id: string, patch: { name?: string; groupId?:
   const { error } = await supabase.from("screens").update(row).eq("id", id);
   if (error) throw error;
   // Wake the TV within ~5 s instead of waiting for its next periodic check; best effort.
-  if (patch.playlistId !== undefined || patch.displayRotation !== undefined) void enqueueCommand({ data: { screenId: id, command: "refresh_content" } }).catch(() => {});
+  if (patch.playlistId !== undefined || patch.displayRotation !== undefined || patch.slideTransition !== undefined) void enqueueCommand({ data: { screenId: id, command: "refresh_content" } }).catch(() => {});
 }
 
 export async function deleteScreen(id: string) {

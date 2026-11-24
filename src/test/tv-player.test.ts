@@ -4,7 +4,7 @@ import { cacheKey, imageDuration, nextItem, type Content, type Item } from "@/pl
 import { cachedMedia, clearMediaCache, commandReceipt, downloadContent, readContent, saveReceipt } from "@/player/cache";
 
 const item: Item = { id: "a67f4500-b2f4-4049-9a31-5433f14aad57", position: 0, display_duration: 17, media: { id: "a67f4500-b2f4-4049-9a31-5433f14aad57", name: "Image", type: "image", size: 4, duration: null, download_url: "https://example.test/image.png" } };
-const manifest: Content = { display_rotation: 0, screen_id: item.id, assignment_updated_at: "2026-11-20T00:00:00Z", last_sync_at: "2026-11-20T00:00:00Z", playlist: { id: item.id, name: "TV", updated_at: "2026-11-20T00:00:00Z", items: [item] } };
+const manifest: Content = { display_rotation: 0, slide_transition: "default", screen_id: item.id, assignment_updated_at: "2026-11-20T00:00:00Z", last_sync_at: "2026-11-20T00:00:00Z", playlist: { id: item.id, name: "TV", updated_at: "2026-11-20T00:00:00Z", items: [item] } };
 describe("TV player playback and offline cache", () => {
   beforeEach(async () => { await clearMediaCache(); vi.restoreAllMocks(); });
   it("uses the playlist photo duration and loops in playlist order", () => {

@@ -893,6 +893,7 @@ export type Database = {
           name: string
           pairing_code: string
           playlist_id: string | null
+          slide_transition: string
           status: string
           user_id: string
         }
@@ -908,6 +909,7 @@ export type Database = {
           name: string
           pairing_code: string
           playlist_id?: string | null
+          slide_transition?: string
           status?: string
           user_id: string
         }
@@ -923,6 +925,7 @@ export type Database = {
           name?: string
           pairing_code?: string
           playlist_id?: string | null
+          slide_transition?: string
           status?: string
           user_id?: string
         }

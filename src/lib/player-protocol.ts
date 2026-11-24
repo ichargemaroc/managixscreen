@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { wallPlaybackSchema } from "./video-wall";
 import { displayRotationSchema } from './display-rotation';
+import { slideTransitionSchema } from './slide-transition';
 
 export const manifestMediaSchema = z.object({ id: z.string().uuid(), name: z.string(), type: z.enum(['image', 'video', 'webpage']), size: z.number(), duration: z.number().nullable(), path: z.string(), webpage_url: z.string().nullable().optional(), refresh_minutes: z.number().int().min(0).max(1440).default(0), webpage_fullscreen: z.boolean().default(true) });
 
@@ -13,6 +14,7 @@ export const deviceReport = deviceIdentity.extend({ player_version: z.string().t
 export const commandAck = deviceIdentity.extend({ command_id: z.string().uuid(), status: z.enum(["completed", "failed"]), error: z.string().max(500).optional() }).strict();
 export const manifestSchema = z.object({
   display_rotation: displayRotationSchema.default(0),
+  slide_transition: slideTransitionSchema.catch('default'),
   wall: wallPlaybackSchema.nullable().optional(), server_time: z.string().optional(),
   screen_id: z.string().uuid(), assignment_updated_at: z.string(),
   playlist: z.object({ id: z.string().uuid(), name: z.string(), updated_at: z.string(), items: z.array(z.object({

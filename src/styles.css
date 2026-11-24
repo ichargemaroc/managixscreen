@@ -288,3 +288,24 @@
 .tv-position-test .position-label { font-size: 32px; font-weight: 600; }
 .tv-position-test small { font-size: 16px; }
 @media (max-height: 600px), (max-width: 640px) { .tv-position-test strong { font-size: 110px; } .tv-position-test p { font-size: 18px; } .tv-position-test .position-label { font-size: 22px; } .tv-position-test { gap: 8px; } }
+
+/* Player slide transitions (playback-only, per screen). */
+.tv-stage[data-transition="fade"] { animation: sf-fade .8s ease both; }
+.tv-stage[data-transition="zoom"] { animation: sf-zoom .8s ease both; }
+.tv-stage[data-transition="spin"] { animation: sf-spin .9s ease both; }
+.tv-stage[data-transition="slide-right"] { animation: sf-slide-right .7s ease both; }
+.tv-stage[data-transition="slide-left"] { animation: sf-slide-left .7s ease both; }
+.tv-stage[data-transition="bounce"] { animation: sf-bounce .9s ease both; }
+.tv-stage[data-transition="scale"] { animation: sf-scale .7s ease both; }
+.tv-stage[data-transition="rotate"] { animation: sf-rotate .8s ease both; }
+.tv-stage[data-transition="blink"] { animation: sf-blink .8s steps(1) both; }
+@keyframes sf-fade { from { opacity: 0; } }
+@keyframes sf-zoom { from { opacity: 0; transform: scale(1.25); } }
+@keyframes sf-spin { from { opacity: 0; transform: rotate(-360deg) scale(.3); } }
+@keyframes sf-slide-right { from { transform: translateX(100%); } }
+@keyframes sf-slide-left { from { transform: translateX(-100%); } }
+@keyframes sf-bounce { 0% { transform: translateY(-100%); } 60% { transform: translateY(6%); } 80% { transform: translateY(-3%); } 100% { transform: none; } }
+@keyframes sf-scale { from { opacity: 0; transform: scale(.4); } }
+@keyframes sf-rotate { from { opacity: 0; transform: perspective(1200px) rotateY(90deg); } }
+@keyframes sf-blink { 0%, 40% { opacity: 0; } 20%, 60%, 100% { opacity: 1; } 80% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .tv-stage[data-transition] { animation: none; } }

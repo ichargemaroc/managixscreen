@@ -14,6 +14,8 @@ import { COMMAND_LABELS, COMMAND_STATUSES } from "@/lib/player-protocol";
 import { sendApkUpdate } from "@/lib/player.functions";
 import { DisplayRotationPicker } from '@/components/display-rotation-picker';
 import type { DisplayRotation } from '@/lib/display-rotation';
+import { SlideTransitionSelect } from '@/components/slide-transition-select';
+import type { SlideTransition } from '@/lib/slide-transition';
 
 export const Route = createFileRoute("/_authenticated/screens_/$screenId")({
   head: () => ({ meta: [
@@ -42,6 +44,7 @@ function Details({ screen }: { screen: Screen }) {
   const [name, setName] = useState(screen.name);
   const [location, setLocation] = useState(screen.location);
   const [rotation, setRotation] = useState<DisplayRotation>(screen.displayRotation ?? 0);
+  const [transition, setTransition] = useState<SlideTransition>(screen.slideTransition ?? 'default');
   const [playlistId, setPlaylistId] = useState(screen.playlistId ?? "none");
   const [command, setCommand] = useState<DeviceCommand["command"]>("refresh_content");
   const [busy, setBusy] = useState(false);
@@ -71,11 +74,12 @@ function Details({ screen }: { screen: Screen }) {
       {screen.playbackStatus !== null && typeof screen.playbackStatus === "object" && "state" in screen.playbackStatus && <div><dt className="text-sm text-muted-foreground">Lecture déclarée</dt><dd>{({ idle: "Inactive", playing: "En lecture", paused: "En pause", buffering: "Chargement", error: "Erreur" } as Record<string, string>)[String(screen.playbackStatus.state)] ?? "Non communiquée"}</dd></div>}
       {screen.deviceId && <div className="sm:col-span-2"><dt className="text-sm text-muted-foreground">Identifiant de l’appareil</dt><dd className="break-all text-sm">{screen.deviceId}</dd></div>}
     </dl>
-    <form className="space-y-4" onSubmit={async (event) => { event.preventDefault(); setBusy(true); try { await updateScreen(screen.id, { name: name.trim(), location: location.trim(), playlistId: playlistId === "none" ? null : playlistId, displayRotation: rotation }); refresh(); toast.success("Écran enregistré"); } catch { toast.error("L’enregistrement a échoué"); } finally { setBusy(false); } }}>
+    <form className="space-y-4" onSubmit={async (event) => { event.preventDefault(); setBusy(true); try { await updateScreen(screen.id, { name: name.trim(), location: location.trim(), playlistId: playlistId === "none" ? null : playlistId, displayRotation: rotation, slideTransition: transition }); refresh(); toast.success("Écran enregistré"); } catch { toast.error("L’enregistrement a échoué"); } finally { setBusy(false); } }}>
       <div className="space-y-2"><Label htmlFor="screen-name">Nom</Label><Input id="screen-name" required maxLength={120} value={name} onChange={(e) => setName(e.target.value)} /></div>
       <div className="space-y-2"><Label htmlFor="screen-location">Lieu</Label><Input id="screen-location" maxLength={240} value={location} onChange={(e) => setLocation(e.target.value)} /></div>
       <div className="space-y-2"><Label htmlFor="screen-playlist">Playlist affectée</Label><Select value={playlistId} onValueChange={setPlaylistId}><SelectTrigger id="screen-playlist" className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">Aucune</SelectItem>{playlists.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
       <DisplayRotationPicker value={rotation} onChange={setRotation} disabled={busy} />
+      <SlideTransitionSelect value={transition} onChange={setTransition} disabled={busy} />
       <Button disabled={busy || !name.trim()}>Enregistrer</Button>
     </form>
     <section className="mt-8 border-t pt-6">
