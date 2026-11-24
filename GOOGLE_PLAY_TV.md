@@ -20,7 +20,7 @@ Dans votre dépôt GitHub connecté :
 
 Le workflow reste manuel et unique. Il installe Java 21, Android SDK 36, build-tools 35.0.0 et platform-tools, sans l’ancien package `tools`. Il prépare le lecteur local, Android, puis lance `assembleDebug`. Les tests et vérifications bloquent une livraison invalide.
 
-L’APK debug est pour les essais uniquement, pas pour Google Play. Sa signature peut changer entre exécutions GitHub. Ne désinstallez pas une TV déjà jumelée simplement pour installer une mise à jour : une désinstallation efface l’identité et les médias. Si les signatures diffèrent, prévoir un nouveau jumelage sur un appareil de test.
+L’APK debug est pour les essais uniquement, pas pour Google Play. Pour **publish_release**, les quatre secrets de signature ci-dessous sont désormais obligatoires, même en mode debug : les APK publiés utilisent une clé persistante au lieu d’une clé debug générée sur chaque runner. Cette clé doit être celle de l’APK déjà installé. Une nouvelle clé ne peut pas remplacer une ancienne signature. **Ne jamais désinstaller une TV jumelée ni effacer ses données pour contourner un refus de mise à jour.** Le lecteur vérifie l’identifiant, la version et la signature avant d’ouvrir l’installateur ; une incompatibilité conserve le jumelage et bloque l’installation. Les anciens APK debug déjà distribués nécessitent leur clé d’origine ; si elle n’a pas été conservée, une mise à jour en place n’est pas possible avec une nouvelle clé.
 
 ## 2. Signature de production et AAB
 

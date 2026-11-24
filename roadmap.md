@@ -1,5 +1,11 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Conservation du jumelage après mise à jour APK
+- [x] Signature persistante obligatoire pour les APK publiés ; validation native identifiant/version/signature avant installation, sans effacer le jumelage
+- [x] Reprise du même code après commande de mise à jour et redémarrage ; récupération d’une confirmation serveur interrompue même après expiration du code, sans nouvel enrôlement
+- [x] 28 tests Vitest et 7 vérifications JVM réussis ; workflow vérifié avec actionlint et application sans erreur de compilation
+- [ ] Installation sur TV physique : clé d’origine et matériel nécessaires
+
 ## Téléchargement interrompu sur la connexion
 - [x] Connexion normale vérifiée ; erreurs réseau simultanées et ancien contenu de démarrage repérés dans les journaux
 - [x] Centraliser la récupération des erreurs interceptées, sans rechargement automatique hors ligne ni accès au stockage avant protection

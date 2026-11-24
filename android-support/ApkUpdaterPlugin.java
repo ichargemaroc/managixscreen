@@ -2,6 +2,8 @@ package app.screenflow.player;
 
 import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
@@ -21,6 +23,20 @@ import java.security.MessageDigest;
 /** Downloads a GitHub Release APK and hands it to the system installer (user confirmation remains Android's). */
 @CapacitorPlugin(name = "ApkUpdater")
 public class ApkUpdaterPlugin extends Plugin {
+  private int signatureFlags() {
+    return Build.VERSION.SDK_INT >= 28 ? PackageManager.GET_SIGNING_CERTIFICATES : PackageManager.GET_SIGNATURES;
+  }
+  private String[] signers(PackageInfo info) {
+    Signature[] signatures = Build.VERSION.SDK_INT >= 28
+        ? (info.signingInfo == null ? null : info.signingInfo.getApkContentsSigners()) : info.signatures;
+    if (signatures == null) return new String[0];
+    String[] values = new String[signatures.length];
+    for (int i = 0; i < signatures.length; i++) values[i] = signatures[i].toCharsString();
+    return values;
+  }
+  private long version(PackageInfo info) {
+    return Build.VERSION.SDK_INT >= 28 ? info.getLongVersionCode() : info.versionCode;
+  }
   @PluginMethod public void install(PluginCall call) {
     String url = call.getString("url", "");
     int versionCode = call.getInt("versionCode", 0);
@@ -30,7 +46,7 @@ public class ApkUpdaterPlugin extends Plugin {
       PackageInfo current = getContext().getPackageManager().getPackageInfo(getContext().getPackageName(), 0);
       long installed = Build.VERSION.SDK_INT >= 28 ? current.getLongVersionCode() : current.versionCode;
       if (versionCode <= installed) { JSObject r = new JSObject(); r.put("status", "up_to_date"); call.resolve(r); return; }
-    } catch (Exception ignored) {}
+    } catch (Exception ignored) { call.reject("Invalid", "INVALID_APK"); return; }
     if (Build.VERSION.SDK_INT >= 26 && !getContext().getPackageManager().canRequestPackageInstalls()) {
       Intent settings = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getContext().getPackageName()));
       settings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -54,8 +70,13 @@ public class ApkUpdaterPlugin extends Plugin {
           StringBuilder hex = new StringBuilder(); for (byte b : digest.digest()) hex.append(String.format("%02x", b));
           if (!hex.toString().equals(sha)) { apk.delete(); call.reject("Checksum", "CHECKSUM"); return; }
         }
-        PackageInfo info = getContext().getPackageManager().getPackageArchiveInfo(apk.getPath(), 0);
-        if (info == null || !getContext().getPackageName().equals(info.packageName)) { apk.delete(); call.reject("Invalid", "INVALID_APK"); return; }
+        PackageInfo info = getContext().getPackageManager().getPackageArchiveInfo(apk.getPath(), signatureFlags());
+        PackageInfo current = getContext().getPackageManager().getPackageInfo(getContext().getPackageName(), signatureFlags());
+        if (info == null || !ApkUpdatePolicy.compatible(current.packageName, info.packageName,
+            version(current), version(info), versionCode, signers(current), signers(info))) {
+          // Never suggest uninstalling: that would erase the Keystore and paired identity.
+          apk.delete(); call.reject("Incompatible", "INCOMPATIBLE_UPDATE"); return;
+        }
         Uri uri = FileProvider.getUriForFile(getContext(), getContext().getPackageName() + ".updates", apk);
         Intent intent = new Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/vnd.android.package-archive");
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);

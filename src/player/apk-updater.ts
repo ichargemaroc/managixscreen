@@ -20,6 +20,6 @@ export async function installApkUpdate(raw: unknown) {
     await plugin.install({ url: payload.data.url, versionCode: payload.data.version_code, ...(payload.data.sha256 ? { sha256: payload.data.sha256 } : {}) });
   } catch (e) {
     const code = e && typeof e === "object" && "code" in e ? String((e as { code: unknown }).code) : "";
-    throw new Error(({ INSTALL_PERMISSION: "Autorisez « Installer des applications inconnues » pour ScreenFlow dans les paramètres de la TV.", DOWNLOAD_FAILED: "Téléchargement de l’APK impossible.", CHECKSUM: "APK corrompu : empreinte incorrecte.", INVALID_APK: "APK invalide ou d’une autre application." } as Record<string, string>)[code] ?? "La mise à jour a échoué.");
+    throw new Error(({ INSTALL_PERMISSION: "Autorisez « Installer des applications inconnues » pour ScreenFlow dans les paramètres de la TV.", DOWNLOAD_FAILED: "Téléchargement de l’APK impossible.", CHECKSUM: "APK corrompu : empreinte incorrecte.", INVALID_APK: "APK invalide ou d’une autre application.", INCOMPATIBLE_UPDATE: "APK incompatible avec la version installée. Conservez la clé de signature d’origine ; ne désinstallez pas le lecteur : jumelage conservé." } as Record<string, string>)[code] ?? "La mise à jour a échoué.");
   }
 }

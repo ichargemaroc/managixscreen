@@ -16,6 +16,7 @@ copyFileSync("android-support/AutoStartPolicy.java", "android/app/src/main/java/
 copyFileSync("android-support/DeviceVaultPlugin.java", "android/app/src/main/java/app/screenflow/player/DeviceVaultPlugin.java");
 copyFileSync("android-support/WebpagePlayerPlugin.java", "android/app/src/main/java/app/screenflow/player/WebpagePlayerPlugin.java");
 copyFileSync("android-support/ApkUpdaterPlugin.java", "android/app/src/main/java/app/screenflow/player/ApkUpdaterPlugin.java");
+copyFileSync("android-support/ApkUpdatePolicy.java", "android/app/src/main/java/app/screenflow/player/ApkUpdatePolicy.java");
 const resources = "android/app/src/main/res";
 mkdirSync(`${resources}/xml`, { recursive: true });
 copyFileSync("android-support/data_extraction_rules.xml", `${resources}/xml/data_extraction_rules.xml`);

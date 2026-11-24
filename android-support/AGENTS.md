@@ -1,0 +1,1 @@
+- Published APK updates use a persistent original signing key in both build modes; reject incompatible package/version/signers before installation to preserve paired device data. Never generate a replacement signing key for an existing fleet.

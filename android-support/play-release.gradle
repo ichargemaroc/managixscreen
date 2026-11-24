@@ -6,6 +6,8 @@ if (!(releaseName ==~ /[0-9]+\.[0-9]+\.[0-9]+/)) throw new GradleException('Inva
 def releaseRequested = gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
 def signingKeys = ['PLAYER_KEYSTORE_PATH', 'PLAYER_KEYSTORE_PASSWORD', 'PLAYER_KEY_ALIAS', 'PLAYER_KEY_PASSWORD']
 def signingReady = signingKeys.every { System.getenv(it) }
+def updatePublication = System.getenv('PLAYER_PUBLISH_RELEASE') == 'true'
+if (updatePublication && !signingReady) throw new GradleException('Published TV updates require the original persistent signing key; never uninstall a paired TV')
 if (releaseRequested && !signingReady) throw new GradleException('Release requires all four upload-signing environment variables')
 android {
     compileSdk = 36
@@ -27,7 +29,10 @@ android {
         }
     }
     buildTypes {
-        debug { versionNameSuffix '-debug' }
+        debug {
+            versionNameSuffix '-debug'
+            if (signingReady) signingConfig signingConfigs.playUpload
+        }
         release {
             debuggable false
             if (signingReady) signingConfig signingConfigs.playUpload

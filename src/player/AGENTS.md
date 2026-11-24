@@ -6,3 +6,4 @@
 - Multi-zone manifests commit only after every local zone asset downloads; independent zone timers share one audio-enabled zone and do not restart for renewed signed links.
 - Native web zones have separate session-keyed WebViews with bounded rectangles and no bridge; silenced zones require a media gesture, and closing one session must not destroy others.- Player content checks send the last manifest fingerprint; the server answers "unchanged" without signing URLs, and dashboard playlist/assignment saves enqueue best-effort refresh_content commands for near-instant updates.
 - Remote APK updates come only from the latest GitHub Release APK of the player repository, triggered manually per screen via an owner-scoped update_apk command; Android's installer keeps the final confirmation.
+- On restart, recover server-confirmed pairing for saved identities even after the code expires; expired sessions only poll status every 30 seconds and never automatically enroll again.

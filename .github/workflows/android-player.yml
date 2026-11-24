@@ -71,6 +71,10 @@ jobs:
         run: python3 scripts/test-android-artifacts.py
       - name: Test native auto-start policy
         run: node scripts/test-android-autostart.mjs
+      - name: Test pairing-safe APK update policy
+        run: |
+          node scripts/test-android-update.mjs
+          bunx vitest run src/test/player-pairing-recovery.test.tsx
       - name: Validate server address
         env:
           PLAYER_ORIGIN: ${{ inputs.api_origin }}
@@ -78,7 +82,7 @@ jobs:
       - name: Validate version
         run: node -e 'if(!/^[1-9][0-9]{0,8}$/.test(process.env.PLAYER_VERSION_CODE)||!/^\d+\.\d+\.\d+$/.test(process.env.PLAYER_VERSION_NAME))throw Error("Invalid version")'
       - name: Prepare private upload key
-        if: inputs.build_mode == 'play-release'
+        if: inputs.build_mode == 'play-release' || inputs.publish_release
         env:
           PLAYER_UPLOAD_KEYSTORE_BASE64: ${{ secrets.PLAYER_UPLOAD_KEYSTORE_BASE64 }}
           PLAYER_KEYSTORE_PASSWORD: ${{ secrets.PLAYER_KEYSTORE_PASSWORD }}
@@ -90,7 +94,7 @@ jobs:
           from pathlib import Path
           required = ['PLAYER_UPLOAD_KEYSTORE_BASE64', 'PLAYER_KEYSTORE_PASSWORD', 'PLAYER_KEY_ALIAS', 'PLAYER_KEY_PASSWORD']
           if not all(os.environ.get(key) for key in required):
-              raise SystemExit('Configure all four GitHub upload-key secrets before a Play release')
+              raise SystemExit('TV updates require all four persistent signing secrets using the original APK key. Do not uninstall paired TVs.')
           path = Path(os.environ['RUNNER_TEMP']) / 'screenflow-upload.jks'
           path.write_bytes(base64.b64decode(os.environ['PLAYER_UPLOAD_KEYSTORE_BASE64'], validate=True))
           path.chmod(0o600)
@@ -103,6 +107,12 @@ jobs:
       - run: bun run android:prepare
       - run: bun run android:sync
       - run: chmod +x android/gradlew && cd android && ./gradlew assembleDebug
+        env:
+          PLAYER_PUBLISH_RELEASE: ${{ inputs.publish_release }}
+          PLAYER_KEYSTORE_PATH: ${{ runner.temp }}/screenflow-upload.jks
+          PLAYER_KEYSTORE_PASSWORD: ${{ secrets.PLAYER_KEYSTORE_PASSWORD }}
+          PLAYER_KEY_ALIAS: ${{ secrets.PLAYER_KEY_ALIAS }}
+          PLAYER_KEY_PASSWORD: ${{ secrets.PLAYER_KEY_PASSWORD }}
       - name: Audit debug APK and manifest
         run: |
           python3 scripts/check-android-artifacts.py android/app/build/outputs/apk/debug/app-debug.apk

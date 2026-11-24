@@ -119,15 +119,21 @@ export function TVPlayer() {
   useEffect(() => {
     if (!identity || phase === "revoked") return;
     let cancelled = false;
+    let lastExpiredCheck = 0;
     const tick = async () => {
       if (busy.current || !navigator.onLine) return;
       busy.current = true;
       try {
         if (!identity.paired) {
-          if (identity.expires_at <= Date.now()) return;
+          // An update can interrupt the local confirmation after the server claimed the TV.
+          // Expiry prevents new claims, not discovery of an existing server-side pairing.
+          if (identity.expires_at <= Date.now()) {
+            if (Date.now() - lastExpiredCheck < 30000) return;
+            lastExpiredCheck = Date.now();
+          }
           const status = await deviceApi("status", identity) as { status: string; paired: boolean };
-          if (status.status === "expired") { setNow(identity.expires_at); return; }
           if (status.paired && !cancelled) { const claimed = { ...identity, paired: true }; await saveCredentials(claimed); setIdentity(claimed); setPhase("playing"); }
+          else if (status.status === "expired") setNow(identity.expires_at);
           return;
         }
         if (Date.now() - lastBeat.current >= 29000) try {
