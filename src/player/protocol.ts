@@ -26,6 +26,10 @@ export const commandsSchema = z.object({ server_time: z.string().optional(), com
 export function cacheKey(_content: Content, item: Item) { return `media:${item.media.id}:${item.media.type}:${item.media.size}`; }
 export function legacyCacheKey(content: Content, item: Item) { return `${content.playlist?.id}:${content.playlist?.updated_at}:${item.media.id}`; }
 export function nextItem(index: number, count: number) { return count > 0 ? (index + 1) % count : 0; }
+// Offline playback must never freeze on a missing local file: skip it until every item of the playlist was tried.
+export function missingMediaAction(consecutiveMisses: number, totalItems: number): 'skip' | 'stop' {
+  return consecutiveMisses >= Math.max(1, totalItems) ? 'stop' : 'skip';
+}
 export function imageDuration(item: Item) { return Math.max(1, item.display_duration) * 1000; }
 
 export class DeviceApiError extends Error { constructor(public status: number) { super(status === 401 ? "L’accès de cet appareil a été révoqué." : status === 429 ? "Trop de demandes, nouvel essai dans une minute." : "Connexion au serveur indisponible."); } }

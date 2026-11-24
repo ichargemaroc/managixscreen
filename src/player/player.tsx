@@ -4,7 +4,7 @@ import { resolveSlideTransition, slideTransitionSchema } from '@/lib/slide-trans
 import { Button } from "@/components/ui/button";
 import { cachedMedia, clearMediaCache, commandReceipt, downloadContent, readContent, saveReceipt, saveEntitlement } from "./cache";
 import { installApkUpdate } from "./apk-updater";
-import { contentSchema, unchangedSchema, credentialsSchema, commandsSchema, deviceApi, DeviceApiError, imageDuration, nextItem, type Content, type Credentials } from "./protocol";
+import { contentSchema, unchangedSchema, credentialsSchema, commandsSchema, deviceApi, DeviceApiError, imageDuration, missingMediaAction, nextItem, type Content, type Credentials } from "./protocol";
 import { enterPlayerMode, keepAwake, readCredentials, saveCredentials, subscribeNetwork } from "./platform";
 import { QRCodeSVG } from "qrcode.react";
 import { pairingUrl } from "@/lib/qr-pairing";
@@ -49,6 +49,8 @@ export function TVPlayer() {
   const current = useRef({ identity, content, index, paused }); current.current = { identity, content, index, paused };
   const busy = useRef(false);
   const lastBeat = useRef(0);
+  // Consecutive missing local media: skip each one, stop only when the whole playlist is unavailable offline.
+  const missingStreak = useRef(0);
   const playback = useRef<"idle" | "playing" | "paused" | "buffering" | "error">("idle");
   const video = useRef<HTMLVideoElement>(null);
   const items = content?.playlist?.items ?? [];
@@ -226,10 +228,21 @@ export function TVPlayer() {
 
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
   useEffect(() => {
-    let active = true; let url = ""; setPrevFrame(shownImage.current); shownImage.current = ""; setSource(""); playback.current = "idle";
-    if (item?.media.type === 'webpage') { setSource(item.media.webpage_url ?? ''); return; }
-    if (content && item) void cachedMedia(content, item).then((blob) => { if (active && blob) { url = URL.createObjectURL(blob); setSource(url); } }).catch(() => setError("Le média local est indisponible."));
-    return () => { active = false; if (url) { const old = url; setTimeout(() => URL.revokeObjectURL(old), 3000); } };
+    let active = true; let url = ""; let skipTimer: number | undefined;
+    setPrevFrame(shownImage.current); shownImage.current = ""; setSource(""); playback.current = "idle";
+    if (item?.media.type === 'webpage') { missingStreak.current = 0; setSource(item.media.webpage_url ?? ''); return; }
+    if (content && item) void cachedMedia(content, item).then((blob) => {
+      if (!active) return;
+      if (blob) { missingStreak.current = 0; url = URL.createObjectURL(blob); setSource(url); return; }
+      throw new Error("missing");
+    }).catch(() => {
+      if (!active) return;
+      // Hors connexion : ne jamais figer la diffusion sur un fichier local manquant.
+      missingStreak.current += 1;
+      if (missingMediaAction(missingStreak.current, items.length) === 'stop') setError("Aucun média local disponible hors connexion. Reconnectez l’écran pour resynchroniser.");
+      else { setError("Média local manquant ; passage au suivant."); skipTimer = window.setTimeout(() => { if (active) setIndex(value => nextItem(value, items.length)); }, 1500); }
+    });
+    return () => { active = false; if (skipTimer) clearTimeout(skipTimer); if (url) { const old = url; setTimeout(() => URL.revokeObjectURL(old), 3000); } };
   }, [content?.playlist?.id, content?.playlist?.updated_at, item?.id]);
   useEffect(() => {
     if (positionTest || content?.wall || !item || !source || paused || item.media.type !== 'webpage') return;
