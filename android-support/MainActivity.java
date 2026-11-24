@@ -12,6 +12,7 @@ public class MainActivity extends BridgeActivity {
   @Override public void onCreate(Bundle state) {
     registerPlugin(DeviceVaultPlugin.class);
     registerPlugin(WebpagePlayerPlugin.class);
+    registerPlugin(ApkUpdaterPlugin.class);
     super.onCreate(state);
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     immersive();

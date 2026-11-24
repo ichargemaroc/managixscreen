@@ -12,6 +12,11 @@ on:
         type: choice
         default: debug
         options: [debug, play-release]
+      publish_release:
+        description: "Publish the APK as a GitHub Release so TVs can be updated from the dashboard"
+        required: true
+        default: false
+        type: boolean
       version_code:
         description: "Positive version code; increase for every Play upload"
         required: true
@@ -23,7 +28,7 @@ on:
         default: "1.0.0"
         type: string
 permissions:
-  contents: read
+  contents: write
 jobs:
   apk:
     runs-on: ubuntu-latest
@@ -127,3 +132,13 @@ jobs:
       - name: Remove private upload key
         if: always()
         run: rm -f "$RUNNER_TEMP/screenflow-upload.jks"
+      - name: Publish GitHub Release for remote TV updates
+        if: inputs.publish_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          if [ "${{ inputs.build_mode }}" = "play-release" ]; then APK=android/app/build/outputs/apk/release/app-release.apk; fi
+          cp "$APK" "$RUNNER_TEMP/screenflow-tv.apk"
+          (cd "$RUNNER_TEMP" && sha256sum screenflow-tv.apk | cut -d' ' -f1 > screenflow-tv.apk.sha256)
+          gh release create "player-${PLAYER_VERSION_CODE}" "$RUNNER_TEMP/screenflow-tv.apk" "$RUNNER_TEMP/screenflow-tv.apk.sha256" --title "${PLAYER_VERSION_NAME}" --notes "ScreenFlow TV ${PLAYER_VERSION_NAME} (code ${PLAYER_VERSION_CODE})" --latest

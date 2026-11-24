@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { PageHeader, StatusBadge } from "@/components/app-shell";
 import { useStore, updateScreen, deleteScreen, revokeDeviceAccess, sendDeviceCommand, setScreenEnabled, type Screen, type DeviceCommand } from "@/lib/store";
 import { COMMAND_LABELS, COMMAND_STATUSES } from "@/lib/player-protocol";
+import { sendApkUpdate } from "@/lib/player.functions";
 
 export const Route = createFileRoute("/_authenticated/screens_/$screenId")({
   head: () => ({ meta: [
@@ -76,9 +77,10 @@ function Details({ screen }: { screen: Screen }) {
     <section className="mt-8 border-t pt-6">
       <h2 className="mb-4 font-display text-lg font-semibold">Commandes du lecteur</h2>
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Select value={command} onValueChange={(value) => setCommand(value as DeviceCommand["command"])}><SelectTrigger aria-label="Commande du lecteur" className="w-full sm:flex-1"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(COMMAND_LABELS).filter(([value]) => value !== 'position_test' && value !== 'stop_position_test').map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select>
+        <Select value={command} onValueChange={(value) => setCommand(value as DeviceCommand["command"])}><SelectTrigger aria-label="Commande du lecteur" className="w-full sm:flex-1"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(COMMAND_LABELS).filter(([value]) => value !== 'position_test' && value !== 'stop_position_test' && value !== 'update_apk').map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select>
         <Button disabled={busy || !screen.deviceId || screen.revoked} onClick={async () => { setBusy(true); try { await sendDeviceCommand(screen.id, command); refresh(); toast.success("Commande mise en attente"); } catch (error) { toast.error(error instanceof Error ? error.message : "Commande refusée"); } finally { setBusy(false); } }}><Send /> Envoyer</Button>
       </div>
+      <div className="mt-4 flex flex-col gap-2 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium">Application Android TV</p><p className="text-sm text-muted-foreground">Envoie la dernière version publiée. La TV télécharge l’APK puis affiche l’écran d’installation Android.</p></div><Button variant="outline" disabled={busy || !screen.deviceId || screen.revoked} onClick={async () => { setBusy(true); try { const r = await sendApkUpdate({ data: { screenId: screen.id } }); refresh(); toast.success(`Mise à jour ${r.versionName} envoyée`); } catch (error) { toast.error(error instanceof Error ? error.message : "Mise à jour refusée"); } finally { setBusy(false); } }}>Mettre à jour l’APK</Button></div>
       <ul className="mt-5 divide-y">{commands.filter((c) => c.screenId === screen.id).slice(0, 30).map((c) => <li key={c.id} className="flex flex-wrap items-start justify-between gap-2 py-3 text-sm"><div><p className="font-medium">{COMMAND_LABELS[c.command]}</p><p className="text-muted-foreground">{new Date(c.createdAt).toLocaleString("fr-FR")}</p>{c.error && <p className="break-words text-destructive">{c.error}</p>}</div><span className="text-muted-foreground">{COMMAND_STATUSES[(c.status === "pending" || c.status === "delivered") && Date.parse(c.expiresAt) <= Date.now() ? "expired" : c.status]}</span></li>)}</ul>
       {!commands.some((c) => c.screenId === screen.id) && <p className="mt-4 text-sm text-muted-foreground">Aucune commande envoyée.</p>}
     </section>

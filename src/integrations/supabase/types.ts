@@ -1381,6 +1381,16 @@ export type Database = {
         Returns: string
       }
       device_wall: { Args: { p_device: string; p_hash: string }; Returns: Json }
+      enqueue_apk_update: {
+        Args: {
+          p_screen: string
+          p_sha256: string
+          p_url: string
+          p_version_code: number
+          p_version_name: string
+        }
+        Returns: string
+      }
       enqueue_device_command: {
         Args: { p_command: string; p_screen: string }
         Returns: string

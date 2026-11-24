@@ -18,7 +18,7 @@ export const unchangedSchema = z.object({ unchanged: z.literal(true), fingerprin
 export type Content = z.input<typeof contentSchema>;
 export type Item = NonNullable<Content["playlist"]>["items"][number];
 export function contentItems(content: Content): Item[] { return [...(content.playlist?.items ?? []), ...(content.layout?.zones.flatMap(z => z.playlist?.items ?? []) ?? [])]; }
-export const commandsSchema = z.object({ server_time: z.string().optional(), commands: z.array(z.object({ id: z.string().uuid(), command: z.enum(["refresh_content", "reload_playlist", "restart_player", "clear_cache", "position_test", "stop_position_test"]), expires_at: z.string(), payload: z.unknown().optional() })) });
+export const commandsSchema = z.object({ server_time: z.string().optional(), commands: z.array(z.object({ id: z.string().uuid(), command: z.enum(["refresh_content", "reload_playlist", "restart_player", "clear_cache", "position_test", "stop_position_test", "update_apk"]), expires_at: z.string(), payload: z.unknown().optional() })) });
 // Uploaded media IDs are immutable; editing order/duration must not redownload large videos.
 export function cacheKey(_content: Content, item: Item) { return `media:${item.media.id}:${item.media.type}:${item.media.size}`; }
 export function legacyCacheKey(content: Content, item: Item) { return `${content.playlist?.id}:${content.playlist?.updated_at}:${item.media.id}`; }

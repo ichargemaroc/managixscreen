@@ -3,7 +3,7 @@ import { wallPlaybackSchema } from "./video-wall";
 
 export const manifestMediaSchema = z.object({ id: z.string().uuid(), name: z.string(), type: z.enum(['image', 'video', 'webpage']), size: z.number(), duration: z.number().nullable(), path: z.string(), webpage_url: z.string().nullable().optional(), refresh_minutes: z.number().int().min(0).max(1440).default(0), webpage_fullscreen: z.boolean().default(true) });
 
-export const deviceCommand = z.enum(["refresh_content", "reload_playlist", "restart_player", "clear_cache", "position_test", "stop_position_test"]);
+export const deviceCommand = z.enum(["refresh_content", "reload_playlist", "restart_player", "clear_cache", "position_test", "stop_position_test", "update_apk"]);
 const deviceInfo = z.object({ manufacturer: z.string().max(120).optional(), model: z.string().max(120).optional(), android_version: z.string().max(80).optional() }).strict();
 const playbackStatus = z.object({ state: z.enum(["idle", "playing", "paused", "buffering", "error"]), media_id: z.string().uuid().nullable().optional(), playlist_id: z.string().uuid().nullable().optional(), position_seconds: z.number().finite().min(0).max(86400).optional(), error: z.string().max(500).optional() }).strict();
 export const deviceIdentity = z.object({ device_id: z.string().uuid() }).strict();
@@ -18,6 +18,6 @@ export const manifestSchema = z.object({
   })) }).nullable(),
 });
 export const COMMAND_LABELS: Record<z.infer<typeof deviceCommand>, string> = {
-  refresh_content: "Actualiser le contenu", reload_playlist: "Recharger la playlist", restart_player: "Redémarrer le lecteur", clear_cache: "Vider le cache", position_test: "Test de position", stop_position_test: "Arrêter le test",
+  refresh_content: "Actualiser le contenu", reload_playlist: "Recharger la playlist", restart_player: "Redémarrer le lecteur", clear_cache: "Vider le cache", position_test: "Test de position", stop_position_test: "Arrêter le test", update_apk: "Mettre à jour l’application",
 };
 export const COMMAND_STATUSES: Record<string, string> = { pending: "En attente", delivered: "Reçue par le lecteur", completed: "Exécutée", failed: "Échec", expired: "Expirée" };

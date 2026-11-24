@@ -15,9 +15,11 @@ copyFileSync("android-support/BootReceiver.java", "android/app/src/main/java/app
 copyFileSync("android-support/AutoStartPolicy.java", "android/app/src/main/java/app/screenflow/player/AutoStartPolicy.java");
 copyFileSync("android-support/DeviceVaultPlugin.java", "android/app/src/main/java/app/screenflow/player/DeviceVaultPlugin.java");
 copyFileSync("android-support/WebpagePlayerPlugin.java", "android/app/src/main/java/app/screenflow/player/WebpagePlayerPlugin.java");
+copyFileSync("android-support/ApkUpdaterPlugin.java", "android/app/src/main/java/app/screenflow/player/ApkUpdaterPlugin.java");
 const resources = "android/app/src/main/res";
 mkdirSync(`${resources}/xml`, { recursive: true });
 copyFileSync("android-support/data_extraction_rules.xml", `${resources}/xml/data_extraction_rules.xml`);
+copyFileSync("android-support/update_paths.xml", `${resources}/xml/update_paths.xml`);
 // Replace Capacitor's generic launcher with the existing brand, including adaptive icons.
 cpSync("android-support/res", resources, { recursive: true });
 if (existsSync(`${resources}/drawable/tv_banner.xml`)) {

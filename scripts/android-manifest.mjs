@@ -26,5 +26,7 @@ export function configureAndroidManifest(source) {
   if (!manifest.includes('android:name=".BootReceiver"')) {
     manifest = manifest.replace('</application>', '<receiver android:name=".BootReceiver" android:enabled="true" android:exported="false" android:directBootAware="false">\n            <intent-filter>\n                <action android:name="android.intent.action.BOOT_COMPLETED" />\n                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />\n            </intent-filter>\n        </receiver>\n    </application>');
   }
+  if (!manifest.includes('android.permission.REQUEST_INSTALL_PACKAGES')) manifest = manifest.replace('<application', '<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n    <application');
+  if (!manifest.includes('${applicationId}.updates')) manifest = manifest.replace('</application>', '<provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.updates" android:exported="false" android:grantUriPermissions="true">\n            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/update_paths" />\n        </provider>\n    </application>');
   return manifest;
 }

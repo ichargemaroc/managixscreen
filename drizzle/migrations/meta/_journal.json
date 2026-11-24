@@ -162,6 +162,13 @@
       "when": 1795345614702,
       "tag": "0022_bound_content_team_invitations",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795539572097,
+      "tag": "0023_apk_update_command",
+      "breakpoints": true
     }
   ]
 }

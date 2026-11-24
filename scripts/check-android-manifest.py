@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 def check_manifest(path):
     root = ET.parse(path).getroot()
     key = '{http://schemas.android.com/apk/res/android}'
-    allowed = {'android.permission.INTERNET', 'android.permission.ACCESS_NETWORK_STATE', 'android.permission.RECEIVE_BOOT_COMPLETED'}
+    allowed = {'android.permission.INTERNET', 'android.permission.ACCESS_NETWORK_STATE', 'android.permission.RECEIVE_BOOT_COMPLETED', 'android.permission.REQUEST_INSTALL_PACKAGES'}
     permissions = {e.get(key + 'name') for e in root if e.tag.startswith('uses-permission')}
     # AndroidX adds this signature permission to protect dynamically registered receivers.
     permissions = {p for p in permissions if p and not p.endswith('.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION')}

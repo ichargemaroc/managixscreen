@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Cast, Maximize, RefreshCw, Wifi, WifiOff, Monitor, Play, Pause, ChevronRight, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cachedMedia, clearMediaCache, commandReceipt, downloadContent, readContent, saveReceipt, saveEntitlement } from "./cache";
+import { installApkUpdate } from "./apk-updater";
 import { contentSchema, unchangedSchema, credentialsSchema, commandsSchema, deviceApi, DeviceApiError, imageDuration, nextItem, type Content, type Credentials } from "./protocol";
 import { enterPlayerMode, keepAwake, readCredentials, saveCredentials, subscribeNetwork } from "./platform";
 import { QRCodeSVG } from "qrcode.react";
@@ -185,9 +186,10 @@ export function TVPlayer() {
               }
               if (command.command === "clear_cache") { await clearMediaCache(); setContent(null); await sync(identity, true); }
               if (command.command === "refresh_content" || command.command === "reload_playlist") { await sync(identity, true); if (command.command === "reload_playlist") setIndex(0); }
+              if (command.command === "update_apk") await installApkUpdate(command.payload);
               restart = command.command === "restart_player";
               receipt = restart ? { status: "completed", restartPending: true } : { status: "completed" };
-            } catch { receipt = { status: "failed", error: "L’opération du lecteur a échoué." }; }
+            } catch (e) { receipt = { status: "failed", error: command.command === "update_apk" && e instanceof Error ? e.message.slice(0, 200) : "L’opération du lecteur a échoué." }; }
             await saveReceipt(command.id, receipt);
           }
           if (restart) { window.location.reload(); return; }
