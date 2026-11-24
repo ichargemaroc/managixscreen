@@ -434,6 +434,22 @@ export async function assignPlaylist(playlistId: string, targetType: "screen" | 
   for (const id of ids) void enqueueCommand({ data: { screenId: id, command: "refresh_content" } }).catch(() => {});
 }
 
+export async function assignPlaylistMany(playlistId: string, groupIds: string[], screenIds: string[]) {
+  const ids = new Set(screenIds);
+  if (groupIds.length) {
+    const { data, error } = await supabase.from("screen_group_members").select("screen_id").in("group_id", groupIds);
+    if (error) throw error;
+    for (const m of data ?? []) ids.add(m.screen_id);
+    const { error: groupError } = await supabase.from("groups").update({ playlist_id: playlistId }).in("id", groupIds);
+    if (groupError) throw groupError;
+  }
+  if (!ids.size) return 0;
+  const { error } = await supabase.from("screens").update({ playlist_id: playlistId }).in("id", [...ids]);
+  if (error) throw error;
+  for (const id of ids) void enqueueCommand({ data: { screenId: id, command: "refresh_content" } }).catch(() => {});
+  return ids.size;
+}
+
 export async function addSchedule(s: Omit<Schedule, "id">, id?: string) {
   const row = {
     user_id: await userId(), playlist_id: s.playlistId, target_type: s.targetType, target_id: s.targetId,
