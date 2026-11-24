@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, FolderTree, Settings, Grid2X2, CreditCard, Shield, Columns2,Plug,Users } from "lucide-react";
+import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, FolderTree, Settings, Grid2X2, CreditCard, Shield, Columns2,Plug,Users,Activity } from "lucide-react";
 import { usePlatformAdmin } from '@/lib/store';
 import markAsset from "@/assets/screenflow-mark.webp.asset.json";
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -13,6 +13,7 @@ import {
 const nav = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
   { title: "Écrans", url: "/screens", icon: Monitor },
+  { title: "Supervision", url: "/monitoring", icon: Activity },
   { title: "Murs d’images", url: "/video-walls", icon: Grid2X2 },
   { title: 'Multi-zones',url:'/multi-zones',icon:Columns2 },
   { title: "Médiathèque", url: "/media", icon: Image },
