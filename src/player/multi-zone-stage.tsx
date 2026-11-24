@@ -12,7 +12,8 @@ export function MultiZoneStage({ content, paused, onVideoPlaying }: { content: C
   return <div className="absolute inset-0 bg-player-background">{content.layout?.zones.map(z => <div key={`${content.layout?.id}:${content.layout?.revision}:${z.id}:${z.playlist?.updated_at}`} style={zoneRect(z)} className="absolute overflow-hidden"><ZonePlaylist content={content} zone={z} items={z.playlist?.items ?? []} paused={paused} reportVideo={report} /></div>)}</div>;
 }
 function ZonePlaylist({ content, zone, items, paused, reportVideo }: { content:Content;zone:Zone;items:Item[];paused:boolean;reportVideo: (id: string, playing: boolean) => void }) {
-  const [index,setIndex] = useState(0); const [source,setSource] = useState(''); const [error,setError] = useState(''); const video=useRef<HTMLVideoElement>(null); const latest=useRef(content);latest.current=content;const item=items[index];
+  const [index,setIndex] = useState(0); const [source,setSource] = useState(''); const [error,setError] = useState(''); const video=useRef<HTMLVideoElement>(null); const latest=useRef(content);latest.current=content;const item=items[index % Math.max(1,items.length)];
+  useEffect(()=>{ if(items.length && index>=items.length) setIndex(0); },[items.length,index]);
   // Hors connexion : sauter les médias locaux manquants au lieu de figer la zone.
   const missing=useRef(0);
   const next=()=>setIndex(i=>nextItem(i,items.length));
