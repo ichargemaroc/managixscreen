@@ -204,6 +204,13 @@
       "when": 1795561010760,
       "tag": "0028_group_default_playlist",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1795562628811,
+      "tag": "0029_playlist_background_music",
+      "breakpoints": true
     }
   ]
 }

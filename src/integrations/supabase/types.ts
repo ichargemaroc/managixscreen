@@ -616,6 +616,50 @@ export type Database = {
           },
         ]
       }
+      playlist_music: {
+        Row: {
+          enabled: boolean
+          name: string
+          path: string
+          pause_on_video: boolean
+          playlist_id: string
+          size: number
+          track_id: string
+          user_id: string
+          volume: number
+        }
+        Insert: {
+          enabled?: boolean
+          name: string
+          path: string
+          pause_on_video?: boolean
+          playlist_id: string
+          size: number
+          track_id: string
+          user_id: string
+          volume?: number
+        }
+        Update: {
+          enabled?: boolean
+          name?: string
+          path?: string
+          pause_on_video?: boolean
+          playlist_id?: string
+          size?: number
+          track_id?: string
+          user_id?: string
+          volume?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playlist_music_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: true
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       playlists: {
         Row: {
           created_at: string

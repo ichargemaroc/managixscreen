@@ -6,17 +6,30 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { screenMusicOptions, saveScreenMusic, removeScreenMusic, formatBytes } from '@/lib/store';
+import { screenMusicOptions, saveScreenMusic, removeScreenMusic, playlistMusicOptions, savePlaylistMusic, removePlaylistMusic, formatBytes } from '@/lib/store';
 import { defaultMusicSettings, validateMusicFile, type MusicSettings } from '@/lib/background-music';
 
+type Target = { kind: 'screen' | 'playlist'; id: string };
+
 export function ScreenMusicPanel({ screenId }: { screenId: string }) {
-  const query = useQuery(screenMusicOptions(screenId));
-  if (query.isPending) return <section className="mt-8 border-t py-6 text-muted-foreground">Chargement de la musique…</section>;
-  if (query.isError) return <section className="mt-8 border-t py-6"><p role="alert">Musique indisponible.</p><Button variant="outline" onClick={() => void query.refetch()}>Réessayer</Button></section>;
-  return <MusicForm key={`${screenId}:${query.data?.track_id ?? 'none'}:${query.data?.enabled}:${query.data?.volume}:${query.data?.pause_on_video}`} screenId={screenId} track={query.data} />;
+  return <MusicPanel target={{ kind: 'screen', id: screenId }} />;
 }
 
-function MusicForm({ screenId, track }: { screenId: string; track: { name: string; size: number; enabled: boolean; volume: number; pause_on_video: boolean; previewUrl: string } | null }) {
+export function PlaylistMusicPanel({ playlistId }: { playlistId: string }) {
+  return <MusicPanel target={{ kind: 'playlist', id: playlistId }} />;
+}
+
+function MusicPanel({ target }: { target: Target }) {
+  const screenId = target.id;
+  const screenQuery = useQuery({ ...screenMusicOptions(target.id), enabled: target.kind === 'screen' });
+  const playlistQuery = useQuery({ ...playlistMusicOptions(target.id), enabled: target.kind === 'playlist' });
+  const query = target.kind === 'playlist' ? playlistQuery : screenQuery;
+  if (query.isPending) return <section className="mt-8 border-t py-6 text-muted-foreground">Chargement de la musique…</section>;
+  if (query.isError) return <section className="mt-8 border-t py-6"><p role="alert">Musique indisponible.</p><Button variant="outline" onClick={() => void query.refetch()}>Réessayer</Button></section>;
+  return <MusicForm key={`${screenId}:${query.data?.track_id ?? 'none'}:${query.data?.enabled}:${query.data?.volume}:${query.data?.pause_on_video}`} screenId={screenId} target={target} track={query.data} />;
+}
+
+function MusicForm({ screenId, target, track }: { screenId: string; target: Target; track: { name: string; size: number; enabled: boolean; volume: number; pause_on_video: boolean; previewUrl: string } | null }) {
   const client = useQueryClient(); const input = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | undefined>();
   const [settings, setSettings] = useState<MusicSettings>(track ? { enabled: track.enabled, volume: track.volume, pause_on_video: track.pause_on_video } : defaultMusicSettings);
@@ -25,14 +38,16 @@ function MusicForm({ screenId, track }: { screenId: string; track: { name: strin
   const act = async (remove = false) => {
     setBusy(true); setError('');
     try {
-      if (remove) await removeScreenMusic(screenId); else await saveScreenMusic(screenId, settings, file);
-      await client.invalidateQueries({ queryKey: ['screen-music', screenId] }); setFile(undefined);
+      const playlist = target.kind === 'playlist';
+      if (remove) await (playlist ? removePlaylistMusic(screenId) : removeScreenMusic(screenId)); else await (playlist ? savePlaylistMusic(screenId, settings, file) : saveScreenMusic(screenId, settings, file));
+      await client.invalidateQueries({ queryKey: [playlist ? 'playlist-music' : 'screen-music', screenId] }); setFile(undefined);
       toast.success(remove ? 'Musique retirée' : 'Musique enregistrée');
     } catch (e) { setError(e instanceof Error ? e.message : 'La musique n’a pas pu être enregistrée.'); }
     finally { setBusy(false); }
   };
   return <section className="mt-8 space-y-5 border-t pt-6" aria-label="Musique de fond">
     <h2 className="flex items-center gap-2 font-display text-lg font-semibold"><Music2 className="size-5 text-primary" /> Musique de fond</h2>
+    <p className="text-sm text-muted-foreground">{target.kind === 'playlist' ? 'Diffusée sur toutes les TV qui affichent cette playlist.' : 'Utilisée seulement si la playlist de cette TV n’a pas de musique.'}</p>
     <input ref={input} type="file" accept=".mp3,audio/mpeg" className="hidden" aria-label="Fichier MP3" disabled={busy} onChange={async e => {
       const selected = e.target.files?.[0]; e.target.value = ''; if (!selected) return;
       try { await validateMusicFile(selected); setFile(selected); setError(''); } catch (reason) { setError(reason instanceof Error ? reason.message : 'Fichier non reconnu.'); }

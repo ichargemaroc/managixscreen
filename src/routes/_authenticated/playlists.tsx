@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PlaylistMusicPanel } from "@/components/screen-music-panel";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useStore, formatDuration, createPlaylist, renamePlaylist, deletePlaylist, savePlaylistItems, assignPlaylist, type Playlist, type PlaylistItem } from "@/lib/store";
 
@@ -134,6 +135,7 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
             </Select>
             <Button className="w-full" disabled={!target} onClick={() => { void assign().catch((error) => toast.error(error instanceof Error ? error.message : "L’affectation a échoué")); }}>Affecter la playlist</Button>
           </CardContent></Card>
+          <Card><CardContent className="p-4 [&>section]:mt-0 [&>section]:border-t-0 [&>section]:pt-0"><PlaylistMusicPanel playlistId={playlist.id} /></CardContent></Card>
           <Card><CardContent className="p-4">
             <Label className="mb-3 block">Bibliothèque</Label>
             {media.length === 0 ? <p className="text-sm text-muted-foreground">Importez d'abord des médias dans la Médiathèque.</p> : (

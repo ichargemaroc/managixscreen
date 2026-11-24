@@ -283,6 +283,48 @@ export async function removeScreenMusic(screenId: string) {
   void enqueueCommand({ data: { screenId, command: 'refresh_content' } }).catch(() => {});
 }
 
+async function refreshPlaylistScreens(playlistId: string) {
+  const { data: screens } = await supabase.from("screens").select("id").eq("playlist_id", playlistId);
+  for (const screen of screens ?? []) void enqueueCommand({ data: { screenId: screen.id, command: "refresh_content" } }).catch(() => {});
+}
+
+export const playlistMusicOptions = (playlistId: string) => queryOptions({
+  queryKey: ['playlist-music', playlistId], staleTime: 30_000,
+  queryFn: async () => {
+    const { data, error } = await supabase.from('playlist_music').select('*').eq('playlist_id', playlistId).maybeSingle();
+    if (error) throw new Error('Musique indisponible. Réessayez.');
+    if (!data) return null;
+    const signed = await supabase.storage.from('media').createSignedUrl(data.path, 3600);
+    return { ...data, previewUrl: signed.data?.signedUrl ?? '' };
+  },
+});
+
+export async function savePlaylistMusic(playlistId: string, settings: MusicSettings, file?: File) {
+  const config = musicSettingsSchema.parse(settings);
+  const previous = await supabase.from('playlist_music').select('path').eq('playlist_id', playlistId).maybeSingle();
+  if (previous.error) throw new Error('La musique n’a pas pu être enregistrée.');
+  if (file) {
+    await validateMusicFile(file);
+    const owner = await userId(); const trackId = crypto.randomUUID(); const path = `${owner}/${trackId}.mp3`;
+    const uploaded = await supabase.storage.from('media').upload(path, file, { contentType: 'audio/mpeg' });
+    if (uploaded.error) throw new Error('L’import de la musique a échoué.');
+    const saved = await supabase.from('playlist_music').upsert({ ...config, playlist_id: playlistId, user_id: owner, track_id: trackId, name: file.name.slice(0, 255), path, size: file.size }).select('playlist_id').single();
+    if (saved.error) { await supabase.storage.from('media').remove([path]); throw new Error('La musique n’a pas pu être enregistrée.'); }
+    if (previous.data && previous.data.path !== path) await supabase.storage.from('media').remove([previous.data.path]);
+  } else {
+    const saved = await supabase.from('playlist_music').update(config).eq('playlist_id', playlistId).select('playlist_id').single();
+    if (saved.error) throw new Error('La musique n’a pas pu être enregistrée.');
+  }
+  await refreshPlaylistScreens(playlistId);
+}
+
+export async function removePlaylistMusic(playlistId: string) {
+  const removed = await supabase.from('playlist_music').delete().eq('playlist_id', playlistId).select('path').single();
+  if (removed.error) throw new Error('La musique n’a pas pu être retirée.');
+  await supabase.storage.from('media').remove([removed.data.path]);
+  await refreshPlaylistScreens(playlistId);
+}
+
 export async function addGroup(name: string, location: string) {
   const { error } = await supabase.from("groups").insert({ user_id: await userId(), name, location });
   if (error) throw error;
