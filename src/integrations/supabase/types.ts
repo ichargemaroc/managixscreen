@@ -880,6 +880,50 @@ export type Database = {
         }
         Relationships: []
       }
+      screen_music: {
+        Row: {
+          enabled: boolean
+          name: string
+          path: string
+          pause_on_video: boolean
+          screen_id: string
+          size: number
+          track_id: string
+          user_id: string
+          volume: number
+        }
+        Insert: {
+          enabled?: boolean
+          name: string
+          path: string
+          pause_on_video?: boolean
+          screen_id: string
+          size: number
+          track_id: string
+          user_id: string
+          volume?: number
+        }
+        Update: {
+          enabled?: boolean
+          name?: string
+          path?: string
+          pause_on_video?: boolean
+          screen_id?: string
+          size?: number
+          track_id?: string
+          user_id?: string
+          volume?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "screen_music_screen_id_fkey"
+            columns: ["screen_id"]
+            isOneToOne: true
+            referencedRelation: "screens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       screens: {
         Row: {
           assignment_updated_at: string

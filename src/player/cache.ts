@@ -1,6 +1,7 @@
 import { cacheKey, legacyCacheKey, contentSchema, contentItems, type Content, type Item } from "./protocol";
 import { deviceEntitlementSchema } from '@/lib/billing';
 import type { z } from 'zod';
+import { musicCacheKey } from '@/lib/background-music';
 
 // IndexedDB is shared by the browser route and the bundled Android WebView.
 const dbName = "screenflow-player-v1";
@@ -27,6 +28,9 @@ export async function readContent(): Promise<Content | null> {
   return entitlement.success ? { ...parsed.data, entitlement: entitlement.data } : parsed.data;
 }
 export async function saveEntitlement(screenId: string, value: z.infer<typeof deviceEntitlementSchema>) { await write('state', `entitlement:${screenId}`, deviceEntitlementSchema.parse(value)); }
+export async function cachedMusic(content: Content) {
+  return content.background_music ? read<Blob>('media', musicCacheKey(content.background_music)) : undefined;
+}
 export async function cachedMedia(content: Content, item: Item) {
   const stored = await read<Blob>("media", cacheKey(content, item)) ?? await read<Blob>("media", legacyCacheKey(content, item));
   if (stored) return stored;
@@ -67,12 +71,20 @@ async function storeContent(content: Content, progress: (done: number, total: nu
     }
   };
   await Promise.all(Array.from({ length: Math.min(3, items.length) }, worker));
+  if (content.background_music && !await cachedMusic(content)) {
+    const response = await fetch(content.background_music.download_url, { signal: AbortSignal.timeout(120000) });
+    if (!response.ok) throw new Error('La musique n’a pas pu être téléchargée.');
+    const blob = await response.blob();
+    if (!blob.size) throw new Error('Musique vide.');
+    await write('media', musicCacheKey(content.background_music), blob);
+  }
   await write("state", "manifest", content);
   // Prune only after the replacement is durably committed.
   const db = await database();
   try { await new Promise<void>((resolve, reject) => {
     const tx = db.transaction("media", "readwrite"); const store = tx.objectStore("media");
     const keep = new Set(items.map((item) => cacheKey(content, item)));
+    if (content.background_music) keep.add(musicCacheKey(content.background_music));
     const req = store.openCursor(); req.onsuccess = () => { const cursor = req.result; if (!cursor) return; if (!keep.has(String(cursor.key))) cursor.delete(); cursor.continue(); };
     tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error);
   }); } finally { db.close(); }

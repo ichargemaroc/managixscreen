@@ -16,6 +16,7 @@ import { DisplayRotationPicker } from '@/components/display-rotation-picker';
 import type { DisplayRotation } from '@/lib/display-rotation';
 import { SlideTransitionSelect } from '@/components/slide-transition-select';
 import type { SlideTransition } from '@/lib/slide-transition';
+import { ScreenMusicPanel } from '@/components/screen-music-panel';
 
 export const Route = createFileRoute("/_authenticated/screens_/$screenId")({
   head: () => ({ meta: [
@@ -82,6 +83,7 @@ function Details({ screen }: { screen: Screen }) {
       <SlideTransitionSelect value={transition} onChange={setTransition} disabled={busy} />
       <Button disabled={busy || !name.trim()}>Enregistrer</Button>
     </form>
+    <ScreenMusicPanel screenId={screen.id} />
     <section className="mt-8 border-t pt-6">
       <h2 className="mb-4 font-display text-lg font-semibold">Commandes du lecteur</h2>
       <div className="flex flex-col gap-3 sm:flex-row">

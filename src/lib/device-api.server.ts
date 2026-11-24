@@ -98,11 +98,21 @@ export async function handleDeviceRequest(request: Request, operation: "request"
         download.protocol = publicUrl.protocol; download.host = publicUrl.host;
         return { ...item, media: { ...metadata, download_url: download.toString() } };
       };
-      const items = await Promise.all((manifest.playlist?.items ?? []).map(signItem));
+      const signMusic = async () => {
+        if (!manifest.background_music) return null;
+        const { path, ...track } = manifest.background_music;
+        const signed = await supabaseAdmin.storage.from('media').createSignedUrl(path, 3600);
+        const publicHost = import.meta.env['VITE_SUPABASE_URL'];
+        if (signed.error || !signed.data?.signedUrl || !publicHost) throw new Error('Music unavailable');
+        const url = new URL(signed.data.signedUrl); const host = new URL(publicHost);
+        url.protocol = host.protocol; url.host = host.host;
+        return { ...track, download_url: url.toString() };
+      };
+      const [items, backgroundMusic] = await Promise.all([Promise.all((manifest.playlist?.items ?? []).map(signItem)), signMusic()]);
       const signedLayout = layout ? { ...layout,zones:await Promise.all(layout.zones.map(async zone => ({ ...zone,playlist:zone.playlist ? { ...zone.playlist,items:await Promise.all(zone.playlist.items.map(signItem)) } : null }))) } : null;
       const { data: synced, error: syncError } = await supabaseAdmin.rpc("device_record_sync", { p_device: input.device_id, p_hash: hash });
       if (syncError) return reply({ error: "Appareil non autorisé" }, 401);
-      return reply({ ...manifest, layout:signedLayout, entitlement, playlist: manifest.playlist ? { ...manifest.playlist, items } : null, server_time: new Date().toISOString(), last_sync_at: synced, fingerprint, download_urls_expire_in: 3600 });
+      return reply({ ...manifest, background_music: backgroundMusic, layout:signedLayout, entitlement, playlist: manifest.playlist ? { ...manifest.playlist, items } : null, server_time: new Date().toISOString(), last_sync_at: synced, fingerprint, download_urls_expire_in: 3600 });
     }
     if (operation === "commands") {
       const { data, error } = await supabaseAdmin.rpc("device_poll_commands", { p_device: input.device_id, p_hash: hash });

@@ -17,6 +17,30 @@ function request(token?: string, fields = {}) {
 
 describe("Device API isolation", () => {
   beforeEach(() => { vi.resetAllMocks(); mocks.layout.mockResolvedValue({data:null});mocks.entitlement.mockResolvedValue({ data: { version: 1, active: true, revision: 1 } }); });
+  it('signs only the paired screen music and fingerprints music settings before signing', async () => {
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://storage.example.test');
+    mocks.from.mockReturnValue(row({ device_id: deviceId }));
+    let volume = 35;
+    mocks.rpc.mockImplementation(async (name: string) => {
+      if (name === 'consume_device_limit') return { data: true };
+      if (name === 'device_content') return { data: { screen_id: deviceId, assignment_updated_at: 'now', playlist: null, background_music: { id: deviceId, name: 'Ambiance', size: 10, path: 'owner/track.mp3', enabled: true, volume, pause_on_video: true } } };
+      if (name === 'device_record_sync') return { data: 'now' };
+      return { data: null };
+    });
+    const sign = vi.fn().mockResolvedValue({ data: { signedUrl: 'https://internal.test/music.mp3' } });
+    mocks.storage.from.mockReturnValue({ createSignedUrl: sign });
+    const first = await (await handleDeviceRequest(request('a'.repeat(64)), 'content')).json();
+    expect(first.background_music.volume).toBe(35);
+    expect(first.background_music.path).toBeUndefined();
+    expect(first.background_music.download_url).toBe('https://storage.example.test/music.mp3');
+    const same = await (await handleDeviceRequest(request('a'.repeat(64), { known: first.fingerprint }), 'content')).json();
+    expect(same.unchanged).toBe(true); expect(sign).toHaveBeenCalledTimes(1);
+    volume = 70;
+    const changed = await (await handleDeviceRequest(request('a'.repeat(64), { known: first.fingerprint }), 'content')).json();
+    expect(changed.background_music.volume).toBe(70); expect(changed.fingerprint).not.toBe(first.fingerprint);
+    expect(sign).toHaveBeenCalledWith('owner/track.mp3', 3600);
+    vi.unstubAllEnvs();
+  });
   it("rejects an anonymous device before reading any data", async () => {
     expect((await handleDeviceRequest(request(), "status")).status).toBe(401);
     expect(mocks.from).not.toHaveBeenCalled();

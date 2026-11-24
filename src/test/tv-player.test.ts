@@ -1,11 +1,31 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import "fake-indexeddb/auto";
 import { cacheKey, imageDuration, nextItem, type Content, type Item } from "@/player/protocol";
-import { cachedMedia, clearMediaCache, commandReceipt, downloadContent, readContent, saveReceipt } from "@/player/cache";
+import { cachedMedia, cachedMusic, clearMediaCache, commandReceipt, downloadContent, readContent, saveReceipt } from "@/player/cache";
 
 const item: Item = { id: "a67f4500-b2f4-4049-9a31-5433f14aad57", position: 0, display_duration: 17, media: { id: "a67f4500-b2f4-4049-9a31-5433f14aad57", name: "Image", type: "image", size: 4, duration: null, download_url: "https://example.test/image.png" } };
 const manifest: Content = { display_rotation: 0, slide_transition: "default", screen_id: item.id, assignment_updated_at: "2026-11-20T00:00:00Z", last_sync_at: "2026-11-20T00:00:00Z", playlist: { id: item.id, name: "TV", updated_at: "2026-11-20T00:00:00Z", items: [item] } };
 describe("TV player playback and offline cache", () => {
+  it('commits background music with the playlist and keeps it offline across setting changes', async () => {
+    const fetcher = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('data'));
+    const music = { id: item.id, name: 'Ambiance', size: 4, enabled: true, volume: 35, pause_on_video: true, download_url: 'https://example.test/ambiance.mp3' };
+    const first = { ...manifest, background_music: music };
+    await downloadContent(first, () => {});
+    expect(await cachedMusic(first)).toBeDefined(); expect(fetcher).toHaveBeenCalledTimes(2);
+    fetcher.mockRejectedValue(new Error('Offline'));
+    const changed = { ...first, background_music: { ...music, volume: 70, download_url: 'https://example.test/renewed.mp3' } };
+    await downloadContent(changed, () => {});
+    expect((await readContent())?.background_music?.volume).toBe(70);
+    expect(await cachedMusic(changed)).toBeDefined(); expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+  it('preserves the entire previous manifest when replacement music cannot download', async () => {
+    const fetcher = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('data'));
+    await downloadContent(manifest, () => {});
+    fetcher.mockRejectedValue(new Error('Offline'));
+    await expect(downloadContent({ ...manifest, background_music: { id: item.id, name: 'Ambiance', size: 5, enabled: true, volume: 50, pause_on_video: true, download_url: 'https://example.test/ambiance.mp3' } }, () => {})).rejects.toThrow('Offline');
+    expect(await readContent()).toEqual(manifest);
+    expect(await cachedMedia(manifest, item)).toBeDefined();
+  });
   beforeEach(async () => { await clearMediaCache(); vi.restoreAllMocks(); });
   it("uses the playlist photo duration and loops in playlist order", () => {
     expect(imageDuration(item)).toBe(17000);

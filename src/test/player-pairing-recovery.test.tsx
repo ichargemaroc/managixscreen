@@ -28,9 +28,10 @@ it('recovers the existing server pairing after an update interrupted local confi
 it('does not create a new identity for a genuinely expired unclaimed code and bounds status checks', async () => {
   vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
   mocks.api.mockResolvedValue({ status: 'expired', paired: false });
-  vi.useFakeTimers({ shouldAdvanceTime: true });
+  vi.useFakeTimers();
   render(<TVPlayer />);
-  await waitFor(() => expect(mocks.api).toHaveBeenCalledWith('status', identity));
+  await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+  expect(mocks.api).toHaveBeenCalledWith('status', identity);
   await act(async () => { await vi.advanceTimersByTimeAsync(16000); });
   expect(mocks.api).toHaveBeenCalledTimes(1);
   expect(mocks.save).not.toHaveBeenCalled();

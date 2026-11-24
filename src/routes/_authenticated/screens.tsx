@@ -20,6 +20,7 @@ import { DisplayRotationPicker } from '@/components/display-rotation-picker';
 import type { DisplayRotation } from '@/lib/display-rotation';
 import { SlideTransitionSelect } from '@/components/slide-transition-select';
 import type { SlideTransition } from '@/lib/slide-transition';
+import { Music2 } from 'lucide-react';
 
 export const Route = createFileRoute("/_authenticated/screens")({
   head: () => ({ meta: [
@@ -90,6 +91,7 @@ function Screens() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild><Link to="/screens/$screenId" params={{ screenId: s.id }}>Détails / accès</Link></DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setEditing(s)}>Gérer / renommer</DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link to="/screens/$screenId" params={{ screenId: s.id }}><Music2 />Musique de fond</Link></DropdownMenuItem>
                             <DropdownMenuItem className="text-destructive" onClick={async () => { await deleteScreen(s.id); refresh(); toast.success("TV supprimée"); }}>Supprimer</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

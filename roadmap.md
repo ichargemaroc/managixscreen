@@ -1,5 +1,11 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Musique de fond par écran
+- [x] Import MP3 privé (50 Mo), affectation par écran, volume et coupure optionnelle pendant les vidéos ; accès depuis les actions et détails d’écran
+- [x] Manifeste protégé, empreinte des réglages, cache hors connexion atomique et audio continu indépendant des diapositives ; suivi des vidéos multi-zones
+- [x] 274 tests réussis ; écran temporaire jumelé, MP3 importé puis relu à 35 %, piste locale décodée et lue avec temps avançant, téléphone sans débordement ; données temporaires supprimées ; continuité entre images et reprise hors connexion couvertes par tests automatisés
+- [ ] Validation Android TV physique : nouvel APK signé et matériel nécessaires
+
 ## Rotation physique des écrans
 - [x] Sélecteur 0°, 90°, 180° et 270° dans Gérer / renommer et les détails d’écran, sauvegarde propriétaire et manifeste compatible
 - [x] Rotation du lecteur partagé et des pages Web natives isolées, dimensions portrait et cache sans modifier les fichiers ni le jumelage

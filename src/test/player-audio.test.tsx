@@ -10,7 +10,7 @@ vi.mock('@/player/platform', () => ({
   readCredentials: async () => ({ device_id: 'a67f4500-b2f4-4049-9a31-5433f14aad57', device_token: 'a'.repeat(64), paired: true }),
   saveCredentials: vi.fn(), subscribeNetwork: async () => () => {}, keepAwake: async () => () => {}, enterPlayerMode: vi.fn(),
 }));
-vi.mock('@/player/cache', () => ({ readContent: async () => fixture.content, cachedMedia: async () => new Blob(['video']), commandReceipt: vi.fn(), saveReceipt: vi.fn(), downloadContent: vi.fn(), clearMediaCache: vi.fn() }));
+vi.mock('@/player/cache', () => ({ readContent: async () => fixture.content, cachedMedia: async () => new Blob(['video']), cachedMusic: async () => new Blob(['ID3music']), commandReceipt: vi.fn(), saveReceipt: vi.fn(), downloadContent: vi.fn(), clearMediaCache: vi.fn() }));
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 function setupPlaylist() {
@@ -30,6 +30,24 @@ it('plays playlist videos with audio enabled', async () => {
   expect(video?.muted).toBe(false);
   expect(video?.defaultMuted).toBe(false);
   expect(video?.volume).toBe(1);
+});
+
+it('does not interrupt background music while changing image sources', async () => {
+  setupPlaylist();
+  const previous = fixture.content; const first = previous?.playlist?.items[0];
+  if (!previous?.playlist || !first) throw new Error('Missing fixture');
+  const image = { ...first, media: { ...first.media, type: 'image' as const } };
+  fixture.content = { ...previous, playlist: { ...previous.playlist, items: [image, { ...image, id: 'b67f4500-b2f4-4049-9a31-5433f14aad57' }] }, background_music: { id: first.id, name: 'Ambiance', size: 12, enabled: true, volume: 35, pause_on_video: true, download_url: 'https://example.test/music.mp3' } };
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+  const { container } = render(<TVPlayer />);
+  await waitFor(() => expect(container.querySelector('audio')?.volume).toBe(0.35));
+  const audio = container.querySelector('audio');
+  fireEvent.click(await screen.findByRole('button', { name: 'Commandes de lecture' }));
+  const pause = vi.mocked(HTMLMediaElement.prototype.pause); pause.mockClear();
+  fireEvent.click(await screen.findByRole('button', { name: 'Média suivant' }));
+  await waitFor(() => expect(container.textContent).toContain('2/2'));
+  expect(container.querySelector('audio')).toBe(audio);
+  expect(pause).not.toHaveBeenCalled();
 });
 
 it('retries audible playback directly from the play button after browser autoplay denial', async () => {
