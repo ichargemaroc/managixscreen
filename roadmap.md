@@ -1,5 +1,10 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Accueil après authentification
+- [x] Réutiliser la réponse de connexion vérifiée pendant 30 secondes sans affaiblir les contrôles d’accès
+- [x] Afficher le menu pendant le chargement et limiter l’accueil à quatre lectures utiles, sans signer les médias
+- [x] 224 tests réussis ; accueil connecté, médiathèque et écrans relus sur ordinateur et téléphone, menu accessible pendant un chargement volontairement ralenti ; aucune donnée client modifiée
+
 ## Multi-zones, intégrations et gestion d’équipe
 - [x] Compositions de deux à quatre zones, playlists indépendantes, aperçu, proportions, une zone sonore et affectation ; manifeste et cache atomique vérifiés
 - [x] Sources Canva publiées, météo MET Norway réelle et Instagram public ; aucun compte fournisseur fictivement connecté, restrictions de publication documentées

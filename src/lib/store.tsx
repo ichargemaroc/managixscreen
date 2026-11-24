@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { queryOptions, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { useRouterState } from '@tanstack/react-router';
 import { supabase } from "@/integrations/supabase/client";
 import { mediaKind, mediaMimeType, mediaStorageFilename, screenStatus } from "@/lib/signage-rules";
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,7 @@ export type Schedule = {
 };
 
 type State = { groups: Group[]; screens: Screen[]; media: Media[]; playlists: Playlist[]; schedules: Schedule[]; commands: DeviceCommand[]; walls: VideoWall[]; wallEvents: { id: string; wall_id: string; action: string; effective_at: string; created_at: string }[] };
-type Ctx = State & { loading: boolean; refresh: () => void };
+type Ctx = State & { loading: boolean; loadError: boolean; retry: () => void; refresh: () => void };
 
 const StoreCtx = createContext<Ctx | null>(null);
 
@@ -78,27 +79,37 @@ export async function loadMediaUrls(queryClient: QueryClient, rows: { path: stri
   return new Map(originals.map((m) => [m.path, { url: m.url, thumbnailUrl: thumbnailByPath.get(m.path) || m.url }]));
 }
 
-async function fetchAll(queryClient: QueryClient): Promise<State> {
+export type StoreScope = 'dashboard' | 'metadata' | 'media';
+
+export function storeScope(pathname: string): StoreScope {
+  if (pathname === '/') return 'dashboard';
+  if (['/media', '/playlists', '/video-walls', '/multi-zones', '/team'].includes(pathname)) return 'media';
+  return 'metadata';
+}
+
+export async function fetchAll(queryClient: QueryClient, scope: StoreScope = 'media'): Promise<State> {
+  const full = scope !== 'dashboard';
+  const empty = { data: [], error: null };
   const [groups, screens, media, playlists, items, schedules, members, sessions, telemetry, commands, walls, wallMembers, wallEvents, entitlements] = await Promise.all([
-    supabase.from("groups").select("*").order("created_at"),
+    full ? supabase.from("groups").select("*").order("created_at") : empty,
     supabase.from("screens").select("*").order("created_at"),
     supabase.from("media").select("*").order("created_at", { ascending: false }),
     supabase.from("playlists").select("*").order("created_at"),
-    supabase.from("playlist_items").select("*").order("position"),
-    supabase.from("schedules").select("*").order("created_at"),
-    supabase.from("screen_group_members").select("*"),
+    full ? supabase.from("playlist_items").select("*").order("position") : empty,
+    full ? supabase.from("schedules").select("*").order("created_at") : empty,
+    full ? supabase.from("screen_group_members").select("*") : empty,
     supabase.from("pairing_sessions").select("screen_id, device_id, status"),
-    supabase.from("device_telemetry").select("*"),
-    supabase.from("device_commands").select("*").order("created_at", { ascending: false }).limit(200),
-    supabase.from("video_walls").select("*").order("created_at"),
-    supabase.from("video_wall_screens").select("*"),
-    supabase.from("video_wall_events").select("id,wall_id,action,effective_at,created_at").order("created_at", { ascending: false }).limit(100),
-    supabase.from('screen_entitlements').select('screen_id,active'),
+    full ? supabase.from("device_telemetry").select("*") : empty,
+    full ? supabase.from("device_commands").select("*").order("created_at", { ascending: false }).limit(200) : empty,
+    full ? supabase.from("video_walls").select("*").order("created_at") : empty,
+    full ? supabase.from("video_wall_screens").select("*") : empty,
+    full ? supabase.from("video_wall_events").select("id,wall_id,action,effective_at,created_at").order("created_at", { ascending: false }).limit(100) : empty,
+    full ? supabase.from('screen_entitlements').select('screen_id,active') : empty,
   ]);
   for (const r of [groups, screens, media, playlists, items, schedules, members, sessions, telemetry, commands, walls, wallMembers, wallEvents, entitlements]) {
     if (r.error) throw r.error;
   }
-  const mediaUrls = await loadMediaUrls(queryClient, media.data ?? []);
+  const mediaUrls = scope === 'media' ? await loadMediaUrls(queryClient, media.data ?? []) : new Map<string, { url: string; thumbnailUrl: string }>();
   const mediaRows = (media.data ?? []).map((m) => ({
       id: m.id, name: m.name, type: m.type as Media['type'], size: m.size,
       duration: m.duration, path: m.path, url: m.type === 'webpage' ? m.webpage_url ?? '' : mediaUrls.get(m.path)?.url ?? '', createdAt: m.created_at,
@@ -138,13 +149,28 @@ async function fetchAll(queryClient: QueryClient): Promise<State> {
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const { data, isLoading, error, refetch } = useQuery({ queryKey: ["screenflow"], queryFn: () => fetchAll(queryClient), refetchInterval: 60_000 });
+  const scope = useRouterState({ select: (state) => storeScope(state.location.pathname) });
+  const { data, isLoading, error, refetch } = useQuery({ queryKey: ["screenflow", scope], queryFn: () => fetchAll(queryClient, scope), staleTime: 30_000, refetchInterval: 60_000 });
   const value = useMemo<Ctx>(() => ({
     ...(data ?? EMPTY),
     loading: isLoading,
+    loadError: Boolean(error),
+    retry: () => { void refetch(); },
     refresh: () => { void queryClient.invalidateQueries({ queryKey: ["screenflow"] }); },
-  }), [data, isLoading, queryClient]);
-  return <StoreCtx.Provider value={value}>{error ? <div role="alert" className="p-8 text-center"><p>Les données n’ont pas pu être chargées.</p><Button className="mt-4" onClick={() => void refetch()}>Réessayer</Button></div> : isLoading ? <p role="status" className="p-8 text-center text-muted-foreground">Chargement…</p> : children}</StoreCtx.Provider>;
+  }), [data, isLoading, error, refetch, queryClient]);
+  return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
+}
+
+// Keep the shell mounted, but never expose empty-data actions while loading.
+export function StoreContent({ children }: { children: ReactNode }) {
+  const { loading, loadError, retry } = useStore();
+  if (loadError) return <div role="alert" className="p-8 text-center"><p>Les données n’ont pas pu être chargées.</p><Button className="mt-4" onClick={retry}>Réessayer</Button></div>;
+  if (loading) return <div role="status" aria-label="Chargement des données" className="mx-auto max-w-7xl space-y-8">
+    <div aria-hidden="true" className="h-9 w-56 rounded bg-muted motion-safe:animate-pulse" />
+    <div aria-hidden="true" className="grid grid-cols-2 gap-8 border-b pb-9 md:grid-cols-3 xl:grid-cols-6">{Array.from({ length: 6 }, (_, i) => <div key={i} className="space-y-4 motion-safe:animate-pulse"><div className="size-12 rounded-full bg-muted" /><div className="h-4 w-24 rounded bg-muted" /><div className="h-9 w-12 rounded bg-muted" /></div>)}</div>
+    <div aria-hidden="true" className="space-y-5 motion-safe:animate-pulse">{Array.from({ length: 3 }, (_, i) => <div key={i} className="h-10 rounded bg-muted" />)}</div>
+  </div>;
+  return children;
 }
 
 export function useStore() {

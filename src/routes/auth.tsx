@@ -1,4 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from '@tanstack/react-query';
+import { cacheVerifiedSignIn } from '@/lib/verified-user';
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import logoAsset from "@/assets/screenflow-logo.webp.asset.json";
@@ -45,6 +47,7 @@ function GoogleLogo() {
 
 function AuthPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { pairCode } = Route.useSearch();
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [fullName, setFullName] = useState("");
@@ -63,8 +66,9 @@ function AuthPage() {
         toast.success("Lien envoyé — vérifiez votre e-mail pour réinitialiser votre mot de passe.");
         setMode("login");
       } else if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (data.user) await cacheVerifiedSignIn(queryClient, data.user);
         if (pairCode) await navigate({ to: "/pair", search: { code: pairCode } });
         else await navigate({ to: "/" });
       } else {

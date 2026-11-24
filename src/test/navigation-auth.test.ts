@@ -1,12 +1,33 @@
 import { QueryClient } from '@tanstack/react-query';
+import type { User } from '@supabase/supabase-js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ getUser: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { auth: { getUser: mocks.getUser } } }));
-import { verifiedUser } from '@/lib/verified-user';
+import { verifiedUser, cacheVerifiedSignIn } from '@/lib/verified-user';
 
 describe('Verified navigation identity', () => {
   beforeEach(() => { vi.useRealTimers(); mocks.getUser.mockReset(); });
+
+  it('reuses a successful sign-in response without a second verification call', async () => {
+    const client = new QueryClient();
+    const user = { id: 'signed-in-owner' } as User;
+    await cacheVerifiedSignIn(client, user);
+    expect(await verifiedUser(client)).toEqual(user);
+    expect(mocks.getUser).not.toHaveBeenCalled();
+    client.clear();
+  });
+
+  it('revalidates a primed sign-in identity after 30 seconds', async () => {
+    vi.useFakeTimers();
+    const client = new QueryClient();
+    await cacheVerifiedSignIn(client, { id: 'signed-in-owner' } as User);
+    vi.advanceTimersByTime(30_001);
+    mocks.getUser.mockResolvedValue({ data: { user: null }, error: null });
+    expect(await verifiedUser(client)).toBeNull();
+    expect(mocks.getUser).toHaveBeenCalledTimes(1);
+    client.clear();
+  });
 
   it('shares one server verification across consecutive page changes', async () => {
     const client = new QueryClient();
