@@ -41,7 +41,7 @@ export function WallStage({ wall, source, type, clockOffset, onState }: { wall:W
         if(!running && !video.paused) video.pause();
       }
       if(el && ctx){
-        const box=el.getBoundingClientRect(); const width=Math.max(1,Math.round(box.width)); const height=Math.max(1,Math.round(box.height));
+        const width=Math.max(1,el.clientWidth); const height=Math.max(1,el.clientHeight);
         if(el.width!==width || el.height!==height){el.width=width;el.height=height;}
         ctx.clearRect(0,0,width,height);
         const sourceEl=type==='image'?image:video;

@@ -169,6 +169,13 @@
       "when": 1795539572097,
       "tag": "0023_apk_update_command",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1795545326137,
+      "tag": "0024_screen_display_rotation",
+      "breakpoints": true
     }
   ]
 }

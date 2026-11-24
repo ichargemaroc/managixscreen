@@ -15,6 +15,7 @@ copyFileSync("android-support/BootReceiver.java", "android/app/src/main/java/app
 copyFileSync("android-support/AutoStartPolicy.java", "android/app/src/main/java/app/screenflow/player/AutoStartPolicy.java");
 copyFileSync("android-support/DeviceVaultPlugin.java", "android/app/src/main/java/app/screenflow/player/DeviceVaultPlugin.java");
 copyFileSync("android-support/WebpagePlayerPlugin.java", "android/app/src/main/java/app/screenflow/player/WebpagePlayerPlugin.java");
+copyFileSync("android-support/DisplayRotationLayout.java", "android/app/src/main/java/app/screenflow/player/DisplayRotationLayout.java");
 copyFileSync("android-support/ApkUpdaterPlugin.java", "android/app/src/main/java/app/screenflow/player/ApkUpdaterPlugin.java");
 copyFileSync("android-support/ApkUpdatePolicy.java", "android/app/src/main/java/app/screenflow/player/ApkUpdatePolicy.java");
 const resources = "android/app/src/main/res";

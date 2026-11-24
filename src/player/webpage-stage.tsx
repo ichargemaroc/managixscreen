@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { displayWebpageUrl, webpageRefreshMs, youtubeEmbedUrl, WEBPAGE_TIMEOUT_MS } from '@/lib/webpage';
 import { nativeWebpage } from './webpage-native';
 import { isScreenflowDisplay } from '@/lib/integrations';
+import type { DisplayRotation } from '@/lib/display-rotation';
 
-export function WebpageStage({ url, name, fullscreen = true, refreshMinutes = 0, active = true, rectangle, muted=false,onError, onState }: { url: string; name: string; fullscreen?: boolean; refreshMinutes?: number; active?: boolean; muted?:boolean;rectangle?: {x:number;y:number;width:number;height:number}; onError: () => void; onState: (state: 'buffering' | 'playing' | 'paused' | 'error') => void }) {
+export function WebpageStage({ url, name, fullscreen = true, refreshMinutes = 0, active = true, rectangle, rotation = 0, muted=false,onError, onState }: { url: string; name: string; fullscreen?: boolean; refreshMinutes?: number; active?: boolean; rotation?: DisplayRotation; muted?:boolean;rectangle?: {x:number;y:number;width:number;height:number}; onError: () => void; onState: (state: 'buffering' | 'playing' | 'paused' | 'error') => void }) {
   const [web, setWeb] = useState(false); const [revision, setRevision] = useState(0); const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const handlers = useRef({ onError, onState }); handlers.current = { onError, onState };
@@ -25,7 +26,7 @@ export function WebpageStage({ url, name, fullscreen = true, refreshMinutes = 0,
           close = () => { void listener.remove(); void native.close(session).catch(() => {}); };
           nativeClose.current = close;
           if (cancelled) { close(); return; }
-          await native.open({ url: safeUrl, session, fullscreen, timeoutMs: WEBPAGE_TIMEOUT_MS, ...(muted?{muted:true}:{}),...(rectangle ? {rectangle} : {}) });
+          await native.open({ url: safeUrl, session, fullscreen, timeoutMs: WEBPAGE_TIMEOUT_MS, ...(rotation ? {rotation} : {}), ...(muted?{muted:true}:{}),...(rectangle ? {rectangle} : {}) });
           if (cancelled) { close(); return; }
           const interval = webpageRefreshMs(refreshMinutes);
           if (interval) refresh = setInterval(() => { if (rejected.current) return; completed.current = false; setLoading(true); timeout.current = setTimeout(fail, WEBPAGE_TIMEOUT_MS); void native.reload(session).catch(fail); }, interval);
@@ -37,7 +38,7 @@ export function WebpageStage({ url, name, fullscreen = true, refreshMinutes = 0,
       } catch { if (!cancelled) fail(); }
     })();
     return () => { cancelled = true; clearTimeout(timeout.current); clearInterval(refresh); close?.(); nativeClose.current = undefined; };
-  }, [url, refreshMinutes, fullscreen, active, muted]);
+  }, [url, refreshMinutes, fullscreen, active, muted, rotation, rectangle?.x, rectangle?.y, rectangle?.width, rectangle?.height]);
   const youtube = !!youtubeEmbedUrl(url);
   const trusted=isScreenflowDisplay(url,typeof window!=='undefined'?window.location.origin:'https://screenflow.live');
   return <div className={fullscreen ? 'tv-webpage' : 'tv-webpage tv-webpage-inset'}>

@@ -25,6 +25,7 @@ public class WebpagePlayerPlugin extends Plugin {
   private final java.util.Map<String, PageState> pages = new java.util.HashMap<>();
   private static class PageState {
     WebView page; FrameLayout layer; String session; Runnable deadline; boolean loadFailed; boolean silent;
+    android.view.View host; android.view.View.OnLayoutChangeListener layoutListener;
   }
   private final Handler timer = new Handler(Looper.getMainLooper());
   private void event(PageState p, String state) {
@@ -47,6 +48,7 @@ public class WebpagePlayerPlugin extends Plugin {
   }
   private void destroyPage(PageState p) {
     cancelDeadline(p); pages.remove(p.session);
+    if (p.host != null && p.layoutListener != null) p.host.removeOnLayoutChangeListener(p.layoutListener);
     if (p.page != null) { p.page.stopLoading(); p.page.loadUrl("about:blank"); p.page.destroy(); p.page = null; }
     if (p.layer != null) { ViewGroup parent = (ViewGroup) p.layer.getParent(); if (parent != null) parent.removeView(p.layer); p.layer = null; }
     getBridge().getWebView().requestFocus();
@@ -55,6 +57,13 @@ public class WebpagePlayerPlugin extends Plugin {
   @PluginMethod public void open(PluginCall call) {
     String url = call.getString("url"); String requested = call.getString("session");
     if (url == null || requested == null || !allowed(url)) { call.reject("WEBPAGE_INVALID_URL"); return; }
+    int rotation = call.getInt("rotation", 0);
+    if (!DisplayRotationLayout.validRotation(rotation)) { call.reject("WEBPAGE_INVALID_ROTATION"); return; }
+    JSObject rect = call.getObject("rectangle");
+    double x = rect == null ? 0 : rect.optDouble("x", 0), y = rect == null ? 0 : rect.optDouble("y", 0);
+    double w = rect == null ? 1 : rect.optDouble("width", 1), h = rect == null ? 1 : rect.optDouble("height", 1);
+    try { DisplayRotationLayout.bounds(1, 1, rotation, x, y, w, h); }
+    catch (IllegalArgumentException ignored) { call.reject("WEBPAGE_INVALID_RECT"); return; }
     getActivity().runOnUiThread(() -> {
       PageState old = pages.get(requested); if (old != null) destroyPage(old);
       if (pages.size() >= 4) { call.reject("WEBPAGE_LIMIT"); return; }
@@ -91,18 +100,19 @@ public class WebpagePlayerPlugin extends Plugin {
       int inset = fullscreen ? 0 : Math.round(32 * getContext().getResources().getDisplayMetrics().density);
       FrameLayout.LayoutParams content = new FrameLayout.LayoutParams(-1, -1); content.setMargins(inset, inset, inset, inset);
       layer.addView(page, content);
-      JSObject rect = call.getObject("rectangle");
-      if (rect == null) getActivity().addContentView(layer, new ViewGroup.LayoutParams(-1, -1));
-      else {
-        android.view.View decor = getActivity().getWindow().getDecorView();
-        double x = rect.optDouble("x", 0), y = rect.optDouble("y", 0), w = rect.optDouble("width", 1), h = rect.optDouble("height", 1);
-        if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(w) || !Double.isFinite(h) || x < 0 || y < 0 || w <= 0 || h <= 0 || x+w > 1.001 || y+h > 1.001) { destroyPage(p); call.reject("WEBPAGE_INVALID_RECT"); return; }
-        int width = decor.getWidth(), height = decor.getHeight();
-        if (width <= 0 || height <= 0) { destroyPage(p); call.reject("WEBPAGE_INVALID_RECT"); return; }
-        FrameLayout.LayoutParams bounds = new FrameLayout.LayoutParams(Math.round((float)(width*w)), Math.round((float)(height*h)));
-        bounds.leftMargin = Math.round((float)(width*x)); bounds.topMargin = Math.round((float)(height*y));
-        getActivity().addContentView(layer, bounds);
-      }
+      FrameLayout host = getActivity().findViewById(android.R.id.content);
+      if (host == null || host.getWidth() <= 0 || host.getHeight() <= 0) { destroyPage(p); call.reject("WEBPAGE_INVALID_RECT"); return; }
+      p.host = host;
+      Runnable place = () -> {
+        if (p.layer == null || host.getWidth() <= 0 || host.getHeight() <= 0) return;
+        double[] b = DisplayRotationLayout.bounds(host.getWidth(), host.getHeight(), rotation, x, y, w, h);
+        FrameLayout.LayoutParams bounds = new FrameLayout.LayoutParams(Math.max(1, (int)Math.round(b[2])), Math.max(1, (int)Math.round(b[3])), android.view.Gravity.TOP | android.view.Gravity.LEFT);
+        bounds.leftMargin = (int)Math.round(b[0]); bounds.topMargin = (int)Math.round(b[1]);
+        layer.setLayoutParams(bounds); layer.setPivotX(bounds.width / 2f); layer.setPivotY(bounds.height / 2f); layer.setRotation(rotation);
+      };
+      host.addView(layer); place.run();
+      p.layoutListener = (view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> { if (right-left != oldRight-oldLeft || bottom-top != oldBottom-oldTop) place.run(); };
+      host.addOnLayoutChangeListener(p.layoutListener);
       page.requestFocus(); armDeadline(p); page.loadUrl(url); call.resolve();
     });
   }

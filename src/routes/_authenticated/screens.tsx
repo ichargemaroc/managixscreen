@@ -16,6 +16,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useStore, useBillingStore, isValidPairingCode, addScreen, updateScreen, deleteScreen, type Screen } from "@/lib/store";
 import { availablePlaces } from '@/lib/billing';
 import { PairingScanner } from "@/components/pairing-scanner";
+import { DisplayRotationPicker } from '@/components/display-rotation-picker';
+import type { DisplayRotation } from '@/lib/display-rotation';
 
 export const Route = createFileRoute("/_authenticated/screens")({
   head: () => ({ meta: [
@@ -166,6 +168,7 @@ function AddDialog({ open, onOpenChange, onAdd }: { open: boolean; onOpenChange:
 function EditForm({ screen, onSave }: { screen: Screen; onSave: (p: Partial<Screen>) => void }) {
   const { playlists } = useStore();
   const [location, setLocation] = useState(screen.location);
+  const [rotation, setRotation] = useState<DisplayRotation>(screen.displayRotation ?? 0);
   const [name, setName] = useState(screen.name); const [group, setGroup] = useState(screen.groupId); const [pl, setPl] = useState(screen.playlistId);
   return (
     <div className="space-y-4">
@@ -178,7 +181,8 @@ function EditForm({ screen, onSave }: { screen: Screen; onSave: (p: Partial<Scre
           <SelectContent><SelectItem value={NONE}>Aucune</SelectItem>{playlists.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
         </Select>
       </div>
-      <DialogFooter><Button disabled={!name.trim()} onClick={() => onSave({ name: name.trim(), groupId: group, playlistId: pl, location })}>Enregistrer</Button></DialogFooter>
+      <DisplayRotationPicker value={rotation} onChange={setRotation} />
+      <DialogFooter><Button disabled={!name.trim()} onClick={() => onSave({ name: name.trim(), groupId: group, playlistId: pl, location, displayRotation: rotation })}>Enregistrer</Button></DialogFooter>
     </div>
   );
 }

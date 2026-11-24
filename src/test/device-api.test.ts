@@ -142,6 +142,32 @@ describe("Device API access from the Android app", () => {
   });
 });
 
+describe('Display rotation synchronization', () => {
+  it('delivers rotation-only changes and changes the fingerprint without signing media', async () => {
+    vi.resetAllMocks();
+    mocks.from.mockReturnValue(row({ device_id: deviceId }));
+    mocks.layout.mockResolvedValue({ data: null });
+    mocks.entitlement.mockResolvedValue({ data: { version: 1, active: true, revision: 1 } });
+    let rotation = 90;
+    mocks.rpc.mockImplementation(async (name: string) => {
+      if (name === 'consume_device_limit') return { data: true };
+      if (name === 'device_content') return { data: { screen_id: deviceId, assignment_updated_at: 'now', display_rotation: rotation, playlist: null } };
+      if (name === 'device_record_sync') return { data: 'now' };
+      return { data: null };
+    });
+    const first = await (await handleDeviceRequest(request('a'.repeat(64)), 'content')).json();
+    expect(first.display_rotation).toBe(90);
+    const unchanged = await (await handleDeviceRequest(request('a'.repeat(64), { known: first.fingerprint }), 'content')).json();
+    expect(unchanged.unchanged).toBe(true);
+    rotation = 270;
+    const next = await (await handleDeviceRequest(request('a'.repeat(64), { known: first.fingerprint }), 'content')).json();
+    expect(next.unchanged).toBeUndefined();
+    expect(next.display_rotation).toBe(270);
+    expect(next.fingerprint).not.toBe(first.fingerprint);
+    expect(mocks.storage.from).not.toHaveBeenCalled();
+  });
+});
+
 describe("Video wall device manifests", () => {
   beforeEach(() => { vi.resetAllMocks(); mocks.layout.mockResolvedValue({data:null});mocks.entitlement.mockResolvedValue({ data: { version: 1, active: true, revision: 1 } }); });
   it("overrides a standard playlist with only the device wall and strips private fields", async () => {

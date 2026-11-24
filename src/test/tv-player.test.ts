@@ -4,7 +4,7 @@ import { cacheKey, imageDuration, nextItem, type Content, type Item } from "@/pl
 import { cachedMedia, clearMediaCache, commandReceipt, downloadContent, readContent, saveReceipt } from "@/player/cache";
 
 const item: Item = { id: "a67f4500-b2f4-4049-9a31-5433f14aad57", position: 0, display_duration: 17, media: { id: "a67f4500-b2f4-4049-9a31-5433f14aad57", name: "Image", type: "image", size: 4, duration: null, download_url: "https://example.test/image.png" } };
-const manifest: Content = { screen_id: item.id, assignment_updated_at: "2026-11-20T00:00:00Z", last_sync_at: "2026-11-20T00:00:00Z", playlist: { id: item.id, name: "TV", updated_at: "2026-11-20T00:00:00Z", items: [item] } };
+const manifest: Content = { display_rotation: 0, screen_id: item.id, assignment_updated_at: "2026-11-20T00:00:00Z", last_sync_at: "2026-11-20T00:00:00Z", playlist: { id: item.id, name: "TV", updated_at: "2026-11-20T00:00:00Z", items: [item] } };
 describe("TV player playback and offline cache", () => {
   beforeEach(async () => { await clearMediaCache(); vi.restoreAllMocks(); });
   it("uses the playlist photo duration and loops in playlist order", () => {
@@ -36,6 +36,15 @@ describe("TV player playback and offline cache", () => {
   });
   it("does not key local media by expiring signed URLs", () => {
     expect(cacheKey(manifest, item)).toBe(cacheKey(manifest, { ...item, media: { ...item.media, download_url: "https://example.test/renewed.png" } }));
+  });
+  it('retains the rotated display offline without downloading the same media again', async () => {
+    const fetcher = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('data'));
+    await downloadContent(manifest, () => {});
+    fetcher.mockRejectedValue(new Error('Offline'));
+    await downloadContent({ ...manifest, display_rotation: 90 }, () => {});
+    expect((await readContent())?.display_rotation).toBe(90);
+    expect(await cachedMedia(manifest, item)).toBeDefined();
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
   it('applies an edited assigned playlist without downloading the same video again', async () => {
     const fetcher = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('data')).mockRejectedValue(new Error('Download unavailable'));

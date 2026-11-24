@@ -885,6 +885,7 @@ export type Database = {
           assignment_updated_at: string
           created_at: string
           current_playlist_id: string | null
+          display_rotation: number
           group_id: string | null
           id: string
           last_seen: string | null
@@ -899,6 +900,7 @@ export type Database = {
           assignment_updated_at?: string
           created_at?: string
           current_playlist_id?: string | null
+          display_rotation?: number
           group_id?: string | null
           id?: string
           last_seen?: string | null
@@ -913,6 +915,7 @@ export type Database = {
           assignment_updated_at?: string
           created_at?: string
           current_playlist_id?: string | null
+          display_rotation?: number
           group_id?: string | null
           id?: string
           last_seen?: string | null

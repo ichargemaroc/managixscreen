@@ -185,6 +185,15 @@
 .console-shell [data-collapsible="icon"] [data-sidebar="menu-button"] > span { display: none; }
 .console-shell [data-slot="card"] { box-shadow: none; }
 
+.display-rotation-option { height: 164px; min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 16px 6px; border-radius: 8px; white-space: normal; background: var(--card); border: 2px solid var(--border); }
+.display-rotation-option.display-rotation-selected { border-color: var(--primary); background: var(--secondary); box-shadow: 0 0 0 1px var(--primary); }
+.display-rotation-icon { width: 64px; height: 64px; display: grid; place-items: center; background: var(--muted); border-radius: 8px; }
+.display-rotation-screen { width: 48px; height: 32px; border: 2px solid var(--primary); background: var(--accent); border-radius: 4px; position: relative; }
+.display-rotation-screen > span { position: absolute; top: 3px; left: 50%; width: 8px; height: 3px; margin-left: -4px; border-radius: 1px; background: var(--primary); }
+.display-rotation-90 { transform: rotate(90deg); }
+.display-rotation-180 { transform: rotate(180deg); }
+.display-rotation-270 { transform: rotate(270deg); }
+
 .welcome-intro { min-height: min(720px, calc(100svh - 150px)); display: flex; align-items: center; padding-block: 80px; }
 .dark .welcome-logo { background: var(--qr-background); border-radius: 4px; padding: 4px; }
 :root { --welcome-background: oklch(0 0 0); --welcome-foreground: oklch(0.98 0 0); }
@@ -231,6 +240,11 @@
 .tv-footer svg { width: 18px; height: 18px; }
 .tv-error { color: var(--warning); font-size: 14px; max-width: 600px; }
 .tv-stage { width: 100%; height: 100%; }
+.tv-display { position: absolute; inset: 0; overflow: hidden; }
+.tv-display[data-rotation="180"] { transform: rotate(180deg); }
+.tv-display[data-rotation="90"], .tv-display[data-rotation="270"] { inset: auto; top: 50%; left: 50%; width: 100svh; height: 100svw; }
+.tv-display[data-rotation="90"] { transform: translate(-50%, -50%) rotate(90deg); }
+.tv-display[data-rotation="270"] { transform: translate(-50%, -50%) rotate(270deg); }
 .tv-webpage { position: absolute; inset: 0; background: var(--player-background); }
 .tv-webpage-inset { inset: 32px; }
 .tv-webpage iframe { width: 100%; height: 100%; border: 0; background: var(--background); }

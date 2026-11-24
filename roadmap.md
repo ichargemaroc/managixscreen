@@ -1,5 +1,11 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Rotation physique des écrans
+- [x] Sélecteur 0°, 90°, 180° et 270° dans Gérer / renommer et les détails d’écran, sauvegarde propriétaire et manifeste compatible
+- [x] Rotation du lecteur partagé et des pages Web natives isolées, dimensions portrait et cache sans modifier les fichiers ni le jumelage
+- [x] 260 tests Vitest et 11 calculs natifs réussis ; écran temporaire réellement jumelé, image importée/diffusée aux quatre rotations, réglage relu après rechargement et reprise locale avec les accès de synchronisation/stockage coupés ; formats ordinateur/tablette/téléphone vérifiés, données temporaires supprimées
+- [ ] Installation et validation sur Android TV physique : nouvel APK signé avec la clé d’origine et matériel nécessaires
+
 ## Conservation du jumelage après mise à jour APK
 - [x] Signature persistante obligatoire pour les APK publiés ; validation native identifiant/version/signature avant installation, sans effacer le jumelage
 - [x] Reprise du même code après commande de mise à jour et redémarrage ; récupération d’une confirmation serveur interrompue même après expiration du code, sans nouvel enrôlement

@@ -26,3 +26,20 @@ it('closes a stalled native page after fifteen seconds rather than leaving it ov
   await act(async () => { await vi.advanceTimersByTimeAsync(15000); });
   expect(error).toHaveBeenCalledTimes(1); expect(native.close).toHaveBeenCalled();
 });
+it('repositions a native zone when rotation changes and closes only its previous session', async () => {
+  native.open.mockResolvedValue(undefined); native.close.mockResolvedValue(undefined);
+  const rectangle = { x: 0, y: 0, width: 0.5, height: 1 };
+  const view = render(<WebpageStage url="https://example.com" name="Site" rotation={90} rectangle={rectangle} onError={() => {}} onState={() => {}} />);
+  await act(async () => {});
+  expect(native.open).toHaveBeenLastCalledWith(expect.objectContaining({ rotation: 90, rectangle }));
+  const previous = native.open.mock.calls[0]?.[0] as { session: string } | undefined;
+  if (!previous) throw new Error('Native zone missing');
+  view.rerender(<WebpageStage url="https://example.com" name="Site" rotation={270} rectangle={{ ...rectangle }} onError={() => {}} onState={() => {}} />);
+  await act(async () => {});
+  expect(native.close).toHaveBeenCalledWith(previous.session);
+  expect(native.open).toHaveBeenLastCalledWith(expect.objectContaining({ rotation: 270, rectangle }));
+  const count = native.open.mock.calls.length;
+  view.rerender(<WebpageStage url="https://example.com" name="Site" rotation={270} rectangle={{ ...rectangle }} onError={() => {}} onState={() => {}} />);
+  await act(async () => {});
+  expect(native.open).toHaveBeenCalledTimes(count);
+});
