@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from '@tanstack/react-query';
-import { cacheVerifiedSignIn } from '@/lib/verified-user';
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import logoAsset from "@/assets/screenflow-logo.webp.asset.json";
@@ -68,7 +67,16 @@ function AuthPage() {
       } else if (mode === "login") {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        if (data.user) await cacheVerifiedSignIn(queryClient, data.user);
+        // Cache priming is optional: a successful login must still navigate if it fails.
+        // Keep this inline so a stale helper module cannot interrupt sign-in.
+        if (data.user) {
+          try {
+            await queryClient.cancelQueries({ queryKey: ['auth', 'verified-user'] });
+            queryClient.setQueryData(['auth', 'verified-user'], data.user);
+          } catch {
+            // The protected route will verify the identity if the cache is unavailable.
+          }
+        }
         if (pairCode) await navigate({ to: "/pair", search: { code: pairCode } });
         else await navigate({ to: "/" });
       } else {

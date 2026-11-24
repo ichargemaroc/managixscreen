@@ -1,5 +1,9 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Correction connexion iPhone
+- [x] Supprimer la dépendance au helper de connexion et rendre la mise en cache facultative sans modifier la session ni les contrôles d’accès
+- [x] 10 tests réussis : redirection après connexion, cache indisponible et refus d’identifiants ; accueil connecté vérifié au format iPhone sans erreur ; aucune donnée client modifiée
+
 ## Accueil après authentification
 - [x] Réutiliser la réponse de connexion vérifiée pendant 30 secondes sans affaiblir les contrôles d’accès
 - [x] Afficher le menu pendant le chargement et limiter l’accueil à quatre lectures utiles, sans signer les médias
