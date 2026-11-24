@@ -1,5 +1,10 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Écran blanc après connexion
+- [x] Reproduire l’erreur AuthenticatedLayout avec un ancien module de données sans StoreContent
+- [x] Isoler l’affichage de chargement dans son propre module sans changer les accès ni les données
+- [x] 16 tests réussis ; accueil connecté → écrans → accueil vérifié sur ordinateur et téléphone sans erreur ; aucune donnée client modifiée
+
 ## Correction connexion iPhone
 - [x] Supprimer la dépendance au helper de connexion et rendre la mise en cache facultative sans modifier la session ni les contrôles d’accès
 - [x] 10 tests réussis : redirection après connexion, cache indisponible et refus d’identifiants ; accueil connecté vérifié au format iPhone sans erreur ; aucune donnée client modifiée

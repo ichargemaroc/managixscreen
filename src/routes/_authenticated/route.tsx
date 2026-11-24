@@ -1,7 +1,8 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { verifiedUser } from "@/lib/verified-user";
 import { AppShell } from "@/components/app-shell";
-import { StoreProvider, StoreContent } from "@/lib/store";
+import { StoreProvider } from "@/lib/store";
+import { StoreContent } from "@/components/store-content";
 import { RealtimeSync } from "@/components/realtime-sync";
 
 export const Route = createFileRoute("/_authenticated")({
