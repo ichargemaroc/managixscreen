@@ -236,7 +236,7 @@ export async function updateScreen(id: string, patch: { name?: string; groupId?:
   const { error } = Object.keys(row).length ? await supabase.from("screens").update(row).eq("id", id) : { error: null };
   if (error) throw error;
   // Wake the TV within ~5 s instead of waiting for its next periodic check; best effort.
-  if (patch.playlistId !== undefined || patch.displayRotation !== undefined || patch.slideTransition !== undefined) void enqueueCommand({ data: { screenId: id, command: "refresh_content" } }).catch(() => {});
+  if (patch.playlistId !== undefined || patch.groupId !== undefined || patch.displayRotation !== undefined || patch.slideTransition !== undefined) void enqueueCommand({ data: { screenId: id, command: "refresh_content" } }).catch(() => {});
 }
 
 export async function deleteScreen(id: string) {
@@ -303,6 +303,7 @@ export async function setGroupMember(groupId: string, screenId: string, included
     ? await supabase.from("screen_group_members").upsert({ group_id: groupId, screen_id: screenId }, { onConflict: "group_id,screen_id" })
     : await supabase.from("screen_group_members").delete().eq("group_id", groupId).eq("screen_id", screenId);
   if (error) throw error;
+  if (included) void enqueueCommand({ data: { screenId, command: "refresh_content" } }).catch(() => {});
   if (!included) {
     const { error: unlinkError } = await supabase.from("screens").update({ group_id: null }).eq("id", screenId).eq("group_id", groupId);
     if (unlinkError) throw unlinkError;
@@ -382,10 +383,13 @@ export async function assignPlaylist(playlistId: string, targetType: "screen" | 
     const { data, error } = await supabase.from("screen_group_members").select("screen_id").eq("group_id", targetId);
     if (error) throw error;
     ids = (data ?? []).map((m) => m.screen_id);
-    if (!ids.length) throw new Error("Ce groupe ne contient aucun écran");
+    const { error: groupError } = await supabase.from("groups").update({ playlist_id: playlistId }).eq("id", targetId);
+    if (groupError) throw groupError;
+    if (!ids.length) return;
   }
   const { error } = await supabase.from("screens").update({ playlist_id: playlistId }).in("id", ids);
   if (error) throw error;
+  for (const id of ids) void enqueueCommand({ data: { screenId: id, command: "refresh_content" } }).catch(() => {});
 }
 
 export async function addSchedule(s: Omit<Schedule, "id">, id?: string) {

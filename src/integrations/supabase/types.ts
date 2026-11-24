@@ -405,6 +405,7 @@ export type Database = {
           id: string
           location: string
           name: string
+          playlist_id: string | null
           user_id: string
         }
         Insert: {
@@ -412,6 +413,7 @@ export type Database = {
           id?: string
           location?: string
           name: string
+          playlist_id?: string | null
           user_id: string
         }
         Update: {
@@ -419,9 +421,18 @@ export type Database = {
           id?: string
           location?: string
           name?: string
+          playlist_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "groups_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       media: {
         Row: {
