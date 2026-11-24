@@ -221,6 +221,8 @@ export async function updateScreen(id: string, patch: { name?: string; groupId?:
   if (patch.playlistId !== undefined) row.playlist_id = patch.playlistId;
   const { error } = await supabase.from("screens").update(row).eq("id", id);
   if (error) throw error;
+  // Wake the TV within ~5 s instead of waiting for its next periodic check; best effort.
+  if (patch.playlistId !== undefined) void enqueueCommand({ data: { screenId: id, command: "refresh_content" } }).catch(() => {});
 }
 
 export async function deleteScreen(id: string) {
@@ -316,6 +318,9 @@ export async function deletePlaylist(id: string) {
 export async function savePlaylistItems(playlistId: string, items: { mediaId: string; duration: number }[]) {
   const { error } = await supabase.rpc("replace_playlist_items", { p_playlist_id: playlistId, p_items: items });
   if (error) throw error;
+  // Notify TVs showing this playlist so they update within seconds; best effort.
+  const { data: screens } = await supabase.from("screens").select("id").eq("playlist_id", playlistId);
+  for (const screen of screens ?? []) void enqueueCommand({ data: { screenId: screen.id, command: "refresh_content" } }).catch(() => {});
 }
 
 export async function assignPlaylist(playlistId: string, targetType: "screen" | "group", targetId: string) {

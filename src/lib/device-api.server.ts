@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { effectivePairingStatus, generateDeviceToken, generatePairingCode, hashDeviceToken, PAIRING_LIFETIME_SECONDS } from "@/lib/device-protocol";
-import { deviceIdentity, deviceReport, commandAck, manifestSchema, manifestMediaSchema } from "@/lib/player-protocol";
+import { deviceIdentity, contentRequest, deviceReport, commandAck, manifestSchema, manifestMediaSchema } from "@/lib/player-protocol";
 import { wallPlaybackSchema } from "@/lib/video-wall";
 import { webpageUrl } from './webpage';
 import { deviceEntitlementSchema } from './billing';
@@ -43,7 +43,7 @@ export async function handleDeviceRequest(request: Request, operation: "request"
       return reply({ error: "Réessayez ultérieurement." }, 503);
     }
     const parsedBody: unknown = JSON.parse(body);
-    const input = operation === "heartbeat" ? deviceReport.parse(parsedBody) : operation === "ack" ? commandAck.parse(parsedBody) : deviceIdentity.parse(parsedBody);
+    const input = operation === "heartbeat" ? deviceReport.parse(parsedBody) : operation === "ack" ? commandAck.parse(parsedBody) : operation === "content" ? contentRequest.parse(parsedBody) : deviceIdentity.parse(parsedBody);
     const token = request.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
     if (!/^[a-f0-9]{64}$/.test(token)) return reply({ error: "Appareil non autorisé" }, 401);
     const hash = await hashDeviceToken(token);
@@ -77,6 +77,14 @@ export async function handleDeviceRequest(request: Request, operation: "request"
       // An assigned wall is an explicit playback mode, even when stopped or without media.
       // Media ID, not control revision, keys the offline cache so pause/resume never redownloads.
       const manifest = { ...base, wall, playlist: wall ? wallMedia ? { id: wall.id, name: wall.name, updated_at: wallMedia.type === 'webpage' ? `${wallMedia.id}:${wallMedia.webpage_url ?? ''}:${wallMedia.refresh_minutes}:${wallMedia.webpage_fullscreen}` : wallMedia.id, items: [{ id: wallMedia.id, position: 0, display_duration: wallMedia.duration ?? 10, media: wallMedia }] } : null : layout ? null : base.playlist };
+      // Unsigned fingerprint: unchanged assignments skip URL signing and player re-downloads.
+      const fingerprint = await hashDeviceToken(JSON.stringify({ manifest, layout, entitlement }));
+      const known = contentRequest.parse(parsedBody).known;
+      if (known === fingerprint) {
+        const { data: synced, error: syncError } = await supabaseAdmin.rpc("device_record_sync", { p_device: input.device_id, p_hash: hash });
+        if (syncError) return reply({ error: "Appareil non autorisé" }, 401);
+        return reply({ unchanged: true, fingerprint, entitlement, server_time: new Date().toISOString(), last_sync_at: synced });
+      }
       const signItem = async ({ media, ...item }: NonNullable<typeof base.playlist>['items'][number]) => {
         const { path, ...metadata } = media;
         if (media.type === 'webpage') return { ...item, media: { ...metadata, webpage_url: webpageUrl(media.webpage_url ?? '') } };
@@ -94,7 +102,7 @@ export async function handleDeviceRequest(request: Request, operation: "request"
       const signedLayout = layout ? { ...layout,zones:await Promise.all(layout.zones.map(async zone => ({ ...zone,playlist:zone.playlist ? { ...zone.playlist,items:await Promise.all(zone.playlist.items.map(signItem)) } : null }))) } : null;
       const { data: synced, error: syncError } = await supabaseAdmin.rpc("device_record_sync", { p_device: input.device_id, p_hash: hash });
       if (syncError) return reply({ error: "Appareil non autorisé" }, 401);
-      return reply({ ...manifest, layout:signedLayout, entitlement, playlist: manifest.playlist ? { ...manifest.playlist, items } : null, server_time: new Date().toISOString(), last_sync_at: synced, download_urls_expire_in: 3600 });
+      return reply({ ...manifest, layout:signedLayout, entitlement, playlist: manifest.playlist ? { ...manifest.playlist, items } : null, server_time: new Date().toISOString(), last_sync_at: synced, fingerprint, download_urls_expire_in: 3600 });
     }
     if (operation === "commands") {
       const { data, error } = await supabaseAdmin.rpc("device_poll_commands", { p_device: input.device_id, p_hash: hash });

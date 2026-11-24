@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Cast, Maximize, RefreshCw, Wifi, WifiOff, Monitor, Play, Pause, ChevronRight, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cachedMedia, clearMediaCache, commandReceipt, downloadContent, readContent, saveReceipt, saveEntitlement } from "./cache";
-import { contentSchema, credentialsSchema, commandsSchema, deviceApi, DeviceApiError, imageDuration, nextItem, type Content, type Credentials } from "./protocol";
+import { contentSchema, unchangedSchema, credentialsSchema, commandsSchema, deviceApi, DeviceApiError, imageDuration, nextItem, type Content, type Credentials } from "./protocol";
 import { enterPlayerMode, keepAwake, readCredentials, saveCredentials, subscribeNetwork } from "./platform";
 import { QRCodeSVG } from "qrcode.react";
 import { pairingUrl } from "@/lib/qr-pairing";
@@ -40,6 +40,7 @@ export function TVPlayer() {
   const controlsOpen = useRef(controls); controlsOpen.current = controls;
   const current = useRef({ identity, content, index, paused }); current.current = { identity, content, index, paused };
   const busy = useRef(false);
+  const lastBeat = useRef(0);
   const playback = useRef<"idle" | "playing" | "paused" | "buffering" | "error">("idle");
   const video = useRef<HTMLVideoElement>(null);
   const items = content?.playlist?.items ?? [];
@@ -90,9 +91,19 @@ export function TVPlayer() {
     finally { setRequesting(false); }
   };
 
-  const sync = async (creds: Credentials) => {
+  const sync = async (creds: Credentials, force = false) => {
     const sent = Date.now();
-    const manifest = contentSchema.parse(await deviceApi("content", creds));
+    const known = force ? undefined : current.current.content?.fingerprint;
+    const raw = await deviceApi("content", creds, known ? { known } : {});
+    const same = unchangedSchema.safeParse(raw);
+    if (same.success && current.current.content) {
+      // Nothing changed: keep playback and offline media untouched, only refresh the clock offset.
+      const previous = current.current.content;
+      const offset = same.data.server_time ? Date.parse(same.data.server_time) - (sent + Date.now()) / 2 : previous.clock_offset;
+      if (offset !== undefined && Math.abs(offset - (previous.clock_offset ?? 0)) > 50) setContent({ ...previous, clock_offset: offset });
+      setPhase('playing'); setProgress(""); setError(""); return;
+    }
+    const manifest = contentSchema.parse(raw);
     if (manifest.entitlement) await saveEntitlement(manifest.screen_id, manifest.entitlement);
     if (manifest.entitlement?.active === false) { setPhase('disabled'); setPositionTest(null); setProgress(''); setError(''); return; }
     if (manifest.server_time) manifest.clock_offset = Date.parse(manifest.server_time) - (sent + Date.now()) / 2;
@@ -118,7 +129,8 @@ export function TVPlayer() {
           if (status.paired && !cancelled) { const claimed = { ...identity, paired: true }; await saveCredentials(claimed); setIdentity(claimed); setPhase("playing"); }
           return;
         }
-        try {
+        if (Date.now() - lastBeat.current >= 29000) try {
+          lastBeat.current = Date.now();
           await deviceApi("heartbeat", identity, { player_version: `${nativePlayer ? 'android-tv' : 'web'}-${playerVersion}`, playback_status: { state: playback.current, playlist_id: current.current.content?.playlist?.id ?? null, media_id: current.current.content?.playlist?.items[current.current.index]?.media.id ?? null } });
         } catch (e) {
           // A telemetry outage must not prevent fetching an updated assigned playlist.
@@ -134,8 +146,8 @@ export function TVPlayer() {
         setProgress("");
       } finally { busy.current = false; }
     };
-    // Leave request capacity for the independent command poll and its acknowledgements.
-    void tick(); const timer = window.setInterval(() => void tick(), identity.paired ? content?.wall ? 15000 : 30000 : 5000);
+    // Light fingerprint checks every 15 s, heartbeat every 30 s: leaves request capacity for commands and acknowledgements.
+    void tick(); const timer = window.setInterval(() => void tick(), identity.paired ? 15000 : 5000);
     const resume = () => void tick(); window.addEventListener("online", resume);
     return () => { cancelled = true; clearInterval(timer); window.removeEventListener("online", resume); };
   }, [identity, phase, content?.wall?.id, nativePlayer, playerVersion]);
@@ -171,8 +183,8 @@ export function TVPlayer() {
                 if (!payload || typeof payload.wall_id !== "string") throw new Error("Commande invalide");
                 flushSync(() => setPositionTest(previous => previous?.wall_id === payload.wall_id ? null : previous));
               }
-              if (command.command === "clear_cache") { await clearMediaCache(); setContent(null); await sync(identity); }
-              if (command.command === "refresh_content" || command.command === "reload_playlist") { await sync(identity); if (command.command === "reload_playlist") setIndex(0); }
+              if (command.command === "clear_cache") { await clearMediaCache(); setContent(null); await sync(identity, true); }
+              if (command.command === "refresh_content" || command.command === "reload_playlist") { await sync(identity, true); if (command.command === "reload_playlist") setIndex(0); }
               restart = command.command === "restart_player";
               receipt = restart ? { status: "completed", restartPending: true } : { status: "completed" };
             } catch { receipt = { status: "failed", error: "L’opération du lecteur a échoué." }; }

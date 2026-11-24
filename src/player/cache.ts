@@ -44,23 +44,29 @@ export function downloadContent(content: Content, progress: (done: number, total
 async function storeContent(content: Content, progress: (done: number, total: number) => void) {
   const items = contentItems(content);
   // Download the complete replacement before switching playback; keep the old manifest on failure.
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i]; if (!item) continue;
-    if (item.media.type === 'webpage') { progress(i + 1, items.length); continue; }
-    const stored = await cachedMedia(content, item);
-    if (stored) {
-      // Migrate a legacy offline blob before pruning its old revision-specific key.
-      if (!await read<Blob>("media", cacheKey(content, item))) await write("media", cacheKey(content, item), stored);
-    } else {
-      if (!item.media.download_url) throw new Error('URL du média manquante.');
-      const response = await fetch(item.media.download_url, { signal: AbortSignal.timeout(120000) });
-      if (!response.ok) throw new Error("Un média n’a pas pu être téléchargé.");
-      const blob = await response.blob();
-      if (!blob.size) throw new Error("Média vide.");
-      await write("media", cacheKey(content, item), blob);
+  // Three concurrent downloads speed up updates without exhausting TV memory.
+  let done = 0; let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const item = items[next++]; if (!item) continue;
+      if (item.media.type !== 'webpage') {
+        const stored = await cachedMedia(content, item);
+        if (stored) {
+          // Migrate a legacy offline blob before pruning its old revision-specific key.
+          if (!await read<Blob>("media", cacheKey(content, item))) await write("media", cacheKey(content, item), stored);
+        } else {
+          if (!item.media.download_url) throw new Error('URL du média manquante.');
+          const response = await fetch(item.media.download_url, { signal: AbortSignal.timeout(120000) });
+          if (!response.ok) throw new Error("Un média n’a pas pu être téléchargé.");
+          const blob = await response.blob();
+          if (!blob.size) throw new Error("Média vide.");
+          await write("media", cacheKey(content, item), blob);
+        }
+      }
+      progress(++done, items.length);
     }
-    progress(i + 1, items.length);
-  }
+  };
+  await Promise.all(Array.from({ length: Math.min(3, items.length) }, worker));
   await write("state", "manifest", content);
   // Prune only after the replacement is durably committed.
   const db = await database();

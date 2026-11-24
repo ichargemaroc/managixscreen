@@ -4,4 +4,4 @@
 - Key immutable local media by ID/type/size rather than playlist revision and migrate legacy keys; serialize cache commits to prevent overlapping refreshes from discarding current playback.
 - Keep content retrieval independent of transient heartbeat failures while stopping on revoked device access; telemetry must not block playlist updates.
 - Multi-zone manifests commit only after every local zone asset downloads; independent zone timers share one audio-enabled zone and do not restart for renewed signed links.
-- Native web zones have separate session-keyed WebViews with bounded rectangles and no bridge; silenced zones require a media gesture, and closing one session must not destroy others.
+- Native web zones have separate session-keyed WebViews with bounded rectangles and no bridge; silenced zones require a media gesture, and closing one session must not destroy others.- Player content checks send the last manifest fingerprint; the server answers "unchanged" without signing URLs, and dashboard playlist/assignment saves enqueue best-effort refresh_content commands for near-instant updates.

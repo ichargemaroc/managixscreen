@@ -7,6 +7,7 @@ export const deviceCommand = z.enum(["refresh_content", "reload_playlist", "rest
 const deviceInfo = z.object({ manufacturer: z.string().max(120).optional(), model: z.string().max(120).optional(), android_version: z.string().max(80).optional() }).strict();
 const playbackStatus = z.object({ state: z.enum(["idle", "playing", "paused", "buffering", "error"]), media_id: z.string().uuid().nullable().optional(), playlist_id: z.string().uuid().nullable().optional(), position_seconds: z.number().finite().min(0).max(86400).optional(), error: z.string().max(500).optional() }).strict();
 export const deviceIdentity = z.object({ device_id: z.string().uuid() }).strict();
+export const contentRequest = deviceIdentity.extend({ known: z.string().regex(/^[a-f0-9]{64}$/).optional() }).strict();
 export const deviceReport = deviceIdentity.extend({ player_version: z.string().trim().min(1).max(80).optional(), device_info: deviceInfo.optional(), playback_status: playbackStatus.optional() }).strict();
 export const commandAck = deviceIdentity.extend({ command_id: z.string().uuid(), status: z.enum(["completed", "failed"]), error: z.string().max(500).optional() }).strict();
 export const manifestSchema = z.object({
