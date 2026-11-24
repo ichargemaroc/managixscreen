@@ -54,7 +54,9 @@ export function TVPlayer() {
   const playback = useRef<"idle" | "playing" | "paused" | "buffering" | "error">("idle");
   const video = useRef<HTMLVideoElement>(null);
   const items = content?.playlist?.items ?? [];
-  const item = items[index];
+  const item = items.length ? items[index % items.length] : undefined;
+  // Une nouvelle playlist plus courte ne doit jamais laisser l'index hors limites (écran « En attente »).
+  useEffect(() => { if (items.length && index >= items.length) setIndex(0); }, [items.length, index]);
 
   const startVideo = () => {
     const element = video.current;
