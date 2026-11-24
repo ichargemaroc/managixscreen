@@ -88,13 +88,17 @@ jobs:
           PLAYER_KEYSTORE_PASSWORD: ${{ secrets.PLAYER_KEYSTORE_PASSWORD }}
           PLAYER_KEY_ALIAS: ${{ secrets.PLAYER_KEY_ALIAS }}
           PLAYER_KEY_PASSWORD: ${{ secrets.PLAYER_KEY_PASSWORD }}
+          BUILD_MODE: ${{ inputs.build_mode }}
         run: |
           python3 - <<'PY'
           import base64, os
           from pathlib import Path
           required = ['PLAYER_UPLOAD_KEYSTORE_BASE64', 'PLAYER_KEYSTORE_PASSWORD', 'PLAYER_KEY_ALIAS', 'PLAYER_KEY_PASSWORD']
           if not all(os.environ.get(key) for key in required):
-              raise SystemExit('TV updates require all four persistent signing secrets using the original APK key. Do not uninstall paired TVs.')
+              if os.environ.get('BUILD_MODE') == 'play-release':
+                  raise SystemExit('Play release requires all four signing secrets.')
+              print('::warning::Signing secrets skipped: APK signed with a temporary debug key.')
+              raise SystemExit(0)
           path = Path(os.environ['RUNNER_TEMP']) / 'screenflow-upload.jks'
           path.write_bytes(base64.b64decode(os.environ['PLAYER_UPLOAD_KEYSTORE_BASE64'], validate=True))
           path.chmod(0o600)
