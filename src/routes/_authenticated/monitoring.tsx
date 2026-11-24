@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Activity, AlertTriangle, Monitor, RefreshCw } from "lucide-react";
+import { Activity, AlertTriangle, Eye, Monitor, RefreshCw } from "lucide-react";
 import { PageHeader, EmptyState, StatusBadge } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { WebpagePreview } from "@/components/webpage-preview";
 import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/monitoring")({
@@ -33,6 +35,7 @@ function ago(iso: string | null, now: number) {
 function MonitoringPage() {
   const { screens, playlists, media, refresh } = useStore();
   const [filter, setFilter] = useState<Filter>("all");
+  const [previewScreenId, setPreviewScreenId] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const tick = setInterval(() => setNow(Date.now()), 5000);
@@ -42,6 +45,9 @@ function MonitoringPage() {
   const online = screens.filter((s) => s.status === "online");
   const alerts = screens.filter((s) => s.status !== "online" && s.lastSeen && now - new Date(s.lastSeen).getTime() > 5 * 60000);
   const shown = screens.filter((s) => filter === "all" || (filter === "online" ? s.status === "online" : s.status !== "online"));
+  const previewScreen = screens.find((s) => s.id === previewScreenId);
+  const reportedMediaId = (previewScreen?.playbackStatus as { media_id?: string | null } | null)?.media_id;
+  const previewMedia = media.find((m) => m.id === reportedMediaId);
   return (
     <div>
       <PageHeader title="Supervision" description="État en direct de vos TV, actualisé automatiquement toutes les 30 secondes."
@@ -87,12 +93,44 @@ function MonitoringPage() {
                     <dt className="text-muted-foreground">Lecture</dt><dd className="flex items-center gap-1"><Activity className="size-3" />{pb.state ? playbackLabels[pb.state] ?? pb.state : "Inconnue"}</dd>
                     <dt className="text-muted-foreground">Version</dt><dd className="truncate">{s.playerVersion ?? "—"}</dd>
                   </dl>
+                  <Button variant="outline" className="w-full" onClick={() => setPreviewScreenId(s.id)} aria-label={`Voir le contenu de ${s.name}`}>
+                    <Eye className="size-4" /> Voir le contenu
+                  </Button>
                 </CardContent>
               </Card>
             );
           })}
         </div>
       )}
+      <Dialog open={previewScreenId !== null} onOpenChange={(open) => { if (!open) setPreviewScreenId(null); }}>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-4xl">
+          <DialogHeader className="min-w-0 pr-6">
+            <DialogTitle className="break-words">{previewScreen?.name ?? "Écran indisponible"} — Aperçu</DialogTitle>
+            <DialogDescription>Dernier contenu signalé par le lecteur · Pas une capture en direct de la TV.</DialogDescription>
+          </DialogHeader>
+          {previewScreen && <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <StatusBadge status={previewScreen.status} />
+            <span className="text-muted-foreground">Dernier signal : {ago(previewScreen.lastSeen, now)}</span>
+          </div>}
+          {previewScreen?.status !== "online" && <p role="status" className="text-sm text-destructive">Écran hors ligne : l’aperçu peut ne plus correspondre à son affichage actuel.</p>}
+          {previewMedia?.url ? <div key={`${previewScreenId}-${previewMedia.id}`}>
+            <MonitoringMediaPreview url={previewMedia.url} name={previewMedia.name} type={previewMedia.type} />
+            <p className="mt-3 break-words text-sm font-medium">{previewMedia.name}</p>
+          </div> : <div className="flex aspect-video items-center justify-center bg-muted p-6 text-center text-sm text-muted-foreground">
+            {reportedMediaId ? "Le média signalé n’est plus disponible dans la médiathèque." : "Le lecteur n’a pas signalé de média individuel. Aperçu indisponible."}
+          </div>}
+          <div className="flex justify-end"><Button variant="outline" onClick={refresh}><RefreshCw className="size-4" /> Actualiser</Button></div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
+}
+
+function MonitoringMediaPreview({ url, name, type }: { url: string; name: string; type: "image" | "video" | "webpage" }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <p role="alert" className="bg-muted p-6 text-center text-sm text-muted-foreground">Impossible de charger ce média. Fermez l’aperçu puis actualisez la page pour réessayer.</p>;
+  if (type === "webpage") return <WebpagePreview url={url} name={name} />;
+  return <div className="flex aspect-video items-center justify-center overflow-hidden rounded-md bg-muted">
+    {type === "image" ? <img src={url} alt={name} onError={() => setFailed(true)} className="h-full w-full object-contain" /> : <video src={url} controls autoPlay muted playsInline onError={() => setFailed(true)} className="h-full w-full object-contain" />}
+  </div>;
 }

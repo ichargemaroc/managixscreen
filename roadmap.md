@@ -1,5 +1,10 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Aperçu depuis Supervision
+- [x] Bouton par TV, aperçu du média réellement signalé, images/vidéos/pages Web et états indisponible/hors ligne ; aucune fausse capture en direct
+- [x] Ouverture connectée vérifiée sur trois TV, tablette/téléphone sans débordement ni erreur ; trois tests du store réussis et compilation correcte
+- [ ] Vérifier une image réellement signalée : les trois TV accessibles sont hors ligne et leurs médias signalés sont absents ; aucune donnée client modifiée
+
 ## Musique de fond par écran
 - [x] Import MP3 privé (50 Mo), affectation par écran, volume et coupure optionnelle pendant les vidéos ; accès depuis les actions et détails d’écran
 - [x] Manifeste protégé, empreinte des réglages, cache hors connexion atomique et audio continu indépendant des diapositives ; suivi des vidéos multi-zones
