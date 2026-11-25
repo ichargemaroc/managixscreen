@@ -203,3 +203,8 @@
 ## YouTube en vidéo seule
 - [x] Liens YouTube (vidéo, Short, direct) convertis automatiquement en lecture vidéo seule, sans la page autour
 - [x] Aperçu du formulaire et lecteur (web + Android) utilisent la même conversion ; 154 tests verts
+
+## Sous-menu latéral Écrans / Groupes
+- [ ] Icône téléviseur devant chaque nom de téléviseur dans l'accordéon du menu
+- [x] Carte « Groupes » menant à la page Groupes ; accordéon ouvrant « Nouveau groupe » en première ligne
+- [ ] Vérification à l'écran sur /groups : l'accordéon Groupes ne s'affiche que lorsque les groupes sont chargés

@@ -119,6 +119,7 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                               aria-current={active ? "page" : undefined}
                               className={`flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-medium ${active ? "bg-card text-foreground shadow-sm" : "text-foreground/70 hover:bg-card"}`}
                             >
+                              <Monitor className="size-3.5 shrink-0 opacity-70" />
                               <span className="truncate">{screen.name}</span>
                             </Link>
                           );
@@ -140,26 +141,35 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                     ))}
                     {item.showScreens && groups.length > 0 && (
                       <div className="overflow-hidden rounded-xl bg-card/70">
-                        <button
-                          type="button"
-                          onClick={() => setGroupListOpen((v) => !v)}
-                          aria-expanded={groupListOpen}
-                          aria-label={groupListOpen ? "Replier la liste des groupes" : "Déplier la liste des groupes"}
-                          className="flex h-10 w-full items-center gap-2 px-4 text-sm font-medium text-foreground/80 hover:bg-card"
-                        >
-                          <span className="truncate">Groupes</span>
-                          <ChevronDown className={`ml-auto size-4 shrink-0 transition-transform ${groupListOpen ? "rotate-180" : ""}`} />
-                        </button>
+                        <div className="relative">
+                          <Link
+                            to="/groups"
+                            onClick={() => { setGroupListOpen(true); handleClick(); }}
+                            aria-current={path === "/groups" && !search.g ? "page" : undefined}
+                            className="flex h-10 w-full items-center gap-2 px-4 text-sm font-medium text-foreground/80 hover:bg-card"
+                          >
+                            <span className="truncate">Groupes</span>
+                            <ChevronDown className={`ml-auto size-4 shrink-0 transition-transform ${groupListOpen ? "rotate-180" : ""}`} />
+                          </Link>
+                          {/* Invisible toggle: keeps the group list collapsible without adding a second arrow. */}
+                          <button
+                            type="button"
+                            onClick={() => setGroupListOpen((v) => !v)}
+                            aria-expanded={groupListOpen}
+                            aria-label={groupListOpen ? "Replier la liste des groupes" : "Déplier la liste des groupes"}
+                            className="absolute inset-y-0 right-0 w-9"
+                          />
+                        </div>
                         {groupListOpen && (
                         <div className="flex max-h-40 flex-col gap-0.5 overflow-y-auto pb-1">
                         <Link
                           to="/groups"
+                          search={{ new: "1" }}
                           onClick={handleClick}
-                          aria-current={path === "/groups" && !search.g ? "page" : undefined}
                           className="flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-medium text-foreground/70 hover:bg-card"
                         >
-                          <FolderTree className="size-3.5 shrink-0 opacity-70" />
-                          <span className="truncate">Tous les groupes</span>
+                          <Plus className="size-3.5 shrink-0 opacity-70" />
+                          <span className="truncate">Nouveau groupe</span>
                         </Link>
                         {groups.map((group) => {
                           const active = path === `/groups/${group.id}`;

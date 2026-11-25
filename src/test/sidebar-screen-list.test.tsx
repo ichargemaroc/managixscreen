@@ -9,13 +9,13 @@ const SCREENS = [
 const GROUPS = [{ id: 'g1', name: 'Vitrines' }];
 
 vi.mock('@tanstack/react-router', () => ({
-  Link: ({ to, params, search, children }: { to: string; params?: Record<string, string>; search?: Record<string, string>; children: ReactNode }) => {
+  Link: ({ to, params, search, className, children }: { to: string; params?: Record<string, string>; search?: Record<string, string>; className?: string; children: ReactNode }) => {
     const href = params
       ? Object.entries(params).reduce((u, [k, v]) => u.replace(`$${k}`, v), to)
       : search && Object.keys(search).length
         ? `${to}?${new URLSearchParams(search).toString()}`
         : to;
-    return <a href={href}>{children}</a>;
+    return <a href={href} className={className}>{children}</a>;
   },
   useRouterState: (opts: { select: (state: { location: { pathname: string; search: Record<string, string> } }) => unknown }) =>
     opts.select({ location: { pathname: '/screens', search: {} } }),
@@ -55,6 +55,8 @@ afterEach(cleanup);
 const renderMenu = () => render(<NavLinks currentUrl="/screens" path="/screens" onNavigate={vi.fn()} />);
 const accordionHeader = () => screen.getByRole('button', { name: /liste des téléviseurs/i });
 const groupsHeader = () => screen.getByRole('button', { name: /liste des groupes/i });
+const groupsHeaderLink = () => screen.getAllByText('Groupes').find((el) => el.closest('a'))?.closest('a');
+const cardOf = (el: Element) => el.closest('div.overflow-hidden');
 const tvRows = () => screen.queryAllByText(/TV (TERASSE|SALLE)/).filter((el) => el.closest('a'));
 const groupRows = () => screen.queryAllByText('Vitrines').filter((el) => el.closest('a'));
 
@@ -90,10 +92,8 @@ it('keeps the group list closed until the accordion is opened', () => {
 
 it('gives the group accordion the same card style as the screen accordion', () => {
   renderMenu();
-  const tvCard = accordionHeader().closest('div');
-  const groupCard = groupsHeader().closest('div');
-  expect(groupCard?.className).toBe(tvCard?.className);
-  expect(groupsHeader().className).toBe(accordionHeader().className);
+  expect(cardOf(groupsHeader())?.className).toBe(cardOf(accordionHeader())?.className);
+  expect(groupsHeaderLink()?.className).toBe(accordionHeader().className);
 });
 
 it('lists every screen one by one once the accordion is open', () => {
@@ -103,6 +103,7 @@ it('lists every screen one by one once the accordion is open', () => {
     const row = screen.getAllByText(tv.name).find((el) => el.closest('a'));
     expect(row, `missing submenu row for ${tv.name}`).toBeTruthy();
     expect(row?.closest('a')?.getAttribute('href')).toBe(`/screens/${tv.id}`);
+    expect(row?.closest('a')?.querySelector('svg'), `missing tv icon for ${tv.name}`).toBeTruthy();
   }
 });
 
@@ -114,12 +115,20 @@ it('lists every group as a clickable row that opens that group', () => {
   expect(row?.closest('a')?.getAttribute('href')).toBe('/groups/g1');
 });
 
-it('keeps a plain link to the groups page inside the group accordion', () => {
+it('keeps a link to the groups page on the Groupes card', () => {
+  renderMenu();
+  expect(groupsHeaderLink()?.getAttribute('href')).toBe('/groups');
+});
+
+it('puts "Nouveau groupe" first in the opened group list', () => {
   renderMenu();
   fireEvent.click(groupsHeader());
-  const row = screen.getAllByText('Tous les groupes').find((el) => el.closest('a'));
-  expect(row, 'missing link to the groups page').toBeTruthy();
-  expect(row?.closest('a')?.getAttribute('href')).toBe('/groups');
+  const rows = screen
+    .getAllByText(/Nouveau groupe|Vitrines/)
+    .filter((el) => el.closest('a'));
+  expect(rows).toHaveLength(2);
+  expect(rows[0]?.textContent).toContain('Nouveau groupe');
+  expect(rows[0]?.closest('a')?.getAttribute('href')).toBe('/groups?new=1');
 });
 
 it('puts "Ajouter une TV" first in the opened screen list', () => {

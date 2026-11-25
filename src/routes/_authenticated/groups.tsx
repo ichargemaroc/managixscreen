@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { FolderTree, Plus, Trash2, MapPin, Pencil } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/app-shell";
@@ -12,7 +12,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useStore, addGroup, deleteGroup, updateGroup, setGroupMember, type Group } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/groups")({
-  validateSearch: (search: Record<string, unknown>): { g?: string } => (typeof search["g"] === "string" ? { g: search["g"] } : {}),
+  validateSearch: (search: Record<string, unknown>): { g?: string; new?: "1" } => {
+    const out: { g?: string; new?: "1" } = {};
+    if (typeof search["g"] === "string") out.g = search["g"];
+    if (search["new"] === "1") out.new = "1";
+    return out;
+  },
   head: () => ({ meta: [
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
@@ -26,9 +31,20 @@ export const Route = createFileRoute("/_authenticated/groups")({
 
 function GroupsPage() {
   const { groups, screens, refresh } = useStore();
-  const { g: highlight } = Route.useSearch();
+  const navigate = useNavigate();
+  const { g: highlight, new: addParam } = Route.useSearch();
   const [editing, setEditing] = useState<Group | null>(null);
-  const [open, setOpen] = useState(false); const [name, setName] = useState(""); const [loc, setLoc] = useState("");
+  const [open, setOpen] = useState(addParam === "1"); const [name, setName] = useState(""); const [loc, setLoc] = useState("");
+  const closeDialog = (value: boolean) => {
+    setOpen(value);
+    if (!value) {
+      setEditing(null); setName(""); setLoc("");
+      if (addParam === "1") navigate({ to: "/groups", search: {}, replace: true });
+    }
+  };
+  useEffect(() => {
+    if (addParam === "1") setOpen(true);
+  }, [addParam]);
   useEffect(() => {
     if (!highlight) return;
     document.getElementById(`group-${highlight}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -53,7 +69,7 @@ function GroupsPage() {
           ))}
         </div>
       )}
-      <Dialog open={open} onOpenChange={(value) => { setOpen(value); if (!value) { setEditing(null); setName(""); setLoc(""); } }}>
+      <Dialog open={open} onOpenChange={closeDialog}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editing ? "Gérer le groupe" : "Nouveau groupe"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
@@ -61,7 +77,7 @@ function GroupsPage() {
             <div className="space-y-2"><Label>Lieu</Label><Input value={loc} onChange={(e) => setLoc(e.target.value)} placeholder="Ex. Paris — Rivoli" /></div>
             {editing && <div className="space-y-2"><Label>Écrans</Label>{screens.map((screen) => <label key={screen.id} className="flex items-center gap-2 text-sm"><Checkbox checked={groups.find((g) => g.id === editing.id)?.screenIds.includes(screen.id) ?? false} onCheckedChange={async (checked) => { try { await setGroupMember(editing.id, screen.id, checked === true); refresh(); } catch { toast.error("La modification a échoué"); } }} />{screen.name}</label>)}</div>}
           </div>
-          <DialogFooter><Button disabled={!name.trim()} onClick={async () => { if (editing) await updateGroup(editing.id, name.trim(), loc.trim()); else await addGroup(name.trim(), loc.trim()); refresh(); setName(""); setLoc(""); setOpen(false); setEditing(null); }}>{editing ? "Enregistrer" : "Créer"}</Button></DialogFooter>
+          <DialogFooter><Button disabled={!name.trim()} onClick={async () => { if (editing) await updateGroup(editing.id, name.trim(), loc.trim()); else await addGroup(name.trim(), loc.trim()); refresh(); setName(""); setLoc(""); closeDialog(false); setEditing(null); }}>{editing ? "Enregistrer" : "Créer"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
