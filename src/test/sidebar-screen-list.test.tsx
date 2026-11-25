@@ -9,9 +9,9 @@ const SCREENS = [
 const GROUPS = [{ id: 'g1', name: 'Vitrines' }];
 
 vi.mock('@tanstack/react-router', () => ({
-  Link: ({ to, params, search, children }: { to: string; params?: { screenId?: string }; search?: Record<string, string>; children: ReactNode }) => {
-    const href = params?.screenId
-      ? to.replace('$screenId', params.screenId)
+  Link: ({ to, params, search, children }: { to: string; params?: Record<string, string>; search?: Record<string, string>; children: ReactNode }) => {
+    const href = params
+      ? Object.entries(params).reduce((u, [k, v]) => u.replace(`$${k}`, v), to)
       : search && Object.keys(search).length
         ? `${to}?${new URLSearchParams(search).toString()}`
         : to;
@@ -111,7 +111,7 @@ it('lists every group as a clickable row that opens that group', () => {
   fireEvent.click(groupsHeader());
   const row = groupRows()[0];
   expect(row, 'missing submenu row for the group').toBeTruthy();
-  expect(row?.closest('a')?.getAttribute('href')).toBe('/groups?g=g1');
+  expect(row?.closest('a')?.getAttribute('href')).toBe('/groups/g1');
 });
 
 it('keeps a plain link to the groups page inside the group accordion', () => {

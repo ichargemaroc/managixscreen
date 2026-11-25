@@ -162,12 +162,12 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                           <span className="truncate">Tous les groupes</span>
                         </Link>
                         {groups.map((group) => {
-                          const active = path === "/groups" && search.g === group.id;
+                          const active = path === `/groups/${group.id}`;
                           return (
                             <Link
                               key={group.id}
-                              to="/groups"
-                              search={{ g: group.id }}
+                              to="/groups/$groupId"
+                              params={{ groupId: group.id }}
                               onClick={handleClick}
                               aria-current={active ? "page" : undefined}
                               className={`flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-medium ${active ? "bg-card text-foreground shadow-sm" : "text-foreground/70 hover:bg-card"}`}
