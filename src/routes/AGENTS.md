@@ -1,1 +1,1 @@
-- Home-screen installation uses only a manifest, local icons and shared head metadata; no service worker or offline app-shell cache, to keep previews and published navigation fresh.
+- Home-screen installation uses only a manifest, local icons and shared head metadata; no service worker or offline app-shell cache, to keep previews and published navigation fresh.- Public landing reads published plans only via anon-callable public_pricing(); prices are never hardcoded.
