@@ -7,3 +7,4 @@
 
 - Scheduled playlists override default screen/group playlists in device_content (screen beats group, schedule timezone); fingerprints switch TVs at slot boundaries.
 - Bandeau défilant par playlist : texte, continu ou 1 passage par cycle, temps de passage, affiché sur les TV.
+- External apps update only a playlist banner's text/enabled flag via /api/public/ticker with a per-playlist bearer key stored as a SHA-256 hash; owner-only RPCs rotate/revoke keys and persistent counters rate-limit calls.

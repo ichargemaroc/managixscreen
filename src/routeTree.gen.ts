@@ -33,6 +33,7 @@ import { Route as DisplayInstagramRouteImport } from './routes/display.instagram
 import { Route as DisplayWeatherRouteImport } from './routes/display.weather'
 import { Route as AuthenticatedGroupsGroupIdRouteImport } from './routes/_authenticated/groups_.$groupId'
 import { Route as AuthenticatedScreensScreenIdRouteImport } from './routes/_authenticated/screens_.$screenId'
+import { Route as ApiPublicTickerRouteImport } from './routes/api/public/ticker'
 import { Route as ApiPublicWeatherRouteImport } from './routes/api/public/weather'
 import { Route as ApiPublicDevicesCommandsRouteImport } from './routes/api/public/devices/commands'
 import { Route as ApiPublicDevicesContentRouteImport } from './routes/api/public/devices/content'
@@ -165,6 +166,11 @@ const AuthenticatedScreensScreenIdRoute =
     path: '/screens/$screenId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicTickerRoute = ApiPublicTickerRouteImport.update({
+  id: '/api/public/ticker',
+  path: '/api/public/ticker',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWeatherRoute = ApiPublicWeatherRouteImport.update({
   id: '/api/public/weather',
   path: '/api/public/weather',
@@ -228,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/display/weather': typeof DisplayWeatherRoute
   '/groups/$groupId': typeof AuthenticatedGroupsGroupIdRoute
   '/screens/$screenId': typeof AuthenticatedScreensScreenIdRoute
+  '/api/public/ticker': typeof ApiPublicTickerRoute
   '/api/public/weather': typeof ApiPublicWeatherRoute
   '/api/public/devices/commands': typeof ApiPublicDevicesCommandsRouteWithChildren
   '/api/public/devices/content': typeof ApiPublicDevicesContentRoute
@@ -260,6 +267,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/groups/$groupId': typeof AuthenticatedGroupsGroupIdRoute
   '/screens/$screenId': typeof AuthenticatedScreensScreenIdRoute
+  '/api/public/ticker': typeof ApiPublicTickerRoute
   '/api/public/weather': typeof ApiPublicWeatherRoute
   '/api/public/devices/commands': typeof ApiPublicDevicesCommandsRouteWithChildren
   '/api/public/devices/content': typeof ApiPublicDevicesContentRoute
@@ -294,6 +302,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/groups_/$groupId': typeof AuthenticatedGroupsGroupIdRoute
   '/_authenticated/screens_/$screenId': typeof AuthenticatedScreensScreenIdRoute
+  '/api/public/ticker': typeof ApiPublicTickerRoute
   '/api/public/weather': typeof ApiPublicWeatherRoute
   '/api/public/devices/commands': typeof ApiPublicDevicesCommandsRouteWithChildren
   '/api/public/devices/content': typeof ApiPublicDevicesContentRoute
@@ -328,6 +337,7 @@ export interface FileRouteTypes {
     | '/display/weather'
     | '/groups/$groupId'
     | '/screens/$screenId'
+    | '/api/public/ticker'
     | '/api/public/weather'
     | '/api/public/devices/commands'
     | '/api/public/devices/content'
@@ -360,6 +370,7 @@ export interface FileRouteTypes {
     | '/'
     | '/groups/$groupId'
     | '/screens/$screenId'
+    | '/api/public/ticker'
     | '/api/public/weather'
     | '/api/public/devices/commands'
     | '/api/public/devices/content'
@@ -393,6 +404,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/groups_/$groupId'
     | '/_authenticated/screens_/$screenId'
+    | '/api/public/ticker'
     | '/api/public/weather'
     | '/api/public/devices/commands'
     | '/api/public/devices/content'
@@ -411,6 +423,7 @@ export interface RootRouteChildren {
   TeamInviteRoute: typeof TeamInviteRoute
   DisplayInstagramRoute: typeof DisplayInstagramRoute
   DisplayWeatherRoute: typeof DisplayWeatherRoute
+  ApiPublicTickerRoute: typeof ApiPublicTickerRoute
   ApiPublicWeatherRoute: typeof ApiPublicWeatherRoute
   ApiPublicDevicesCommandsRoute: typeof ApiPublicDevicesCommandsRouteWithChildren
   ApiPublicDevicesContentRoute: typeof ApiPublicDevicesContentRoute
@@ -589,6 +602,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedScreensScreenIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/ticker': {
+      id: '/api/public/ticker'
+      path: '/api/public/ticker'
+      fullPath: '/api/public/ticker'
+      preLoaderRoute: typeof ApiPublicTickerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/weather': {
       id: '/api/public/weather'
       path: '/api/public/weather'
@@ -705,6 +725,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeamInviteRoute: TeamInviteRoute,
   DisplayInstagramRoute: DisplayInstagramRoute,
   DisplayWeatherRoute: DisplayWeatherRoute,
+  ApiPublicTickerRoute: ApiPublicTickerRoute,
   ApiPublicWeatherRoute: ApiPublicWeatherRoute,
   ApiPublicDevicesCommandsRoute: ApiPublicDevicesCommandsRouteWithChildren,
   ApiPublicDevicesContentRoute: ApiPublicDevicesContentRoute,

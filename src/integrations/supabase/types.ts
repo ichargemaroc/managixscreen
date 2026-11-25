@@ -660,6 +660,38 @@ export type Database = {
           },
         ]
       }
+      playlist_ticker_keys: {
+        Row: {
+          created_at: string
+          last_used_at: string | null
+          owner_id: string
+          playlist_id: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          last_used_at?: string | null
+          owner_id: string
+          playlist_id: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          last_used_at?: string | null
+          owner_id?: string
+          playlist_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playlist_ticker_keys_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: true
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       playlists: {
         Row: {
           created_at: string
@@ -1525,6 +1557,10 @@ export type Database = {
         Args: { m: Database["public"]["Tables"]["media"]["Row"] }
         Returns: Json
       }
+      playlist_ticker_key_status: {
+        Args: { p_playlist: string }
+        Returns: Json
+      }
       register_pairing_session: {
         Args: {
           p_code: string
@@ -1552,7 +1588,15 @@ export type Database = {
         Args: { p_invite: string; p_member: string }
         Returns: undefined
       }
+      revoke_playlist_ticker_key: {
+        Args: { p_playlist: string }
+        Returns: boolean
+      }
       revoke_screen_device: { Args: { p_screen: string }; Returns: undefined }
+      rotate_playlist_ticker_key: {
+        Args: { p_hash: string; p_playlist: string }
+        Returns: boolean
+      }
       save_screen_layout: {
         Args: { p_id: string; p_name: string; p_zones: Json }
         Returns: string
@@ -1560,6 +1604,10 @@ export type Database = {
       save_video_wall: {
         Args: { p_config: Json; p_id: string; p_members: Json }
         Returns: string
+      }
+      set_playlist_ticker_text: {
+        Args: { p_enabled: boolean; p_hash: string; p_text: string }
+        Returns: boolean
       }
       set_screen_entitlement: {
         Args: { p_active: boolean; p_screen: string }

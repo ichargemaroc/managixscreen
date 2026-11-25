@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TickerApiPanel } from '@/components/ticker-api-panel';
 import { savePlaylistTicker } from '@/lib/store';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
@@ -43,5 +44,6 @@ export function PlaylistTickerPanel({ playlistId, initial, onSaved }: { playlist
       catch (error) { toast.error(error instanceof Error ? error.message : 'Le bandeau n’a pas pu être enregistré.'); }
       finally { setSaving(false); }
     }}>{saving ? 'Enregistrement…' : 'Enregistrer le bandeau'}</Button></div>
+    <TickerApiPanel playlistId={playlistId} />
   </section>;
 }
