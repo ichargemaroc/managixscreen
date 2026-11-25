@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, FolderTree, Settings, Grid2X2, CreditCard, Shield, Columns2,Plug,Users,Activity } from "lucide-react";
+import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, Settings, Grid2X2, CreditCard, Shield, Columns2,Plug,Users,Activity,ChevronDown, type LucideIcon } from "lucide-react";
 import { usePlatformAdmin } from '@/lib/store';
 import markAsset from "@/assets/screenflow-mark.webp.asset.json";
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -10,41 +10,88 @@ import {
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SidebarInset, useSidebar,
 } from "@/components/ui/sidebar";
 
-const nav = [
+type NavEntry =
+  | { title: string; url: string; icon: LucideIcon; children?: undefined }
+  | { title: string; icon: LucideIcon; children: readonly { title: string; url: string }[]; url?: undefined };
+
+const nav: readonly NavEntry[] = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
-  { title: "Écrans", url: "/screens", icon: Monitor },
+  { title: "Écrans", icon: Monitor, children: [
+    { title: "Écrans", url: "/screens" },
+    { title: "Groupes", url: "/groups" },
+  ] },
   { title: "Supervision", url: "/monitoring", icon: Activity },
   { title: "Murs d’images", url: "/video-walls", icon: Grid2X2 },
   { title: 'Multi-zones',url:'/multi-zones',icon:Columns2 },
   { title: "Médiathèque", url: "/media", icon: Image },
   { title: "Playlists", url: "/playlists", icon: ListVideo },
   { title: "Programmation", url: "/schedule", icon: CalendarClock },
-  { title: "Groupes", url: "/groups", icon: FolderTree },
   { title:'Intégrations',url:'/integrations',icon:Plug },
   { title:'Équipe',url:'/team',icon:Users },
   { title: "Paramètres", url: "/settings", icon: Settings },
   { title: 'Abonnement', url: '/subscription', icon: CreditCard },
-] as const;
+];
 
 function NavLinks({ currentUrl, onNavigate }: { currentUrl: string | undefined; onNavigate: () => void }) {
   const { setOpenMobile } = useSidebar();
   const { data: isAdmin } = usePlatformAdmin();
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const handleClick = () => {
     setOpenMobile(false);
     onNavigate();
   };
+  const toggleGroup = (title: string, effectiveOpen: boolean) => setOpenGroups((prev) => ({ ...prev, [title]: !effectiveOpen }));
   return (
     <SidebarMenu className="gap-2">
-      {nav.map((item) => (
-        <SidebarMenuItem key={item.url}>
-          <SidebarMenuButton asChild isActive={currentUrl === item.url} tooltip={item.title}>
-            <Link to={item.url} onClick={handleClick} aria-label={item.title} aria-current={currentUrl === item.url ? "page" : undefined}>
-              <item.icon />
-              <span>{item.title}</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
+      {nav.map((item) => {
+        if (item.children) {
+          const childActive = item.children.some((c) => c.url === currentUrl);
+          const open = openGroups[item.title] ?? childActive;
+          return (
+            <SidebarMenuItem key={item.title}>
+              <div className={open ? "rounded-2xl bg-accent p-1.5 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0" : ""}>
+                <SidebarMenuButton
+                  onClick={() => toggleGroup(item.title, open)}
+                  isActive={childActive}
+                  tooltip={item.title}
+                  aria-expanded={open}
+                  aria-label={item.title}
+                  className={open ? "text-accent-foreground hover:bg-transparent" : ""}
+                >
+                  <item.icon />
+                  <span>{item.title}</span>
+                  <ChevronDown className={`ml-auto transition-transform group-data-[collapsible=icon]:hidden ${open ? "rotate-180" : ""}`} />
+                </SidebarMenuButton>
+                {open && (
+                  <div className="mt-1 flex flex-col gap-1.5 group-data-[collapsible=icon]:hidden">
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.url}
+                        to={child.url}
+                        onClick={handleClick}
+                        aria-current={currentUrl === child.url ? "page" : undefined}
+                        className={`block rounded-xl px-4 py-2.5 text-sm font-medium ${currentUrl === child.url ? "bg-card text-foreground shadow-sm" : "bg-card/70 text-foreground/80 hover:bg-card"}`}
+                      >
+                        {child.title}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </SidebarMenuItem>
+          );
+        }
+        return (
+          <SidebarMenuItem key={item.url}>
+            <SidebarMenuButton asChild isActive={currentUrl === item.url} tooltip={item.title}>
+              <Link to={item.url} onClick={handleClick} aria-label={item.title} aria-current={currentUrl === item.url ? "page" : undefined}>
+                <item.icon />
+                <span>{item.title}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        );
+      })}
       {isAdmin && <SidebarMenuItem><SidebarMenuButton asChild isActive={currentUrl === '/billing-admin'} tooltip="Administration"><Link to="/billing-admin" onClick={handleClick} aria-label="Administration"><Shield /><span>Administration</span></Link></SidebarMenuButton></SidebarMenuItem>}
     </SidebarMenu>
   );
@@ -62,7 +109,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [menuPinned, setMenuPinned] = useState(false);
   const [menuHovered, setMenuHovered] = useState(false);
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const current = nav.find((n) => (n.url === "/" ? path === "/" : path.startsWith(n.url)));
+  const flatUrls = nav.flatMap((n) => (n.children ? n.children.map((c) => c.url) : [n.url]));
+  const currentUrl = flatUrls.find((u) => (u === "/" ? path === "/" : path.startsWith(u)));
   const closeMenu = () => {
     setMenuPinned(false);
     setMenuHovered(false);
@@ -95,7 +143,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <SidebarContent>
           <SidebarGroup className="px-3 pt-4">
             <SidebarGroupContent>
-              <NavLinks currentUrl={path === '/billing-admin' ? path : current?.url} onNavigate={closeMenu} />
+              <NavLinks currentUrl={path === '/billing-admin' ? path : currentUrl} onNavigate={closeMenu} />
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
