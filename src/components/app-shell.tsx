@@ -226,13 +226,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const flatUrls = nav.flatMap((n) => (n.children ? n.children.map((c) => c.url) : [n.url]));
   const currentUrl = flatUrls.find((u) => (u === "/" ? path === "/" : path.startsWith(u)));
-  const closeMenu = () => {
-    setMenuPinned(false);
-    setMenuHovered(false);
-  };
-  useEffect(() => {
-    closeMenu();
-  }, [path]);
+  // A pinned menu (opened with the header button) must survive navigation; only the
+  // hover-opened preview closes when the pointer leaves or a link is clicked.
+  const closeMenu = () => setMenuHovered(false);
   return (
     <SidebarProvider open={menuPinned || menuHovered} onOpenChange={setMenuPinned} className="console-shell bg-sidebar pt-20">
       <header className="fixed inset-x-0 top-0 z-20 flex h-20 items-center justify-between bg-sidebar text-sidebar-foreground px-5 md:px-8">
