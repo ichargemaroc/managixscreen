@@ -40,9 +40,10 @@ vi.mock('@/components/ui/sidebar', () => {
   };
 });
 
+const mockData = { screens: SCREENS, groups: GROUPS };
 vi.mock('@/lib/store', () => ({
   usePlatformAdmin: () => ({ data: false }),
-  useStore: () => ({ screens: SCREENS, groups: GROUPS }),
+  useStore: () => ({ screens: mockData.screens, groups: mockData.groups }),
 }));
 
 vi.mock('@/components/theme-toggle', () => ({ ThemeToggle: () => null }));
@@ -50,7 +51,11 @@ vi.mock('@/components/sign-out-button', () => ({ SignOutButton: () => null }));
 
 import { NavLinks } from '@/components/app-shell';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  mockData.screens = SCREENS;
+  mockData.groups = GROUPS;
+});
 
 const renderMenu = () => render(<NavLinks currentUrl="/screens" path="/screens" onNavigate={vi.fn()} />);
 const accordionHeader = () => screen.getByRole('button', { name: /liste des téléviseurs/i });
@@ -160,6 +165,18 @@ it('puts "Ajouter une TV" first in the opened screen list', () => {
   expect(rows).toHaveLength(3);
   expect(rows[0]?.textContent).toContain('Ajouter une TV');
   expect(rows[0]?.closest('a')?.getAttribute('href')).toBe('/screens?new=1');
+});
+
+it('keeps the Téléviseurs and Groupes cards visible with no screen and no group', () => {
+  mockData.screens = [];
+  mockData.groups = [];
+  renderMenu();
+  expect(accordionHeader()).toBeTruthy();
+  expect(groupsHeader()).toBeTruthy();
+  fireEvent.click(accordionHeader());
+  expect(screen.getByText('Ajouter une TV').closest('a')?.getAttribute('href')).toBe('/screens?new=1');
+  fireEvent.click(groupsHeader());
+  expect(screen.getByText('Nouveau groupe').closest('a')?.getAttribute('href')).toBe('/groups?new=1');
 });
 
 it('puts the screen accordion where the Écrans card used to be, above Groupes', () => {

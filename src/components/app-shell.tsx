@@ -82,7 +82,7 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                 </div>
                 {open && (
                   <div className="mt-1 flex flex-col gap-1.5 group-data-[collapsible=icon]:hidden">
-                    {item.showScreens && screens.length > 0 && (
+                    {item.showScreens && (
                       <div className="overflow-hidden rounded-xl bg-card/70">
                         <button
                           type="button"
@@ -137,7 +137,7 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                         {child.title}
                       </Link>
                     ))}
-                    {item.showScreens && groups.length > 0 && (
+                    {item.showScreens && (
                       <div className="overflow-hidden rounded-xl bg-card/70">
                         <div className="relative">
                           <Link
