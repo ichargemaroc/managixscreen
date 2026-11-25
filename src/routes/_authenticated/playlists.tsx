@@ -134,11 +134,13 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
       </div>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row"><Input aria-label="Description de la playlist" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} /><Button disabled={!name.trim()} onClick={async () => { try { await renamePlaylist(playlist.id, name.trim(), description); refresh(); toast.success("Playlist enregistrée"); } catch { toast.error("L’enregistrement a échoué"); } }}>Enregistrer</Button></div>
       <Tabs defaultValue="content">
-        <TabsList className="mb-4">
-          <TabsTrigger value="content"><ListVideo className="size-4" /> Contenu</TabsTrigger>
-          <TabsTrigger value="diffusion"><MonitorPlay className="size-4" /> Diffusion <span className="ml-1 rounded-full bg-muted px-1.5 text-xs">{audienceScreenIds.length}</span></TabsTrigger>
-          <TabsTrigger value="settings"><Settings2 className="size-4" /> Paramètres</TabsTrigger>
+        <div className="mb-6 overflow-x-auto border-b border-border">
+        <TabsList className="console-content-tabs" aria-label="Sections de la playlist">
+          <TabsTrigger value="content"><ListVideo className="mr-2 size-4" /> Contenu</TabsTrigger>
+          <TabsTrigger value="diffusion"><MonitorPlay className="mr-2 size-4" /> Diffusion <span className="ml-1 rounded-full bg-background/70 px-1.5 text-xs">{audienceScreenIds.length}</span></TabsTrigger>
+          <TabsTrigger value="settings"><Settings2 className="mr-2 size-4" /> Paramètres</TabsTrigger>
         </TabsList>
+        </div>
         <TabsContent value="content">
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <Card><CardContent className="p-4">
