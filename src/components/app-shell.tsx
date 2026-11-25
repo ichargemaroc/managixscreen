@@ -93,8 +93,7 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                           className="flex h-10 w-full items-center gap-2 px-4 text-sm font-medium text-foreground/80 hover:bg-card"
                         >
                           <span className="truncate">Téléviseurs</span>
-                          <span className="ml-auto shrink-0 text-xs tabular-nums opacity-60">{screens.length}</span>
-                          <ChevronDown className={`size-4 shrink-0 transition-transform ${tvListOpen ? "rotate-180" : ""}`} />
+                          <ChevronDown className={`ml-auto size-4 shrink-0 transition-transform ${tvListOpen ? "rotate-180" : ""}`} />
                         </button>
                         {tvListOpen && (
                         <div className="flex max-h-60 flex-col gap-0.5 overflow-y-auto pb-1">
