@@ -205,6 +205,6 @@
 - [x] Aperçu du formulaire et lecteur (web + Android) utilisent la même conversion ; 154 tests verts
 
 ## Sous-menu latéral Écrans / Groupes
-- [ ] Icône téléviseur devant chaque nom de téléviseur dans l'accordéon du menu
+- [x] Icône téléviseur devant chaque nom de téléviseur dans l'accordéon du menu
 - [x] Carte « Groupes » menant à la page Groupes ; accordéon ouvrant « Nouveau groupe » en première ligne
-- [ ] Vérification à l'écran sur /groups : l'accordéon Groupes ne s'affiche que lorsque les groupes sont chargés
+- [x] Vérification à l'écran : menu déplié, accordéon Groupes ouvert (groupe temporaire créé puis supprimé sur le compte de test), « Nouveau groupe » en tête, fenêtre de création ouverte puis paramètre d'URL effacé à la fermeture ; trois TV contrôlées avec icône
