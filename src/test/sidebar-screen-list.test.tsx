@@ -186,6 +186,15 @@ it('opens the Écrans submenu only on click, never on hover', () => {
   expect(row.getAttribute('aria-expanded')).toBe('true');
 });
 
+it('lists Médiathèque before Playlists in the menu', () => {
+  renderMenu();
+  const media = screen.getAllByText('Médiathèque')[0]?.closest('a');
+  const playlists = screen.getAllByText('Playlists')[0]?.closest('a');
+  if (!media || !playlists) throw new Error('Médiathèque or Playlists link is missing');
+  const all = Array.from(document.querySelectorAll('a'));
+  expect(all.indexOf(media)).toBeLessThan(all.indexOf(playlists));
+});
+
 it('closes the Écrans submenu and restores its plain color when another button is clicked', () => {
   render(<NavLinks currentUrl="/media" path="/media" onNavigate={vi.fn()} />);
   const row = screen.getAllByText('Écrans')[0]?.closest('button');
