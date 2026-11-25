@@ -84,30 +84,19 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                 </div>
                 {open && (
                   <div className="mt-1 flex flex-col gap-1.5 group-data-[collapsible=icon]:hidden">
-                    {item.children.map((child) => (
-                      <Link
-                        key={child.url}
-                        to={child.url}
-                        onClick={handleClick}
-                        aria-current={currentUrl === child.url ? "page" : undefined}
-                        className={`block rounded-xl px-4 py-2.5 text-sm font-medium ${currentUrl === child.url ? "bg-card text-foreground shadow-sm" : "bg-card/70 text-foreground/80 hover:bg-card"}`}
-                      >
-                        {child.title}
-                      </Link>
-                    ))}
                     {item.showScreens && screens.length > 0 && (
-                      <div className="mt-1 border-t border-border/50 pt-1.5">
+                      <div>
                         <button
                           type="button"
                           onClick={() => setTvListOpen((v) => !v)}
                           aria-expanded={tvListOpen}
                           aria-label={tvListOpen ? "Replier la liste des téléviseurs" : "Déplier la liste des téléviseurs"}
-                          className="flex w-full items-center gap-2 rounded-xl bg-card/70 px-4 py-2 text-xs font-medium text-foreground/80 hover:bg-card"
+                          className="flex w-full items-center gap-2 rounded-xl bg-card/70 px-4 py-2.5 text-sm font-medium text-foreground/80 hover:bg-card"
                         >
-                          <Monitor className="size-3.5 shrink-0 opacity-70" />
+                          <Monitor className="size-4 shrink-0 opacity-70" />
                           <span className="truncate">Téléviseurs</span>
-                          <span className="ml-auto shrink-0 tabular-nums opacity-60">{screens.length}</span>
-                          <ChevronDown className={`size-3.5 shrink-0 transition-transform ${tvListOpen ? "rotate-180" : ""}`} />
+                          <span className="ml-auto shrink-0 text-xs tabular-nums opacity-60">{screens.length}</span>
+                          <ChevronDown className={`size-4 shrink-0 transition-transform ${tvListOpen ? "rotate-180" : ""}`} />
                         </button>
                         {tvListOpen && (
                         <div className="mt-1 flex max-h-60 flex-col gap-0.5 overflow-y-auto pb-1">
@@ -132,6 +121,17 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                         )}
                       </div>
                     )}
+                    {(item.showScreens ? item.children.slice(1) : item.children).map((child) => (
+                      <Link
+                        key={child.url}
+                        to={child.url}
+                        onClick={handleClick}
+                        aria-current={currentUrl === child.url ? "page" : undefined}
+                        className={`block rounded-xl px-4 py-2.5 text-sm font-medium ${currentUrl === child.url ? "bg-card text-foreground shadow-sm" : "bg-card/70 text-foreground/80 hover:bg-card"}`}
+                      >
+                        {child.title}
+                      </Link>
+                    ))}
                     {item.showScreens && groups.length > 0 && (
                       <div className="mt-1 flex max-h-40 flex-col gap-0.5 overflow-y-auto border-t border-border/50 pt-1.5">
                         {groups.map((group) => {

@@ -83,3 +83,14 @@ it('lists every group as a clickable row that opens that group', () => {
   expect(row, 'missing submenu row for the group').toBeTruthy();
   expect(row?.closest('a')?.getAttribute('href')).toBe('/groups?g=g1');
 });
+
+it('puts the screen accordion where the Écrans card used to be, above Groupes', () => {
+  renderMenu();
+  const header = accordionHeader();
+  const groupRow = screen.getAllByText('Vitrines').find((el) => el.closest('a'));
+  expect(groupRow, 'missing submenu row for the group').toBeTruthy();
+  // Groupes must come after the accordion header, i.e. the accordion took the first slot.
+  expect(header.compareDocumentPosition(groupRow!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  // The duplicated "Écrans" card is gone: only the menu row itself is named Écrans.
+  expect(screen.getAllByText('Écrans')).toHaveLength(1);
+});
