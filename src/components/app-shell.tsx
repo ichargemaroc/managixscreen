@@ -16,11 +16,11 @@ type NavEntry =
 
 const nav: readonly NavEntry[] = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
+  { title: "Supervision", url: "/monitoring", icon: Activity },
   { title: "Écrans", icon: Monitor, showScreens: true, children: [
     { title: "Écrans", url: "/screens" },
     { title: "Groupes", url: "/groups" },
   ] },
-  { title: "Supervision", url: "/monitoring", icon: Activity },
   { title: "Playlists", url: "/playlists", icon: ListVideo },
   { title: "Médiathèque", url: "/media", icon: Image },
   { title: "Programmation", url: "/schedule", icon: CalendarClock },
