@@ -55,30 +55,16 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
               <div className={open ? "rounded-2xl bg-accent p-1.5 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0" : ""}>
                 <div className="relative" onPointerEnter={() => setOpenGroups((prev) => (prev[item.title] === false ? prev : { ...prev, [item.title]: true }))}>
                   <SidebarMenuButton
-                    asChild
                     isActive={childActive}
                     tooltip={item.title}
+                    onClick={() => toggleGroup(item.title, open)}
+                    aria-label={item.title}
+                    aria-expanded={open}
                     className={open ? "text-accent-foreground hover:bg-transparent" : ""}
                   >
-                    <Link
-                      to={item.children[0]?.url ?? "/"}
-                      onClick={() => {
-                        setOpenGroups((prev) => ({ ...prev, [item.title]: true }));
-                      }}
-                      aria-label={item.title}
-                      aria-expanded={open}
-                    >
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
+                    <item.icon />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
-                  {/* Invisible toggle: keeps the submenu collapsible without showing an arrow on the Écrans row. */}
-                  <button
-                    type="button"
-                    onClick={() => toggleGroup(item.title, open)}
-                    aria-label={open ? `Replier ${item.title}` : `Déplier ${item.title}`}
-                    className="absolute inset-y-0 right-0 w-9 group-data-[collapsible=icon]:hidden"
-                  />
                 </div>
                 {open && (
                   <div className="mt-1 flex flex-col gap-1.5 group-data-[collapsible=icon]:hidden">

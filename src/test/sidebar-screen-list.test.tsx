@@ -167,6 +167,13 @@ it('puts "Ajouter une TV" first in the opened screen list', () => {
   expect(rows[0]?.closest('a')?.getAttribute('href')).toBe('/screens?new=1');
 });
 
+it('renders the Écrans row as a button, never as a link', () => {
+  renderMenu();
+  const row = screen.getAllByText('Écrans')[0];
+  expect(row?.closest('a')).toBeNull();
+  expect(row?.closest('button')).toBeTruthy();
+});
+
 it('keeps the Téléviseurs and Groupes cards visible with no screen and no group', () => {
   mockData.screens = [];
   mockData.groups = [];
