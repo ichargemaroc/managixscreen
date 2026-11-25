@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { useQueryClient } from '@tanstack/react-query';
 import { Monitor, Plus, MoreHorizontal, ScanLine } from "lucide-react";
 import { toast } from "sonner";
@@ -30,6 +30,8 @@ export const Route = createFileRoute("/_authenticated/screens")({
     { property: "og:description", content: "Ajoutez, organisez et gérez vos TV Android." },
   ] }),
   component: Screens,
+  validateSearch: (search: Record<string, unknown>): { new?: "1" } =>
+    search["new"] === "1" ? { new: "1" } : {},
 });
 
 const NONE = "__none";
@@ -38,7 +40,16 @@ function Screens() {
   const { screens, groups, playlists, refresh } = useStore();
   const queryClient = useQueryClient();
   const { data: billing } = useBillingStore();
-  const [adding, setAdding] = useState(false);
+  const navigate = useNavigate();
+  const addParam = Route.useSearch()["new"];
+  const [adding, setAdding] = useState(addParam === "1");
+  const closeAdd = (open: boolean) => {
+    setAdding(open);
+    if (!open && addParam === "1") navigate({ to: "/screens", search: {}, replace: true });
+  };
+  useEffect(() => {
+    if (addParam === "1") setAdding(true);
+  }, [addParam]);
   const [editing, setEditing] = useState<Screen | null>(null);
   const [filter, setFilter] = useState("all");
   const list = filter === "all" ? screens : screens.filter((s) => (s.groupId ?? NONE) === filter);
@@ -102,7 +113,7 @@ function Screens() {
           </Card>
         </>
       )}
-      <AddDialog open={adding} onOpenChange={setAdding} onAdd={async (name, code, groupId, location) => {
+      <AddDialog open={adding} onOpenChange={closeAdd} onAdd={async (name, code, groupId, location) => {
         await addScreen(name, code, groupId, location);
         refresh();
         void queryClient.invalidateQueries({ queryKey: ['billing-account'] });

@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, Settings, Grid2X2, CreditCard, Shield, Columns2,Plug,Users,Activity,ChevronDown,FolderTree, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, Settings, Grid2X2, CreditCard, Shield, Columns2,Plug,Users,Activity,ChevronDown,FolderTree,Plus, type LucideIcon } from "lucide-react";
 import { usePlatformAdmin, useStore } from '@/lib/store';
 import markAsset from "@/assets/screenflow-mark.webp.asset.json";
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -98,6 +98,15 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                         </button>
                         {tvListOpen && (
                         <div className="flex max-h-60 flex-col gap-0.5 overflow-y-auto pb-1">
+                        <Link
+                          to="/screens"
+                          search={{ new: "1" }}
+                          onClick={handleClick}
+                          className="flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-medium text-foreground/70 hover:bg-card"
+                        >
+                          <Plus className="size-3.5 shrink-0 opacity-70" />
+                          <span className="truncate">Ajouter une TV</span>
+                        </Link>
                         {screens.map((screen) => {
                           const url = `/screens/${screen.id}`;
                           const active = path === url;

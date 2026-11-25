@@ -9,8 +9,12 @@ const SCREENS = [
 const GROUPS = [{ id: 'g1', name: 'Vitrines' }];
 
 vi.mock('@tanstack/react-router', () => ({
-  Link: ({ to, params, search, children }: { to: string; params?: { screenId?: string }; search?: { g?: string }; children: ReactNode }) => {
-    const href = params?.screenId ? to.replace('$screenId', params.screenId) : search?.g ? `${to}?g=${search.g}` : to;
+  Link: ({ to, params, search, children }: { to: string; params?: { screenId?: string }; search?: Record<string, string>; children: ReactNode }) => {
+    const href = params?.screenId
+      ? to.replace('$screenId', params.screenId)
+      : search && Object.keys(search).length
+        ? `${to}?${new URLSearchParams(search).toString()}`
+        : to;
     return <a href={href}>{children}</a>;
   },
   useRouterState: (opts: { select: (state: { location: { pathname: string; search: Record<string, string> } }) => unknown }) =>
@@ -82,6 +86,17 @@ it('lists every group as a clickable row that opens that group', () => {
   const row = screen.getAllByText('Vitrines').find((el) => el.closest('a'));
   expect(row, 'missing submenu row for the group').toBeTruthy();
   expect(row?.closest('a')?.getAttribute('href')).toBe('/groups?g=g1');
+});
+
+it('puts "Ajouter une TV" first in the opened screen list', () => {
+  renderMenu();
+  fireEvent.click(accordionHeader());
+  const rows = screen
+    .getAllByText(/Ajouter une TV|TV (TERASSE|SALLE)/)
+    .filter((el) => el.closest('a'));
+  expect(rows).toHaveLength(3);
+  expect(rows[0]?.textContent).toContain('Ajouter une TV');
+  expect(rows[0]?.closest('a')?.getAttribute('href')).toBe('/screens?new=1');
 });
 
 it('puts the screen accordion where the Écrans card used to be, above Groupes', () => {
