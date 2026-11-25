@@ -81,7 +81,7 @@ function MediaPage() {
       ) : (
         <>
           <div className="mb-6 flex min-w-0 flex-col gap-3 border-b border-border sm:flex-row sm:items-end sm:justify-between sm:gap-6">
-            <Tabs className="min-w-0 overflow-x-auto" value={tab} onValueChange={setTab}><TabsList className="media-filter-tabs" aria-label="Type de média">
+            <Tabs className="min-w-0 overflow-x-auto" value={tab} onValueChange={setTab}><TabsList className="console-content-tabs" aria-label="Type de média">
               <TabsTrigger value="all">Tous</TabsTrigger><TabsTrigger value="image">Photos</TabsTrigger><TabsTrigger value="video">Vidéos</TabsTrigger><TabsTrigger value="webpage">Pages Web</TabsTrigger>
             </TabsList></Tabs>
             <Input className="mb-3 h-10 shrink-0 sm:w-64" aria-label="Rechercher un média" placeholder="Rechercher…" value={q} onChange={(e) => setQ(e.target.value)} />
