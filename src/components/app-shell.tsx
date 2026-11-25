@@ -100,10 +100,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
-          <div className="flex items-center gap-2 px-2 pb-3">
-            <SignOutButton variant="outline" />
-            <p className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">Se déconnecter</p>
-          </div>
           <p className="px-5 pb-4 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">ScreenFlow · Affichage dynamique</p>
         </SidebarFooter>
       </Sidebar>
