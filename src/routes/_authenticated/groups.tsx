@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FolderTree, Plus, Trash2, MapPin, Pencil } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useStore, addGroup, deleteGroup, updateGroup, setGroupMember, type Group } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/groups")({
+  validateSearch: (search: Record<string, unknown>): { g?: string } => (typeof search["g"] === "string" ? { g: search["g"] } : {}),
   head: () => ({ meta: [
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
@@ -25,8 +26,13 @@ export const Route = createFileRoute("/_authenticated/groups")({
 
 function GroupsPage() {
   const { groups, screens, refresh } = useStore();
+  const { g: highlight } = Route.useSearch();
   const [editing, setEditing] = useState<Group | null>(null);
   const [open, setOpen] = useState(false); const [name, setName] = useState(""); const [loc, setLoc] = useState("");
+  useEffect(() => {
+    if (!highlight) return;
+    document.getElementById(`group-${highlight}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlight, groups.length]);
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader title="Groupes" description="Regroupez vos écrans par zone, magasin ou usage." action={<Button onClick={() => setOpen(true)}><Plus /> Nouveau groupe</Button>} />
@@ -35,7 +41,7 @@ function GroupsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {groups.map((g) => (
-            <Card key={g.id}><CardContent className="flex items-start justify-between p-5">
+            <Card key={g.id} id={`group-${g.id}`} className={highlight === g.id ? "ring-2 ring-accent" : ""}><CardContent className="flex items-start justify-between p-5">
               <div>
                 <p className="font-semibold">{g.name}</p>
                 {g.location && <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-3" />{g.location}</p>}

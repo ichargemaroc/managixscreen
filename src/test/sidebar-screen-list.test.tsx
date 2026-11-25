@@ -1,0 +1,65 @@
+import { cleanup, render, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { afterEach, expect, it, vi } from 'vitest';
+
+const SCREENS = [
+  { id: 'a1', name: 'TV TERASSE', status: 'online' },
+  { id: 'b2', name: 'TV SALLE', status: 'offline' },
+];
+const GROUPS = [{ id: 'g1', name: 'Vitrines' }];
+
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ to, params, search, children }: { to: string; params?: { screenId?: string }; search?: { g?: string }; children: ReactNode }) => {
+    const href = params?.screenId ? to.replace('$screenId', params.screenId) : search?.g ? `${to}?g=${search.g}` : to;
+    return <a href={href}>{children}</a>;
+  },
+  useRouterState: (opts: { select: (state: { location: { pathname: string; search: Record<string, string> } }) => unknown }) =>
+    opts.select({ location: { pathname: '/screens', search: {} } }),
+}));
+
+vi.mock('@/components/ui/sidebar', () => {
+  const pass = ({ children }: { children: ReactNode }) => <>{children}</>;
+  return {
+    Sidebar: pass,
+    SidebarContent: pass,
+    SidebarFooter: pass,
+    SidebarGroup: pass,
+    SidebarGroupContent: pass,
+    SidebarHeader: pass,
+    SidebarInset: pass,
+    SidebarMenu: ({ children }: { children: ReactNode }) => <ul>{children}</ul>,
+    SidebarMenuItem: ({ children }: { children: ReactNode }) => <li>{children}</li>,
+    SidebarMenuButton: ({ children }: { children: ReactNode }) => <button type="button">{children}</button>,
+    SidebarProvider: pass,
+    SidebarTrigger: () => null,
+    useSidebar: () => ({ setOpenMobile: vi.fn() }),
+  };
+});
+
+vi.mock('@/lib/store', () => ({
+  usePlatformAdmin: () => ({ data: false }),
+  useStore: () => ({ screens: SCREENS, groups: GROUPS }),
+}));
+
+vi.mock('@/components/theme-toggle', () => ({ ThemeToggle: () => null }));
+vi.mock('@/components/sign-out-button', () => ({ SignOutButton: () => null }));
+
+import { NavLinks } from '@/components/app-shell';
+
+afterEach(cleanup);
+
+it('lists every screen one by one inside the Écrans submenu', () => {
+  render(<NavLinks currentUrl="/screens" path="/screens" onNavigate={vi.fn()} />);
+  for (const tv of SCREENS) {
+    const row = screen.getAllByText(tv.name).find((el) => el.closest('a'));
+    expect(row, `missing submenu row for ${tv.name}`).toBeTruthy();
+    expect(row?.closest('a')?.getAttribute('href')).toBe(`/screens/${tv.id}`);
+  }
+});
+
+it('lists every group as a clickable row that opens that group', () => {
+  render(<NavLinks currentUrl="/screens" path="/screens" onNavigate={vi.fn()} />);
+  const row = screen.getAllByText('Vitrines').find((el) => el.closest('a'));
+  expect(row, 'missing submenu row for the group').toBeTruthy();
+  expect(row?.closest('a')?.getAttribute('href')).toBe('/groups?g=g1');
+});

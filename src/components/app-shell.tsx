@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, Settings, Grid2X2, CreditCard, Shield, Columns2,Plug,Users,Activity,ChevronDown, type LucideIcon } from "lucide-react";
-import { usePlatformAdmin } from '@/lib/store';
+import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, Settings, Grid2X2, CreditCard, Shield, Columns2,Plug,Users,Activity,ChevronDown,FolderTree, type LucideIcon } from "lucide-react";
+import { usePlatformAdmin, useStore } from '@/lib/store';
 import markAsset from "@/assets/screenflow-mark.webp.asset.json";
 import { ThemeToggle } from '@/components/theme-toggle';
 import { SignOutButton } from '@/components/sign-out-button';
@@ -11,12 +11,12 @@ import {
 } from "@/components/ui/sidebar";
 
 type NavEntry =
-  | { title: string; url: string; icon: LucideIcon; children?: undefined }
-  | { title: string; icon: LucideIcon; children: readonly { title: string; url: string }[]; url?: undefined };
+  | { title: string; url: string; icon: LucideIcon; children?: undefined; showScreens?: undefined }
+  | { title: string; icon: LucideIcon; children: readonly { title: string; url: string }[]; url?: undefined; showScreens?: boolean };
 
 const nav: readonly NavEntry[] = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
-  { title: "Écrans", icon: Monitor, children: [
+  { title: "Écrans", icon: Monitor, showScreens: true, children: [
     { title: "Écrans", url: "/screens" },
     { title: "Groupes", url: "/groups" },
   ] },
@@ -32,9 +32,11 @@ const nav: readonly NavEntry[] = [
   { title: 'Abonnement', url: '/subscription', icon: CreditCard },
 ];
 
-function NavLinks({ currentUrl, onNavigate }: { currentUrl: string | undefined; onNavigate: () => void }) {
+export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string | undefined; path: string; onNavigate: () => void }) {
   const { setOpenMobile } = useSidebar();
   const { data: isAdmin } = usePlatformAdmin();
+  const { screens, groups } = useStore();
+  const search = useRouterState({ select: (r) => r.location.search as { g?: string } });
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const handleClick = () => {
     setOpenMobile(false);
@@ -50,7 +52,7 @@ function NavLinks({ currentUrl, onNavigate }: { currentUrl: string | undefined; 
           return (
             <SidebarMenuItem key={item.title}>
               <div className={open ? "rounded-2xl bg-accent p-1.5 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0" : ""}>
-                <div className="relative">
+                <div className="relative" onPointerEnter={() => setOpenGroups((prev) => (prev[item.title] === false ? prev : { ...prev, [item.title]: true }))}>
                   <SidebarMenuButton
                     asChild
                     isActive={childActive}
@@ -92,6 +94,47 @@ function NavLinks({ currentUrl, onNavigate }: { currentUrl: string | undefined; 
                         {child.title}
                       </Link>
                     ))}
+                    {item.showScreens && screens.length > 0 && (
+                      <div className="mt-1 flex max-h-60 flex-col gap-0.5 overflow-y-auto border-t border-border/50 pt-1.5">
+                        {screens.map((screen) => {
+                          const url = `/screens/${screen.id}`;
+                          const active = path === url;
+                          return (
+                            <Link
+                              key={screen.id}
+                              to="/screens/$screenId"
+                              params={{ screenId: screen.id }}
+                              onClick={handleClick}
+                              aria-current={active ? "page" : undefined}
+                              className={`flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-medium ${active ? "bg-card text-foreground shadow-sm" : "text-foreground/70 hover:bg-card/70"}`}
+                            >
+                              <span className={`size-1.5 shrink-0 rounded-full ${screen.status === "online" ? "bg-success" : screen.status === "pending" ? "bg-warning" : "bg-muted-foreground"}`} />
+                              <span className="truncate">{screen.name}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {item.showScreens && groups.length > 0 && (
+                      <div className="mt-1 flex max-h-40 flex-col gap-0.5 overflow-y-auto border-t border-border/50 pt-1.5">
+                        {groups.map((group) => {
+                          const active = path === "/groups" && search.g === group.id;
+                          return (
+                            <Link
+                              key={group.id}
+                              to="/groups"
+                              search={{ g: group.id }}
+                              onClick={handleClick}
+                              aria-current={active ? "page" : undefined}
+                              className={`flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-medium ${active ? "bg-card text-foreground shadow-sm" : "text-foreground/70 hover:bg-card/70"}`}
+                            >
+                              <FolderTree className="size-3.5 shrink-0 opacity-70" />
+                              <span className="truncate">{group.name}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -160,7 +203,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <SidebarContent>
           <SidebarGroup className="px-3 pt-4">
             <SidebarGroupContent>
-              <NavLinks currentUrl={path === '/billing-admin' ? path : currentUrl} onNavigate={closeMenu} />
+              <NavLinks currentUrl={path === '/billing-admin' ? path : currentUrl} path={path} onNavigate={closeMenu} />
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
