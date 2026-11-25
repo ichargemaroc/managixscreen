@@ -12,6 +12,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { resolveAssignmentTargets, resolvePlaylistAudience, sameAssignmentSelection } from "@/lib/assignment-targets";
 import { PlaylistMusicPanel } from "@/components/screen-music-panel";
 import { SlideTransitionSelect } from '@/components/slide-transition-select';
+import { PlaylistTickerPanel } from '@/components/playlist-ticker-panel';
+import { DEFAULT_TICKER } from '@/lib/ticker';
 import type { SlideTransition } from '@/lib/slide-transition';
 import { useStore, formatDuration, createPlaylist, renamePlaylist, deletePlaylist, savePlaylistItems, savePlaylistTransition, replacePlaylistAssignments, type Playlist, type PlaylistItem } from "@/lib/store";
 
@@ -249,6 +251,7 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
       </section>
             </CardContent></Card>
           <Card><CardContent className="p-4 [&>section]:mt-0 [&>section]:border-t-0 [&>section]:pt-0"><PlaylistMusicPanel playlistId={playlist.id} /></CardContent></Card>
+          <Card className="lg:col-span-2"><CardContent className="p-4"><PlaylistTickerPanel key={playlist.id} playlistId={playlist.id} initial={playlist.ticker ?? DEFAULT_TICKER} onSaved={refresh} /></CardContent></Card>
           </div>
         </TabsContent>
       </Tabs>

@@ -6,3 +6,4 @@
 - Published Canva links and public Instagram embeds do not imply account connections; weather fetches use fixed MET Norway endpoints, bounded coordinates, attribution and fail-closed persistent abuse counters.- Background music is configured per playlist and follows the screen's playlist; screen music is only a fallback when the playlist has none.
 
 - Scheduled playlists override default screen/group playlists in device_content (screen beats group, schedule timezone); fingerprints switch TVs at slot boundaries.
+- Bandeau défilant par playlist : texte, continu ou 1 passage par cycle, temps de passage, affiché sur les TV.

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Cast, Maximize, RefreshCw, Wifi, WifiOff, Monitor, Play, Pause, ChevronRight, Settings2 } from "lucide-react";
 import { resolveSlideTransition, slideTransitionSchema } from '@/lib/slide-transition';
+import { parseTicker, tickerVisible, type Ticker } from '@/lib/ticker';
 import { Button } from "@/components/ui/button";
 import { cachedMedia, clearMediaCache, commandReceipt, downloadContent, readContent, saveReceipt, saveEntitlement } from "./cache";
 import { installApkUpdate } from "./apk-updater";
@@ -20,6 +21,11 @@ import { WebpageStage } from './webpage-stage';
 import { MultiZoneStage } from './multi-zone-stage';
 import { BackgroundMusic } from './background-music';
 
+/** Bottom scrolling banner: loops forever, or crosses once each time the playlist restarts. */
+function PlayerTicker({ ticker, cycle }: { ticker: Ticker; cycle: number }) {
+  return <div className="tv-ticker" aria-live="off"><div key={ticker.mode === 'once' ? `${cycle}:${ticker.text}` : ticker.text} className="tv-ticker-text" style={{ animationDuration: `${ticker.seconds}s`, animationIterationCount: ticker.mode === 'loop' ? 'infinite' : 1 }}>{ticker.text}</div></div>;
+}
+
 export function TVPlayer() {
   const [positionTest, setPositionTest] = useState<PositionTest | null>(null);
   // Previous image stays underneath while the next slide animates in; ready gates the animation until decode.
@@ -38,6 +44,8 @@ export function TVPlayer() {
   const [online, setOnline] = useState(true);
   const [progress, setProgress] = useState("");
   const [index, setIndex] = useState(0);
+  const [cycle, setCycle] = useState(0);
+  useEffect(() => { if (index === 0) setCycle((c) => c + 1); }, [index]);
   const [source, setSource] = useState("");
   const [paused, setPaused] = useState(false);
   const [zoneVideoPlaying, setZoneVideoPlaying] = useState(false);
@@ -294,6 +302,7 @@ export function TVPlayer() {
     return () => { cancelAnimationFrame(frame); clearTimeout(timer); };
   }, [controls]);
 
+  const playlistTicker = parseTicker(content?.playlist?.ticker);
   const expired = identity && !identity.paired && now >= identity.expires_at;
   const qrUrl = phase === "pairing" && identity && !expired ? pairingUrl(import.meta.env['VITE_PLAYER_API_ORIGIN'] || window.location.origin, identity.pairing_code) : "";
   return <main className="tv-player text-xl" onPointerMove={() => phase === "playing" && setControls(true)}>
@@ -313,6 +322,7 @@ export function TVPlayer() {
       </div>
       <footer className="tv-footer"><span className="text-base">{online ? <Wifi /> : <WifiOff />}{online ? "Réseau disponible" : "Hors connexion"}</span><span className="text-base">{nativePlayer ? "LECTEUR ANDROID TV" : "LECTEUR WEB"} · {playerVersion}{playerBuild ? ` · ${playerBuild}` : ""}</span><Button className="min-h-12 min-w-12" variant="ghost" size="icon" aria-label="Plein écran" onClick={() => void enterPlayerMode()}><Maximize /></Button></footer>
     </div>}
+    {phase === 'playing' && !content?.wall && tickerVisible(playlistTicker) && <PlayerTicker ticker={playlistTicker} cycle={cycle} />}
     </div>
     {phase === "playing" && (source || content?.layout) && controls && <div className="tv-controls"><span>{online ? <Wifi /> : <WifiOff />}{content?.layout?.name ?? content?.playlist?.name}{!content?.layout && ` · ${index + 1}/${items.length}`}{progress && ` · ${progress}`}</span><div><Button disabled={Boolean(content?.wall)} variant="ghost" size="icon" aria-label={paused || playbackBlocked ? "Lecture" : "Pause"} onClick={togglePlayback}>{paused || playbackBlocked ? <Play /> : <Pause />}</Button><Button disabled={Boolean(content?.wall || content?.layout)} variant="ghost" size="icon" aria-label="Média suivant" onClick={() => setIndex((value) => nextItem(value, items.length))}><ChevronRight /></Button><Button variant="ghost" size="icon" aria-label="Synchroniser" disabled={busy.current || !identity || !online} onClick={() => { if (identity && !busy.current) { busy.current = true; void sync(identity).catch(() => setError("Synchronisation indisponible.")).finally(() => { busy.current = false; }); } }}><RefreshCw /></Button><Button variant="ghost" size="icon" aria-label="Plein écran" onClick={() => void enterPlayerMode()}><Maximize /></Button></div>{error && <p role="alert">{error}</p>}</div>}
     {phase === "playing" && (source || content?.layout) && !controls && <Button className="tv-menu" variant="ghost" size="icon" aria-label="Commandes de lecture" onClick={() => setControls(true)}><Settings2 /></Button>}

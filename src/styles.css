@@ -319,3 +319,9 @@
 @keyframes sf-rotate { from { opacity: 0; transform: perspective(1200px) rotateY(90deg); } }
 @keyframes sf-blink { 0%, 40% { opacity: 0; } 20%, 60%, 100% { opacity: 1; } 80% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .tv-stage[data-transition] { animation: none; } }
+
+/* Scrolling banner shared by the TV player and the playlist preview. */
+.tv-ticker { position: absolute; left: 0; right: 0; bottom: 0; z-index: 20; height: 7vh; min-height: 2.5rem; overflow: hidden; background: color-mix(in oklab, var(--player-background) 75%, transparent); color: var(--player-foreground); pointer-events: none; }
+.tv-ticker-text { position: absolute; top: 50%; left: 100%; white-space: nowrap; font-weight: 600; transform: translate(0, -50%); animation-name: tv-ticker-scroll; animation-timing-function: linear; animation-fill-mode: forwards; }
+.tv-ticker .tv-ticker-text { font-size: 3.6vh; }
+@keyframes tv-ticker-scroll { from { left: 100%; transform: translate(0, -50%); } to { left: 0; transform: translate(-100%, -50%); } }

@@ -232,6 +232,13 @@
       "when": 1795566073056,
       "tag": "0032_active_schedule_playlist",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1795642193579,
+      "tag": "0033_playlist_ticker",
+      "breakpoints": true
     }
   ]
 }

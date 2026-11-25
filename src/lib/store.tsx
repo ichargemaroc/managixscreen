@@ -18,6 +18,7 @@ import { readTeam,inviteTeam,acceptTeam,revokeTeam,proposeContent,reviewContent 
 import type { draftInputSchema } from './team';
 import { displayRotationSchema, type DisplayRotation } from './display-rotation';
 import { slideTransitionSchema, type SlideTransition } from './slide-transition';
+import { parseTicker, tickerSchema, type Ticker } from './ticker';
 import { musicSettingsSchema, validateMusicFile, type MusicSettings } from './background-music';
 
 // Données ScreenFlow lues depuis Lovable Cloud. Les pages utilisent useStore()
@@ -34,7 +35,7 @@ export type Screen = {
 export type DeviceCommand = { id: string; screenId: string; command: z.infer<typeof deviceCommand>; status: string; createdAt: string; deliveredAt: string | null; acknowledgedAt: string | null; expiresAt: string; error: string | null; wallId: string | null; testId: string | null; payload: unknown };
 export type Media = { id: string; name: string; type: "image" | "video" | "webpage"; size: number; duration: number | null; url: string; thumbnailUrl?: string; path: string; createdAt: string; refreshMinutes?: number; fullscreen?: boolean };
 export type PlaylistItem = { id: string; mediaId: string; duration: number };
-export type Playlist = { id: string; name: string; description: string; items: PlaylistItem[]; createdAt: string; slideTransition?: SlideTransition };
+export type Playlist = { id: string; name: string; description: string; items: PlaylistItem[]; createdAt: string; slideTransition?: SlideTransition; ticker?: Ticker };
 export type Schedule = {
   id: string; playlistId: string; targetType: "screen" | "group"; targetId: string;
   startDate: string; endDate: string; startTime: string; endTime: string; days: number[];
@@ -143,7 +144,7 @@ export async function fetchAll(queryClient: QueryClient, scope: StoreScope = 'me
     })),
     commands: (commands.data ?? []).map((c) => ({ id: c.id, screenId: c.screen_id, command: c.command as DeviceCommand["command"], status: c.status, createdAt: c.created_at, deliveredAt: c.delivered_at, acknowledgedAt: c.acknowledged_at, expiresAt: c.expires_at, error: c.error_message, wallId: c.wall_id, testId: c.test_id, payload: c.payload })),
     media: mediaRows,
-    playlists: (playlists.data ?? []).map((p) => ({ id: p.id, name: p.name, description: p.description, items: itemsByPlaylist.get(p.id) ?? [], createdAt: p.created_at, slideTransition: slideTransitionSchema.catch('default').parse(p.slide_transition) })),
+    playlists: (playlists.data ?? []).map((p) => ({ id: p.id, name: p.name, description: p.description, items: itemsByPlaylist.get(p.id) ?? [], createdAt: p.created_at, slideTransition: slideTransitionSchema.catch('default').parse(p.slide_transition), ticker: parseTicker(p.ticker) })),
     schedules: (schedules.data ?? []).map((s) => ({
       id: s.id, playlistId: s.playlist_id, targetType: s.target_type as "screen" | "group", targetId: s.target_id,
       startDate: s.start_date, endDate: s.end_date, startTime: s.start_time.slice(0, 5), endTime: s.end_time.slice(0, 5), days: s.days,
@@ -406,6 +407,13 @@ export async function savePlaylistTransition(id: string, transition: SlideTransi
   const slide_transition = slideTransitionSchema.parse(transition);
   const { error } = await supabase.from('playlists').update({ slide_transition }).eq('id', id).select('id').single();
   if (error) throw new Error('L’animation n’a pas pu être enregistrée.');
+  await refreshPlaylistScreens(id);
+}
+
+export async function savePlaylistTicker(id: string, value: Ticker) {
+  const ticker = tickerSchema.parse(value);
+  const { error } = await supabase.from('playlists').update({ ticker }).eq('id', id).select('id').single();
+  if (error) throw new Error('Le bandeau n’a pas pu être enregistré.');
   await refreshPlaylistScreens(id);
 }
 

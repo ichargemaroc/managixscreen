@@ -667,6 +667,7 @@ export type Database = {
           id: string
           name: string
           slide_transition: string
+          ticker: Json | null
           updated_at: string
           user_id: string
         }
@@ -676,6 +677,7 @@ export type Database = {
           id?: string
           name: string
           slide_transition?: string
+          ticker?: Json | null
           updated_at?: string
           user_id: string
         }
@@ -685,6 +687,7 @@ export type Database = {
           id?: string
           name?: string
           slide_transition?: string
+          ticker?: Json | null
           updated_at?: string
           user_id?: string
         }
