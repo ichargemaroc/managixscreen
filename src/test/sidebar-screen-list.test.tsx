@@ -33,7 +33,9 @@ vi.mock('@/components/ui/sidebar', () => {
     SidebarInset: pass,
     SidebarMenu: ({ children }: { children: ReactNode }) => <ul>{children}</ul>,
     SidebarMenuItem: ({ children }: { children: ReactNode }) => <li>{children}</li>,
-    SidebarMenuButton: ({ children }: { children: ReactNode }) => <button type="button">{children}</button>,
+    SidebarMenuButton: ({ children, ...props }: { children: ReactNode; 'aria-label'?: string; 'aria-expanded'?: boolean; onClick?: () => void }) => (
+      <button type="button" aria-label={props['aria-label']} aria-expanded={props['aria-expanded']} onClick={props.onClick}>{children}</button>
+    ),
     SidebarProvider: pass,
     SidebarTrigger: () => null,
     useSidebar: () => ({ setOpenMobile: vi.fn() }),
@@ -165,6 +167,23 @@ it('puts "Ajouter une TV" first in the opened screen list', () => {
   expect(rows).toHaveLength(3);
   expect(rows[0]?.textContent).toContain('Ajouter une TV');
   expect(rows[0]?.closest('a')?.getAttribute('href')).toBe('/screens?new=1');
+});
+
+it('opens the Écrans submenu only on click, never on hover', () => {
+  render(
+    <NavLinks currentUrl="/media" path="/media" onNavigate={vi.fn()} />,
+  );
+  const label = screen.getAllByText('Écrans')[0];
+  const row = label?.closest('button');
+  if (!row) throw new Error('Écrans row is not a button');
+  expect(row.getAttribute('aria-expanded')).toBe('false');
+
+  fireEvent.pointerEnter(row.parentElement ?? row);
+  expect(row.getAttribute('aria-expanded')).toBe('false');
+  expect(tvRows()).toHaveLength(0);
+
+  fireEvent.click(row);
+  expect(row.getAttribute('aria-expanded')).toBe('true');
 });
 
 it('renders the Écrans row as a button, never as a link', () => {

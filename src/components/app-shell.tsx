@@ -53,7 +53,7 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
           return (
             <SidebarMenuItem key={item.title}>
               <div className={open ? "rounded-2xl bg-accent p-1.5 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0" : ""}>
-                <div className="relative" onPointerEnter={() => setOpenGroups((prev) => (prev[item.title] === false ? prev : { ...prev, [item.title]: true }))}>
+                <div className="relative">
                   <SidebarMenuButton
                     isActive={childActive}
                     tooltip={item.title}
