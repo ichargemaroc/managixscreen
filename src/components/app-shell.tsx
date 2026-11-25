@@ -92,7 +92,6 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                           aria-label={tvListOpen ? "Replier la liste des téléviseurs" : "Déplier la liste des téléviseurs"}
                           className="flex h-10 w-full items-center gap-2 rounded-xl bg-card/70 px-4 text-sm font-medium text-foreground/80 hover:bg-card"
                         >
-                          <Monitor className="size-4 shrink-0 opacity-70" />
                           <span className="truncate">Téléviseurs</span>
                           <span className="ml-auto shrink-0 text-xs tabular-nums opacity-60">{screens.length}</span>
                           <ChevronDown className={`size-4 shrink-0 transition-transform ${tvListOpen ? "rotate-180" : ""}`} />
