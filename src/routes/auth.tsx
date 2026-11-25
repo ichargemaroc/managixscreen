@@ -5,7 +5,32 @@ import { toast } from "sonner";
 import logoAsset from "@/assets/screenflow-logo.webp.asset.json";
 import heroAsset from '@/assets/screenflow-tv-hero.webp.asset.json';
 import markAsset from '@/assets/screenflow-mark.webp.asset.json';
-import { ArrowRight, Image, Globe, ListVideo, Monitor } from "lucide-react";
+import { ArrowRight, Image, Globe, ListVideo, Monitor, Check, Grid2X2, Columns2, CalendarClock, Music, Megaphone, Activity, Users, WifiOff, Plug, Smartphone } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { publicPricingSchema, displayMonthly, annualTotal, formatPrice } from "@/lib/public-pricing";
+
+const FEATURES = [
+  { icon: Smartphone, title: 'Jumelage simple', detail: 'Code à 6 chiffres ou QR code, groupes d’écrans, rotation d’affichage.' },
+  { icon: Image, title: 'Médiathèque', detail: 'Images, vidéos MP4, pages Web et vidéos YouTube en plein écran.' },
+  { icon: ListVideo, title: 'Playlists', detail: 'Ordre, durées, 11 transitions entre diapositives, affectation à plusieurs TV ou groupes.' },
+  { icon: CalendarClock, title: 'Programmation horaire', detail: 'Une playlist par défaut et des créneaux programmés qui prennent le relais.' },
+  { icon: Music, title: 'Musique de fond', detail: 'Une musique par playlist, activable ou non sur chaque écran.' },
+  { icon: Megaphone, title: 'Bandeau défilant', detail: 'Texte, couleurs et vitesse réglables, mise à jour possible par API.' },
+  { icon: Columns2, title: 'Multi-zones', detail: 'Écran scindé en plusieurs zones avec un contenu dans chacune.' },
+  { icon: Grid2X2, title: 'Murs d’images', detail: 'Une même image répartie sur plusieurs TV, avec test de position.' },
+  { icon: Plug, title: 'Intégrations', detail: 'Designs Canva publiés, météo locale et publications Instagram.' },
+  { icon: Activity, title: 'Supervision', detail: 'État en ligne, contenu en cours et version du player pour chaque TV.' },
+  { icon: WifiOff, title: 'Lecture hors ligne', detail: 'Les contenus et la musique continuent même sans Internet.' },
+  { icon: Users, title: 'Gestion d’équipe', detail: 'Invitez des collaborateurs et validez leurs modifications.' },
+] as const;
+
+const FAQ = [
+  ['Comment connecter ma télévision ?', 'Ouvrez Screenflow Player sur votre TV Android, puis associez-la à votre compte avec le code affiché ou son QR code.'],
+  ['L’essai gratuit est-il sans engagement ?', 'Oui. L’essai dure 14 jours, jusqu’à 5 écrans, sans carte bancaire.'],
+  ['Que se passe-t-il si Internet coupe ?', 'Le player continue de diffuser les contenus déjà téléchargés, musique comprise.'],
+  ['Puis-je changer de palier ?', 'Oui. Le passage à un palier supérieur est immédiat ; une baisse s’applique au renouvellement, sans supprimer vos données.'],
+  ['Quelles TV sont compatibles ?', 'Android TV et Google TV, ainsi que tout navigateur web. Pour Samsung ou LG, branchez un boîtier Android TV.'],
+] as const;
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,8 +48,8 @@ export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
-    { title: "ScreenFlow — Vos contenus sur grand écran" },
-    { name: "description", content: "Vos photos, vidéos et pages Web réunies sur vos TV Android avec ScreenFlow." },
+    { title: "ScreenFlow — Affichage dynamique pour TV Android, tarifs et essai gratuit" },
+    { name: "description", content: "Pilotez vos TV Android à distance : playlists, programmation, multi-zones, murs d’images. Essai gratuit 14 jours, tarifs par nombre d’écrans." },
     { property: "og:title", content: "ScreenFlow — Vos contenus sur grand écran" },
     { property: "og:description", content: "Vos contenus, vos écrans, un seul espace ScreenFlow." },
     { property: 'og:image', content: heroAsset.url },
@@ -54,6 +79,17 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [connecting, setConnecting] = useState(Boolean(pairCode));
+  const [cycle, setCycle] = useState<'monthly' | 'annual'>('monthly');
+  const { data: pricing } = useQuery({ queryKey: ['public-pricing'], queryFn: async () => {
+    const { data, error } = await supabase.rpc('public_pricing');
+    if (error) throw error;
+    return publicPricingSchema.parse(data);
+  }, staleTime: 5 * 60_000 });
+  function openAuth(next: 'login' | 'signup') { setMode(next); setConnecting(true); }
+  function choosePlan(planId: string) {
+    try { sessionStorage.setItem('screenflow:chosen-plan', planId); } catch { /* optional */ }
+    openAuth('signup');
+  }
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -78,7 +114,11 @@ function AuthPage() {
           }
         }
         if (pairCode) await navigate({ to: "/pair", search: { code: pairCode } });
-        else await navigate({ to: "/" });
+        else {
+          let chosen: string | null = null;
+          try { chosen = sessionStorage.getItem('screenflow:chosen-plan'); sessionStorage.removeItem('screenflow:chosen-plan'); } catch { /* optional */ }
+          await navigate({ to: chosen ? "/subscription" : "/" });
+        }
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -105,13 +145,13 @@ function AuthPage() {
       <header className="welcome-header">
         <img src={logoAsset.url} alt="Screenflow" className="welcome-logo h-10 w-auto max-w-32 shrink-0 object-contain" />
         <nav aria-label="Navigation de l’accueil" className="welcome-nav">
-          <Button variant="ghost" asChild><a href="#screenflow">Découvrir Screenflow</a></Button>
-          <Button variant="ghost" asChild><a href="#contenus">Vos contenus</a></Button>
+          <Button variant="ghost" asChild><a href="#fonctionnalites">Fonctionnalités</a></Button>
+          <Button variant="ghost" asChild><a href="#tarifs">Tarifs</a></Button>
           <Button variant="ghost" asChild><a href="#questions">Questions fréquentes</a></Button>
         </nav>
         <div className="flex items-center gap-1 sm:gap-2">
           <ThemeToggle />
-          <Button className="shrink-0 rounded-full px-5" onClick={() => { setMode('login'); setConnecting(true); }}>Se connecter</Button>
+          <Button className="shrink-0 rounded-full px-5" onClick={() => openAuth('login')}>Se connecter</Button>
         </div>
       </header>
       <main>
@@ -119,24 +159,72 @@ function AuthPage() {
           <img src={heroAsset.url} alt="Télévision Screenflow présentant des paysages, de l’architecture et des images colorées" className="google-tv-welcome-image" fetchPriority="high" />
           <div className="google-tv-welcome-copy">
             <h1 className="google-tv-welcome-title"><img src={markAsset.url} alt="" />Screenflow</h1>
-            <p className="google-tv-welcome-tagline">Tous vos contenus.<br />Un seul espace pour vos écrans.</p>
-            <Button size="lg" className="mt-6 rounded-full px-7" onClick={() => { setMode("signup"); setConnecting(true); }}>Commencer avec Screenflow <ArrowRight /></Button>
+            <p className="google-tv-welcome-tagline">L’affichage dynamique pilotable à distance<br />pour toutes vos TV Android.</p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Button size="lg" className="rounded-full px-7" onClick={() => openAuth('signup')}>Essai gratuit {pricing?.trial_days ?? 14} jours <ArrowRight /></Button>
+              <Button size="lg" variant="outline" className="rounded-full px-7" asChild><a href="#tarifs">Voir les tarifs</a></Button>
+            </div>
           </div>
         </section>
-        <section id="contenus" className="welcome-content-band bg-background px-6 sm:px-12">
-          <div className="mx-auto max-w-5xl text-center">
-            <p className="mx-auto max-w-2xl text-lg leading-relaxed text-muted-foreground">Vos images, vos vidéos et vos pages Web réunies sur vos TV Android. De l’écran d’accueil au mur d’images, donnez à chaque lieu le contenu qui lui ressemble.</p>
-            <h2 className="mt-14 text-4xl font-medium">À chaque écran, son contenu.</h2>
-            <div className="welcome-content-grid">
-              {[{ icon: Image, title: 'Photos & vidéos', detail: 'Vos médias sur grand écran.' }, { icon: Globe, title: 'Pages Web', detail: 'Vos sites et contenus en ligne.' }, { icon: ListVideo, title: 'Playlists', detail: 'Vos contenus, dans le bon ordre.' }, { icon: Monitor, title: 'Murs d’écrans', detail: 'Une image, plusieurs écrans.' }].map(({ icon: Icon, title, detail }) => <div key={title}><Icon className="mx-auto mb-5 size-8 text-primary" strokeWidth={1.5} /><h3 className="text-lg font-medium">{title}</h3><p className="mt-2 text-sm text-muted-foreground">{detail}</p></div>)}
+        <section className="bg-background px-6 py-16 sm:px-12">
+          <div className="mx-auto max-w-5xl">
+            <h2 className="text-center text-3xl font-medium">Opérationnel en 3 étapes</h2>
+            <ol className="mt-10 grid gap-6 md:grid-cols-3">
+              {[['1', 'Installez le player', 'Installez Screenflow Player sur votre TV Android, Google TV ou ouvrez-le dans un navigateur.'], ['2', 'Jumelez l’écran', 'Saisissez le code affiché sur la TV ou scannez son QR code depuis votre espace.'], ['3', 'Diffusez', 'Créez vos playlists et affectez-les à vos TV ou groupes : la mise à jour arrive en quelques secondes.']].map(([n, t, d]) => <li key={n} className="rounded-2xl border bg-card p-6"><span className="flex size-10 items-center justify-center rounded-full bg-accent font-medium text-accent-foreground">{n}</span><h3 className="mt-4 text-lg font-medium">{t}</h3><p className="mt-2 text-sm text-muted-foreground">{d}</p></li>)}
+            </ol>
+          </div>
+        </section>
+        <section id="fonctionnalites" className="bg-muted px-6 py-16 sm:px-12">
+          <div className="mx-auto max-w-6xl">
+            <h2 className="text-center text-3xl font-medium">Tout pour gérer votre réseau d’écrans</h2>
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {FEATURES.map(({ icon: Icon, title, detail }) => <div key={title} className="rounded-2xl bg-card p-6"><Icon className="mb-4 size-7 text-primary" strokeWidth={1.5} /><h3 className="font-medium">{title}</h3><p className="mt-2 text-sm leading-relaxed text-muted-foreground">{detail}</p></div>)}
             </div>
+            <p className="mt-8 text-center text-sm text-muted-foreground">Compatible Android TV, Google TV et navigateur web. Les TV Samsung (Tizen) et LG (webOS) ne sont pas prises en charge : utilisez un boîtier Android TV en HDMI.</p>
+          </div>
+        </section>
+        <section id="tarifs" className="bg-background px-6 py-16 sm:px-12">
+          <div className="mx-auto max-w-6xl">
+            <h2 className="text-center text-3xl font-medium">Des tarifs simples, selon votre nombre d’écrans</h2>
+            <p className="mt-3 text-center text-muted-foreground">Essai gratuit de {pricing?.trial_days ?? 14} jours jusqu’à {pricing?.trial_capacity ?? 5} écrans, sans carte bancaire.</p>
+            <div className="mt-8 flex justify-center">
+              <div role="group" aria-label="Période de facturation" className="inline-flex rounded-full border p-1">
+                {(['monthly', 'annual'] as const).map((c) => <Button key={c} size="sm" variant={cycle === c ? 'default' : 'ghost'} className="rounded-full" onClick={() => setCycle(c)}>{c === 'monthly' ? 'Mensuel' : 'Annuel — 2 mois offerts'}</Button>)}
+              </div>
+            </div>
+            {!pricing ? <p className="mt-10 text-center text-muted-foreground">Chargement des tarifs…</p> : (
+              <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                {pricing.plans.map((plan, i) => {
+                  const discount = pricing.annual_discount_percent ?? 0;
+                  const currency = pricing.currency ?? 'MAD';
+                  return (
+                    <div key={plan.id} className={`flex flex-col rounded-2xl border p-6 ${i === 1 ? 'border-primary bg-accent/40' : 'bg-card'}`}>
+                      {i === 1 && <span className="mb-2 w-fit rounded-full bg-primary px-3 py-0.5 text-xs text-primary-foreground">Le plus choisi</span>}
+                      <h3 className="text-lg font-medium">{plan.name}</h3>
+                      <p className="text-sm text-muted-foreground">Jusqu’à {plan.capacity} écrans</p>
+                      <p className="mt-5 text-3xl font-medium tabular-nums">{formatPrice(displayMonthly(plan.monthly_amount, cycle, discount), currency)}<span className="text-sm font-normal text-muted-foreground"> /mois</span></p>
+                      <p className="mt-1 h-5 text-xs text-muted-foreground">{cycle === 'annual' ? `Soit ${formatPrice(annualTotal(plan.monthly_amount, discount), currency)} par an` : ''}</p>
+                      <ul className="mt-5 flex-1 space-y-2 text-sm">
+                        {['Toutes les fonctionnalités', 'Lecture hors ligne', 'Équipe et programmation'].map((f) => <li key={f} className="flex gap-2"><Check className="size-4 shrink-0 text-primary" />{f}</li>)}
+                      </ul>
+                      <Button className="mt-6 w-full rounded-full" variant={i === 1 ? 'default' : 'outline'} onClick={() => choosePlan(plan.id)}>Commencer l’essai</Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <p className="mt-6 text-center text-xs text-muted-foreground">Prix hors taxes. L’abonnement se choisit depuis votre espace à la fin de l’essai.</p>
           </div>
         </section>
         <section id="questions" className="bg-muted px-6 py-16 sm:px-12">
           <div className="mx-auto max-w-3xl">
             <h2 className="mb-8 text-center text-3xl font-medium">Questions fréquentes</h2>
-            {[['Comment connecter ma télévision ?', 'Ouvrez Screenflow Player sur votre télévision Android, puis associez-la à votre compte avec le code affiché ou son QR code.'], ['Quels contenus puis-je diffuser ?', 'Ajoutez vos photos, vidéos ou pages Web dans Médias, puis réunissez-les dans une playlist à affecter à vos écrans. Certains sites limitent leur affichage intégré.'], ['Puis-je gérer plusieurs écrans ?', 'Oui. Retrouvez vos télévisions dans le même espace, organisez-les en groupes et affectez vos playlists ou vos murs d’images.']].map(([question, answer]) => <details className="welcome-faq border-b py-5" key={question}><summary className="cursor-pointer text-lg font-medium">{question}</summary><p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">{answer}</p></details>)}
+            {FAQ.map(([question, answer]) => <details className="welcome-faq border-b py-5" key={question}><summary className="cursor-pointer text-lg font-medium">{question}</summary><p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">{answer}</p></details>)}
           </div>
+        </section>
+        <section className="bg-background px-6 py-16 text-center sm:px-12">
+          <h2 className="text-3xl font-medium">Prêt à allumer vos écrans ?</h2>
+          <Button size="lg" className="mt-6 rounded-full px-7" onClick={() => openAuth('signup')}>Créer mon compte gratuit <ArrowRight /></Button>
         </section>
       </main>
       <footer className="flex flex-wrap items-center justify-between gap-4 border-t px-6 py-7 sm:px-12"><img src={logoAsset.url} alt="Screenflow" className="welcome-logo h-8 w-auto max-w-28 object-contain" /><span className="text-sm text-muted-foreground">Vos contenus. Tous vos écrans.</span></footer>

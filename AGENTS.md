@@ -63,3 +63,4 @@ use the editor.
 - Wall position tests reuse device_commands with server-derived assignment snapshots, expiring sessions and owner-only RPCs; independent five-second player polling must not wait for media downloads, and acknowledgements confirm rendered tests rather than enqueue success.
 - Player D-pad focus and native Back handling live in src/player/tv-navigation.ts; Back closes playback controls before exiting at root without changing cached media or paired identity.
 - Wall media placement uses normalized offsets and a uniform scale persisted by the owner-scoped wall RPC; previews and native playback share wallMediaRect so movement and resizing change actual cropping without distortion.
+- The public landing (/auth) reads published plans only through the anon-callable public_pricing() RPC; prices are never hardcoded.

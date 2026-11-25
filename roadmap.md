@@ -212,3 +212,5 @@
 ## Documentation API clients
 - [x] Onglet API Développeur, exemples copiables et guide Markdown téléchargeable ; lien depuis les playlists.
 - [x] Session connectée : onglets, lien depuis une playlist, copie des en-têtes et téléchargement de 4 952 octets vérifiés ; téléphone sans débordement, 10 tests réussis et aucune erreur observée.
+- [x] Page d'accueil refaite (audit fonctionnalités + tarifs + inscription essai)
+- [ ] Paiement en ligne (Paddle recommandé) — en attente de l'accord de l'utilisateur

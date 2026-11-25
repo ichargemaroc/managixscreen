@@ -1561,6 +1561,7 @@ export type Database = {
         Args: { p_playlist: string }
         Returns: Json
       }
+      public_pricing: { Args: never; Returns: Json }
       register_pairing_session: {
         Args: {
           p_code: string
