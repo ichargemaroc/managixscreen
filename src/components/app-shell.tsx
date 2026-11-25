@@ -84,20 +84,20 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                 {open && (
                   <div className="mt-1 flex flex-col gap-1.5 group-data-[collapsible=icon]:hidden">
                     {item.showScreens && screens.length > 0 && (
-                      <div>
+                      <div className="overflow-hidden rounded-xl bg-card/70">
                         <button
                           type="button"
                           onClick={() => setTvListOpen((v) => !v)}
                           aria-expanded={tvListOpen}
                           aria-label={tvListOpen ? "Replier la liste des téléviseurs" : "Déplier la liste des téléviseurs"}
-                          className="flex h-10 w-full items-center gap-2 rounded-xl bg-card/70 px-4 text-sm font-medium text-foreground/80 hover:bg-card"
+                          className="flex h-10 w-full items-center gap-2 px-4 text-sm font-medium text-foreground/80 hover:bg-card"
                         >
                           <span className="truncate">Téléviseurs</span>
                           <span className="ml-auto shrink-0 text-xs tabular-nums opacity-60">{screens.length}</span>
                           <ChevronDown className={`size-4 shrink-0 transition-transform ${tvListOpen ? "rotate-180" : ""}`} />
                         </button>
                         {tvListOpen && (
-                        <div className="mt-1 flex max-h-60 flex-col gap-0.5 overflow-y-auto pb-1">
+                        <div className="flex max-h-60 flex-col gap-0.5 overflow-y-auto pb-1">
                         {screens.map((screen) => {
                           const url = `/screens/${screen.id}`;
                           const active = path === url;
@@ -108,7 +108,7 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                               params={{ screenId: screen.id }}
                               onClick={handleClick}
                               aria-current={active ? "page" : undefined}
-                              className={`flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-medium ${active ? "bg-card text-foreground shadow-sm" : "text-foreground/70 hover:bg-card/70"}`}
+                              className={`flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-medium ${active ? "bg-card text-foreground shadow-sm" : "text-foreground/70 hover:bg-card"}`}
                             >
                               <span className={`size-1.5 shrink-0 rounded-full ${screen.status === "online" ? "bg-success" : screen.status === "pending" ? "bg-warning" : "bg-muted-foreground"}`} />
                               <span className="truncate">{screen.name}</span>
