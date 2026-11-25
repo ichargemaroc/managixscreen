@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Cast, Maximize, RefreshCw, Wifi, WifiOff, Monitor, Play, Pause, ChevronRight, Settings2 } from "lucide-react";
 import { resolveSlideTransition, slideTransitionSchema } from '@/lib/slide-transition';
-import { parseTicker, tickerVisible, type Ticker } from '@/lib/ticker';
+import { parseTicker, tickerBackground, tickerVisible, type Ticker } from '@/lib/ticker';
 import { Button } from "@/components/ui/button";
 import { cachedMedia, clearMediaCache, commandReceipt, downloadContent, readContent, saveReceipt, saveEntitlement } from "./cache";
 import { installApkUpdate } from "./apk-updater";
@@ -23,7 +23,7 @@ import { BackgroundMusic } from './background-music';
 
 /** Bottom scrolling banner: loops forever, or crosses once each time the playlist restarts. */
 function PlayerTicker({ ticker, cycle }: { ticker: Ticker; cycle: number }) {
-  return <div className="tv-ticker" aria-live="off"><div key={ticker.mode === 'once' ? `${cycle}:${ticker.text}` : ticker.text} className="tv-ticker-text" style={{ animationDuration: `${ticker.seconds}s`, animationIterationCount: ticker.mode === 'loop' ? 'infinite' : 1 }}>{ticker.text}</div></div>;
+  return <div className="tv-ticker" aria-live="off" style={{ height: `${ticker.height}vh`, background: tickerBackground(ticker), color: ticker.textColor }}><div key={ticker.mode === 'once' ? `${cycle}:${ticker.text}` : ticker.text} className="tv-ticker-text" style={{ animationDuration: `${ticker.seconds}s`, animationIterationCount: ticker.mode === 'loop' ? 'infinite' : 1, fontSize: `${ticker.textSize}vh` }}>{ticker.text}</div></div>;
 }
 
 export function TVPlayer() {
