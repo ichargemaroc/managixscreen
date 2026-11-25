@@ -39,6 +39,7 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
   const search = useRouterState({ select: (r) => r.location.search as { g?: string } });
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [tvListOpen, setTvListOpen] = useState(false);
+  const [groupListOpen, setGroupListOpen] = useState(false);
   const handleClick = () => {
     setOpenMobile(false);
     onNavigate();
@@ -126,7 +127,7 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                         )}
                       </div>
                     )}
-                    {(item.showScreens ? item.children.slice(1) : item.children).map((child) => (
+                    {(item.showScreens ? [] : item.children).map((child) => (
                       <Link
                         key={child.url}
                         to={child.url}
@@ -138,7 +139,28 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                       </Link>
                     ))}
                     {item.showScreens && groups.length > 0 && (
-                      <div className="mt-1 flex max-h-40 flex-col gap-0.5 overflow-y-auto border-t border-border/50 pt-1.5">
+                      <div className="overflow-hidden rounded-xl bg-card/70">
+                        <button
+                          type="button"
+                          onClick={() => setGroupListOpen((v) => !v)}
+                          aria-expanded={groupListOpen}
+                          aria-label={groupListOpen ? "Replier la liste des groupes" : "Déplier la liste des groupes"}
+                          className="flex h-10 w-full items-center gap-2 px-4 text-sm font-medium text-foreground/80 hover:bg-card"
+                        >
+                          <span className="truncate">Groupes</span>
+                          <ChevronDown className={`ml-auto size-4 shrink-0 transition-transform ${groupListOpen ? "rotate-180" : ""}`} />
+                        </button>
+                        {groupListOpen && (
+                        <div className="flex max-h-40 flex-col gap-0.5 overflow-y-auto pb-1">
+                        <Link
+                          to="/groups"
+                          onClick={handleClick}
+                          aria-current={path === "/groups" && !search.g ? "page" : undefined}
+                          className="flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-medium text-foreground/70 hover:bg-card"
+                        >
+                          <FolderTree className="size-3.5 shrink-0 opacity-70" />
+                          <span className="truncate">Tous les groupes</span>
+                        </Link>
                         {groups.map((group) => {
                           const active = path === "/groups" && search.g === group.id;
                           return (
@@ -148,13 +170,15 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                               search={{ g: group.id }}
                               onClick={handleClick}
                               aria-current={active ? "page" : undefined}
-                              className={`flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-medium ${active ? "bg-card text-foreground shadow-sm" : "text-foreground/70 hover:bg-card/70"}`}
+                              className={`flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-medium ${active ? "bg-card text-foreground shadow-sm" : "text-foreground/70 hover:bg-card"}`}
                             >
                               <FolderTree className="size-3.5 shrink-0 opacity-70" />
                               <span className="truncate">{group.name}</span>
                             </Link>
                           );
                         })}
+                        </div>
+                        )}
                       </div>
                     )}
                   </div>

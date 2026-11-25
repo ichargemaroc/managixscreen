@@ -54,7 +54,9 @@ afterEach(cleanup);
 
 const renderMenu = () => render(<NavLinks currentUrl="/screens" path="/screens" onNavigate={vi.fn()} />);
 const accordionHeader = () => screen.getByRole('button', { name: /liste des téléviseurs/i });
+const groupsHeader = () => screen.getByRole('button', { name: /liste des groupes/i });
 const tvRows = () => screen.queryAllByText(/TV (TERASSE|SALLE)/).filter((el) => el.closest('a'));
+const groupRows = () => screen.queryAllByText('Vitrines').filter((el) => el.closest('a'));
 
 it('keeps the screen list closed until the accordion is opened', () => {
   renderMenu();
@@ -71,6 +73,29 @@ it('keeps the screen list closed until the accordion is opened', () => {
   expect(tvRows()).toHaveLength(0);
 });
 
+it('keeps the group list closed until the accordion is opened', () => {
+  renderMenu();
+  const header = groupsHeader();
+  expect(header.getAttribute('aria-expanded')).toBe('false');
+  expect(groupRows()).toHaveLength(0);
+
+  fireEvent.click(header);
+  expect(header.getAttribute('aria-expanded')).toBe('true');
+  expect(groupRows()).toHaveLength(1);
+
+  fireEvent.click(header);
+  expect(header.getAttribute('aria-expanded')).toBe('false');
+  expect(groupRows()).toHaveLength(0);
+});
+
+it('gives the group accordion the same card style as the screen accordion', () => {
+  renderMenu();
+  const tvCard = accordionHeader().closest('div');
+  const groupCard = groupsHeader().closest('div');
+  expect(groupCard?.className).toBe(tvCard?.className);
+  expect(groupsHeader().className).toBe(accordionHeader().className);
+});
+
 it('lists every screen one by one once the accordion is open', () => {
   renderMenu();
   fireEvent.click(accordionHeader());
@@ -83,9 +108,18 @@ it('lists every screen one by one once the accordion is open', () => {
 
 it('lists every group as a clickable row that opens that group', () => {
   renderMenu();
-  const row = screen.getAllByText('Vitrines').find((el) => el.closest('a'));
+  fireEvent.click(groupsHeader());
+  const row = groupRows()[0];
   expect(row, 'missing submenu row for the group').toBeTruthy();
   expect(row?.closest('a')?.getAttribute('href')).toBe('/groups?g=g1');
+});
+
+it('keeps a plain link to the groups page inside the group accordion', () => {
+  renderMenu();
+  fireEvent.click(groupsHeader());
+  const row = screen.getAllByText('Tous les groupes').find((el) => el.closest('a'));
+  expect(row, 'missing link to the groups page').toBeTruthy();
+  expect(row?.closest('a')?.getAttribute('href')).toBe('/groups');
 });
 
 it('puts "Ajouter une TV" first in the opened screen list', () => {
@@ -102,10 +136,9 @@ it('puts "Ajouter une TV" first in the opened screen list', () => {
 it('puts the screen accordion where the Écrans card used to be, above Groupes', () => {
   renderMenu();
   const header = accordionHeader();
-  const groupRow = screen.getAllByText('Vitrines').find((el) => el.closest('a'));
-  expect(groupRow, 'missing submenu row for the group').toBeTruthy();
+  const groupHeader = groupsHeader();
   // Groupes must come after the accordion header, i.e. the accordion took the first slot.
-  expect(header.compareDocumentPosition(groupRow!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(header.compareDocumentPosition(groupHeader) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   // The duplicated "Écrans" card is gone: only the menu row itself is named Écrans.
   expect(screen.getAllByText('Écrans')).toHaveLength(1);
 });
