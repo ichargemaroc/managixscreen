@@ -168,8 +168,12 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
             {media.length === 0 ? <p className="text-sm text-muted-foreground">Importez d'abord des médias dans la Médiathèque.</p> : (
               <ul className="max-h-[28rem] space-y-1 overflow-y-auto">
                 {shown.length === 0 ? <li className="p-2 text-sm text-muted-foreground">Aucun média trouvé.</li> : shown.map((m) => (
-                  <li key={m.id}><Button variant="ghost" disabled={busy} onClick={() => add(m.id)} className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-muted">
-                    {m.type === 'webpage' ? <Globe className="size-4 text-primary" /> : m.type === "video" ? <Film className="size-4 text-primary" /> : <Plus className="size-4 text-primary" />}<span className="truncate">{m.name}</span>
+                  <li key={m.id}><Button variant="ghost" disabled={busy} onClick={() => add(m.id)} className="flex h-auto w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-muted">
+                    <div className="flex h-10 w-16 shrink-0 items-center justify-center overflow-hidden rounded bg-muted">
+                      {m.type === 'webpage' ? <Globe className="size-4 text-primary" /> : m.type === "image" ? <img src={m.thumbnailUrl || m.url} alt="" loading="lazy" decoding="async" className="size-full object-cover" onError={(e) => { const img = e.currentTarget; if (img.src !== m.url) img.src = m.url; }} /> : <video src={m.url} muted preload="metadata" className="size-full object-cover" />}
+                    </div>
+                    <span className="min-w-0 flex-1 truncate">{m.name}</span>
+                    <Plus className="size-4 shrink-0 text-primary" />
                   </Button></li>
                 ))}
               </ul>
