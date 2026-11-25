@@ -416,6 +416,8 @@ export async function deletePlaylist(id: string) {
 
 // Remplace tout le contenu d'une playlist (ordre + durées) en une opération.
 export async function savePlaylistItems(playlistId: string, items: { mediaId: string; duration: number }[]) {
+  const seen = new Set<string>();
+  items = items.filter((it) => !seen.has(it.mediaId) && seen.add(it.mediaId));
   const { error } = await supabase.rpc("replace_playlist_items", { p_playlist_id: playlistId, p_items: items });
   if (error) throw error;
   // Notify TVs showing this playlist so they update within seconds; best effort.
