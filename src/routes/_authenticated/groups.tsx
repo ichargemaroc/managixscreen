@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { FolderTree, Plus, Trash2, MapPin, Pencil } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/app-shell";
@@ -47,7 +47,7 @@ function GroupsPage() {
                 {g.location && <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-3" />{g.location}</p>}
                 <p className="mt-3 text-sm">{g.screenIds.length} écran(s)</p>
               </div>
-              <div className="flex"><Button variant="ghost" size="icon" aria-label="Gérer le groupe" onClick={() => { setEditing(g); setName(g.name); setLoc(g.location); setOpen(true); }}><Pencil /></Button>
+              <div className="flex"><Button variant="ghost" size="icon" aria-label="Gérer le groupe" asChild><Link to="/groups/$groupId" params={{ groupId: g.id }}><Pencil /></Link></Button>
               <Button variant="ghost" size="icon" aria-label="Supprimer" onClick={async () => { await deleteGroup(g.id); refresh(); }}><Trash2 /></Button></div>
             </CardContent></Card>
           ))}

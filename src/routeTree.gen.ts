@@ -31,6 +31,7 @@ import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/t
 import { Route as AuthenticatedVideoWallsRouteImport } from './routes/_authenticated/video-walls'
 import { Route as DisplayInstagramRouteImport } from './routes/display.instagram'
 import { Route as DisplayWeatherRouteImport } from './routes/display.weather'
+import { Route as AuthenticatedGroupsGroupIdRouteImport } from './routes/_authenticated/groups_.$groupId'
 import { Route as AuthenticatedScreensScreenIdRouteImport } from './routes/_authenticated/screens_.$screenId'
 import { Route as ApiPublicWeatherRouteImport } from './routes/api/public/weather'
 import { Route as ApiPublicDevicesCommandsRouteImport } from './routes/api/public/devices/commands'
@@ -152,6 +153,12 @@ const DisplayWeatherRoute = DisplayWeatherRouteImport.update({
   path: '/display/weather',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedGroupsGroupIdRoute =
+  AuthenticatedGroupsGroupIdRouteImport.update({
+    id: '/groups_/$groupId',
+    path: '/groups/$groupId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedScreensScreenIdRoute =
   AuthenticatedScreensScreenIdRouteImport.update({
     id: '/screens_/$screenId',
@@ -219,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/video-walls': typeof AuthenticatedVideoWallsRoute
   '/display/instagram': typeof DisplayInstagramRoute
   '/display/weather': typeof DisplayWeatherRoute
+  '/groups/$groupId': typeof AuthenticatedGroupsGroupIdRoute
   '/screens/$screenId': typeof AuthenticatedScreensScreenIdRoute
   '/api/public/weather': typeof ApiPublicWeatherRoute
   '/api/public/devices/commands': typeof ApiPublicDevicesCommandsRouteWithChildren
@@ -250,6 +258,7 @@ export interface FileRoutesByTo {
   '/display/instagram': typeof DisplayInstagramRoute
   '/display/weather': typeof DisplayWeatherRoute
   '/': typeof AuthenticatedIndexRoute
+  '/groups/$groupId': typeof AuthenticatedGroupsGroupIdRoute
   '/screens/$screenId': typeof AuthenticatedScreensScreenIdRoute
   '/api/public/weather': typeof ApiPublicWeatherRoute
   '/api/public/devices/commands': typeof ApiPublicDevicesCommandsRouteWithChildren
@@ -283,6 +292,7 @@ export interface FileRoutesById {
   '/display/instagram': typeof DisplayInstagramRoute
   '/display/weather': typeof DisplayWeatherRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/groups_/$groupId': typeof AuthenticatedGroupsGroupIdRoute
   '/_authenticated/screens_/$screenId': typeof AuthenticatedScreensScreenIdRoute
   '/api/public/weather': typeof ApiPublicWeatherRoute
   '/api/public/devices/commands': typeof ApiPublicDevicesCommandsRouteWithChildren
@@ -316,6 +326,7 @@ export interface FileRouteTypes {
     | '/video-walls'
     | '/display/instagram'
     | '/display/weather'
+    | '/groups/$groupId'
     | '/screens/$screenId'
     | '/api/public/weather'
     | '/api/public/devices/commands'
@@ -347,6 +358,7 @@ export interface FileRouteTypes {
     | '/display/instagram'
     | '/display/weather'
     | '/'
+    | '/groups/$groupId'
     | '/screens/$screenId'
     | '/api/public/weather'
     | '/api/public/devices/commands'
@@ -379,6 +391,7 @@ export interface FileRouteTypes {
     | '/display/instagram'
     | '/display/weather'
     | '/_authenticated/'
+    | '/_authenticated/groups_/$groupId'
     | '/_authenticated/screens_/$screenId'
     | '/api/public/weather'
     | '/api/public/devices/commands'
@@ -562,6 +575,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DisplayWeatherRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/groups_/$groupId': {
+      id: '/_authenticated/groups_/$groupId'
+      path: '/groups/$groupId'
+      fullPath: '/groups/$groupId'
+      preLoaderRoute: typeof AuthenticatedGroupsGroupIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/screens_/$screenId': {
       id: '/_authenticated/screens_/$screenId'
       path: '/screens/$screenId'
@@ -636,6 +656,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
   AuthenticatedVideoWallsRoute: typeof AuthenticatedVideoWallsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedGroupsGroupIdRoute: typeof AuthenticatedGroupsGroupIdRoute
   AuthenticatedScreensScreenIdRoute: typeof AuthenticatedScreensScreenIdRoute
 }
 
@@ -654,6 +675,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
   AuthenticatedVideoWallsRoute: AuthenticatedVideoWallsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedGroupsGroupIdRoute: AuthenticatedGroupsGroupIdRoute,
   AuthenticatedScreensScreenIdRoute: AuthenticatedScreensScreenIdRoute,
 }
 
