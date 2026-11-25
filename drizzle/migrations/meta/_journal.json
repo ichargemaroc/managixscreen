@@ -218,6 +218,13 @@
       "when": 1795564698879,
       "tag": "0030_playlist_slide_transition",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1795565060978,
+      "tag": "0031_replace_playlist_assignments",
+      "breakpoints": true
     }
   ]
 }

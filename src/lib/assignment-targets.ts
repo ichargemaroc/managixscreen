@@ -1,9 +1,16 @@
 /** Splits a multi-selection so TVs already covered by a selected group are counted once. */
-export function resolveAssignmentTargets(screens: { id: string; groupId: string | null }[], screenIds: string[], groupIds: string[]) {
+export function resolveAssignmentTargets(screens: { id: string; groupId: string | null }[], screenIds: string[], groupIds: string[], memberships: { id: string; screenIds: string[] }[] = []) {
   const groups = new Set(groupIds);
   const covered = new Set(screens.filter((s) => s.groupId && groups.has(s.groupId)).map((s) => s.id));
+  const knownScreens = new Set(screens.map(s => s.id));
+  for (const group of memberships) if (groups.has(group.id)) for (const id of group.screenIds) if (knownScreens.has(id)) covered.add(id);
   const direct = [...new Set(screenIds)].filter((id) => !covered.has(id));
   return { groupIds: [...groups], screenIds: direct, coveredScreenIds: [...covered] };
+}
+
+export function sameAssignmentSelection(left: string[], right: string[]) {
+  const a = new Set(left), b = new Set(right);
+  return a.size === b.size && [...a].every(id => b.has(id));
 }
 
 export type PlaylistAudience<TGroup, TScreen> = {

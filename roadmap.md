@@ -1,5 +1,10 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Modification des affectations de playlist
+- [x] Ajout et retrait des TV et groupes déjà affectés ; couverture par groupe et sélection multiple sans doublons.
+- [x] Remplacement transactionnel propriétaire ; les retraits ciblent uniquement cette playlist, actualisation des TV modifiées.
+- [x] 15 tests ciblés réussis ; retrait puis remise d’une TV de vérification relus après rechargement, affectation initiale restaurée ; tablette/téléphone sans débordement et compilation correcte.
+
 ## Animation des playlists
 - [x] Animation enregistrée sur la playlist ; réglages existants repris, transmission compatible aux lecteurs et par zone ; murs sans animation.
 - [x] Sélecteur déplacé des fiches Écran au détail de playlist ; Zoom enregistré puis relu après rechargement dans une session réelle, réglage initial restauré ; tablette et téléphone vérifiés.

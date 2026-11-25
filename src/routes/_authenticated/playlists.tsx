@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ListVideo, Plus, GripVertical, Trash2, Film, ArrowLeft, Globe, Users, MonitorPlay } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, EmptyState } from "@/components/app-shell";
@@ -8,12 +8,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { resolveAssignmentTargets, resolvePlaylistAudience } from "@/lib/assignment-targets";
+import { resolveAssignmentTargets, resolvePlaylistAudience, sameAssignmentSelection } from "@/lib/assignment-targets";
 import { PlaylistMusicPanel } from "@/components/screen-music-panel";
 import { SlideTransitionSelect } from '@/components/slide-transition-select';
 import type { SlideTransition } from '@/lib/slide-transition';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useStore, formatDuration, createPlaylist, renamePlaylist, deletePlaylist, savePlaylistItems, savePlaylistTransition, assignPlaylistMany, type Playlist, type PlaylistItem } from "@/lib/store";
+import { useStore, formatDuration, createPlaylist, renamePlaylist, deletePlaylist, savePlaylistItems, savePlaylistTransition, replacePlaylistAssignments, type Playlist, type PlaylistItem } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/playlists")({
   head: () => ({ meta: [
@@ -36,7 +35,7 @@ function Playlists() {
     refresh();
     setOpenId(id);
   };
-  if (open) return <Editor playlist={open} onBack={() => setOpenId(null)} />;
+  if (open) return <Editor key={open.id} playlist={open} onBack={() => setOpenId(null)} />;
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader title="Playlists" description="Séquences de contenus diffusées sur vos écrans." action={<Button onClick={create}><Plus /> Nouvelle playlist</Button>} />
@@ -63,12 +62,24 @@ function Playlists() {
 function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }) {
   const { media, screens, groups, refresh } = useStore();
   const [drag, setDrag] = useState<number | null>(null);
-  const [pickedScreens, setPickedScreens] = useState<string[]>([]);
-  const [pickedGroups, setPickedGroups] = useState<string[]>([]);
   const audience = resolvePlaylistAudience(groups, screens, playlist.id);
   const assignedGroupIds = audience.groups.map((g) => g.id);
   const audienceScreenIds = [...audience.directScreens, ...audience.inheritedScreens].map((s) => s.id);
-  const resolved = resolveAssignmentTargets(screens, pickedScreens, [...pickedGroups, ...assignedGroupIds]);
+  const assignedScreenIds = audience.directScreens.map(s => s.id);
+  const [pickedScreens, setPickedScreens] = useState<string[]>(assignedScreenIds);
+  const [pickedGroups, setPickedGroups] = useState<string[]>(assignedGroupIds);
+  const [assignmentDirty, setAssignmentDirty] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const assignedKey = JSON.stringify([assignedGroupIds, assignedScreenIds]);
+  useEffect(() => {
+    if (assignmentDirty) return;
+    const [groupIds, screenIds] = JSON.parse(assignedKey) as [string[], string[]];
+    setPickedGroups(groupIds); setPickedScreens(screenIds);
+  }, [assignedKey, assignmentDirty]);
+  const resolved = resolveAssignmentTargets(screens, pickedScreens, pickedGroups, groups);
+  const saved = resolveAssignmentTargets(screens, assignedScreenIds, assignedGroupIds, groups);
+  const assignmentChanged = !sameAssignmentSelection(resolved.groupIds, saved.groupIds) || !sameAssignmentSelection(resolved.screenIds, saved.screenIds);
+  const selectedCount = new Set([...resolved.screenIds, ...resolved.coveredScreenIds]).size;
   const toggle = (list: string[], id: string, on: boolean) => on ? [...list, id] : list.filter((x) => x !== id);
   const [name, setName] = useState(playlist.name);
   const [description, setDescription] = useState(playlist.description);
@@ -94,10 +105,13 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
     void persist(next);
   };
   const assign = async () => {
-    const count = await assignPlaylistMany(playlist.id, resolved.groupIds, resolved.screenIds);
-    setPickedScreens([]); setPickedGroups([]);
-    refresh();
-    toast.success(`Playlist affectée à ${count} TV`);
+    setAssigning(true);
+    try {
+      const count = await replacePlaylistAssignments(playlist.id, resolved.groupIds, resolved.screenIds);
+      setPickedScreens(resolved.screenIds);
+      refresh();
+      toast.success(`Affectation enregistrée · ${count} TV`);
+    } finally { setAssigning(false); }
   };
   const remove = async () => {
     await deletePlaylist(playlist.id);
@@ -181,14 +195,16 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
             )}
           </CardContent></Card>
           <Card><CardContent className="space-y-3 p-4">
-            <h2 className="text-sm font-semibold">Affecter</h2>
+            <h2 className="text-sm font-semibold">Affectation</h2>
             {groups.length > 0 && <div className="space-y-2"><p className="text-xs font-medium text-muted-foreground">Groupes</p>
-              {groups.map((g) => { const assigned = assignedGroupIds.includes(g.id); return <label key={g.id} className="flex items-center gap-2 text-sm"><Checkbox disabled={assigned} checked={assigned || pickedGroups.includes(g.id)} onCheckedChange={(v) => setPickedGroups((l) => toggle(l, g.id, v === true))} /><span className="truncate">{g.name}</span>{assigned && <span className="ml-auto shrink-0 text-xs text-muted-foreground">déjà affecté</span>}</label>; })}
+              {groups.map((g) => <label key={g.id} className="flex items-center gap-2 text-sm"><Checkbox disabled={assigning} checked={pickedGroups.includes(g.id)} onCheckedChange={(v) => { setAssignmentDirty(true); setPickedGroups((l) => toggle(l, g.id, v === true)); }} /><span className="truncate">{g.name}</span></label>)}
             </div>}
             {screens.length > 0 && <div className="max-h-60 space-y-2 overflow-y-auto"><p className="text-xs font-medium text-muted-foreground">TV</p>
-              {screens.map((sc) => { const covered = resolved.coveredScreenIds.includes(sc.id); const assigned = audienceScreenIds.includes(sc.id); return <label key={sc.id} className="flex items-center gap-2 text-sm"><Checkbox disabled={covered || assigned} checked={covered || assigned || pickedScreens.includes(sc.id)} onCheckedChange={(v) => setPickedScreens((l) => toggle(l, sc.id, v === true))} /><span className="truncate">{sc.name}</span>{covered && <span className="ml-auto shrink-0 text-xs text-muted-foreground">via son groupe</span>}{!covered && assigned && <span className="ml-auto shrink-0 text-xs text-muted-foreground">déjà affectée</span>}</label>; })}
+              {screens.map((sc) => { const covered = resolved.coveredScreenIds.includes(sc.id); return <label key={sc.id} className="flex items-center gap-2 text-sm"><Checkbox disabled={covered || assigning} checked={covered || pickedScreens.includes(sc.id)} onCheckedChange={(v) => { setAssignmentDirty(true); setPickedScreens((l) => toggle(l, sc.id, v === true)); }} /><span className="min-w-0 flex-1 truncate">{sc.name}</span>{covered && <span className="shrink-0 text-xs text-muted-foreground">via son groupe</span>}</label>; })}
             </div>}
-            <Button className="w-full" disabled={!resolved.groupIds.length && !resolved.screenIds.length} onClick={() => { void assign().catch((error) => toast.error(error instanceof Error ? error.message : "L’affectation a échoué")); }}>Affecter la playlist</Button>
+            <p className="text-xs text-muted-foreground">{selectedCount} TV sélectionnée(s)</p>
+            <Button className="w-full" disabled={assigning || !assignmentChanged} onClick={() => { void assign().catch((error) => toast.error(error instanceof Error ? error.message : "L’affectation a échoué")); }}>{assigning ? 'Enregistrement…' : 'Enregistrer l’affectation'}</Button>
+            {assignmentChanged && <Button variant="ghost" className="w-full" disabled={assigning} onClick={() => { setPickedGroups(assignedGroupIds); setPickedScreens(assignedScreenIds); setAssignmentDirty(false); }}>Annuler les modifications</Button>}
           </CardContent></Card>
           <Card><CardContent className="p-4 [&>section]:mt-0 [&>section]:border-t-0 [&>section]:pt-0"><PlaylistMusicPanel playlistId={playlist.id} /></CardContent></Card>
           <Card><CardContent className="p-4">

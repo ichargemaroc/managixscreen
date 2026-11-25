@@ -1526,6 +1526,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      replace_playlist_assignments: {
+        Args: { p_groups: string[]; p_playlist: string; p_screens: string[] }
+        Returns: Json
+      }
       replace_playlist_items: {
         Args: { p_items: Json; p_playlist_id: string }
         Returns: undefined

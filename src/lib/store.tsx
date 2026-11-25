@@ -454,6 +454,21 @@ export async function assignPlaylistMany(playlistId: string, groupIds: string[],
   return ids.size;
 }
 
+export async function replacePlaylistAssignments(playlistId: string, groupIds: string[], screenIds: string[]) {
+  const { data, error } = await supabase.rpc('replace_playlist_assignments', {
+    p_playlist: playlistId, p_groups: [...new Set(groupIds)], p_screens: [...new Set(screenIds)],
+  });
+  if (error) throw new Error('L’affectation n’a pas pu être enregistrée.');
+  const result = readAssignmentResult(data);
+  for (const screenId of result.screenIds) void enqueueCommand({ data: { screenId, command: 'refresh_content' } }).catch(() => {});
+  return result.count;
+}
+
+function readAssignmentResult(data: unknown): { count: number; screenIds: string[] } {
+  if (!data || typeof data !== 'object' || !('count' in data) || typeof data.count !== 'number' || !('screen_ids' in data) || !Array.isArray(data.screen_ids) || !data.screen_ids.every(id => typeof id === 'string')) throw new Error('L’affectation n’a pas pu être confirmée.');
+  return { count: data.count, screenIds: data.screen_ids as string[] };
+}
+
 export async function addSchedule(s: Omit<Schedule, "id">, id?: string) {
   const row = {
     user_id: await userId(), playlist_id: s.playlistId, target_type: s.targetType, target_id: s.targetId,
