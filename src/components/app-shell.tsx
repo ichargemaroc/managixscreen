@@ -38,8 +38,7 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
   const { screens, groups } = useStore();
   const search = useRouterState({ select: (r) => r.location.search as { g?: string } });
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-  const [tvListOpen, setTvListOpen] = useState(false);
-  const [groupListOpen, setGroupListOpen] = useState(false);
+  const [openList, setOpenList] = useState<'tv' | 'groups' | null>(null);
   const handleClick = () => {
     setOpenMobile(false);
     onNavigate();
@@ -88,15 +87,15 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                       <div className="overflow-hidden rounded-xl bg-card/70">
                         <button
                           type="button"
-                          onClick={() => setTvListOpen((v) => !v)}
-                          aria-expanded={tvListOpen}
-                          aria-label={tvListOpen ? "Replier la liste des téléviseurs" : "Déplier la liste des téléviseurs"}
+                          onClick={() => setOpenList((v) => (v === 'tv' ? null : 'tv'))}
+                          aria-expanded={openList === 'tv'}
+                          aria-label={openList === 'tv' ? "Replier la liste des téléviseurs" : "Déplier la liste des téléviseurs"}
                           className="flex h-10 w-full items-center gap-2 px-4 text-sm font-medium text-foreground/80 hover:bg-card"
                         >
                           <span className="truncate">Téléviseurs</span>
-                          <ChevronDown className={`ml-auto size-4 shrink-0 transition-transform ${tvListOpen ? "rotate-180" : ""}`} />
+                          <ChevronDown className={`ml-auto size-4 shrink-0 transition-transform ${openList === 'tv' ? "rotate-180" : ""}`} />
                         </button>
-                        {tvListOpen && (
+                        {openList === 'tv' && (
                         <div className="flex max-h-60 flex-col gap-0.5 overflow-y-auto pb-1">
                         <Link
                           to="/screens"
@@ -144,23 +143,23 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                         <div className="relative">
                           <Link
                             to="/groups"
-                            onClick={() => { setGroupListOpen(true); handleClick(); }}
+                            onClick={() => { setOpenList('groups'); handleClick(); }}
                             aria-current={path === "/groups" && !search.g ? "page" : undefined}
                             className="flex h-10 w-full items-center gap-2 px-4 text-sm font-medium text-foreground/80 hover:bg-card"
                           >
                             <span className="truncate">Groupes</span>
-                            <ChevronDown className={`ml-auto size-4 shrink-0 transition-transform ${groupListOpen ? "rotate-180" : ""}`} />
+                            <ChevronDown className={`ml-auto size-4 shrink-0 transition-transform ${openList === 'groups' ? "rotate-180" : ""}`} />
                           </Link>
                           {/* Invisible toggle: keeps the group list collapsible without adding a second arrow. */}
                           <button
                             type="button"
-                            onClick={() => setGroupListOpen((v) => !v)}
-                            aria-expanded={groupListOpen}
-                            aria-label={groupListOpen ? "Replier la liste des groupes" : "Déplier la liste des groupes"}
+                            onClick={() => setOpenList((v) => (v === 'groups' ? null : 'groups'))}
+                            aria-expanded={openList === 'groups'}
+                            aria-label={openList === 'groups' ? "Replier la liste des groupes" : "Déplier la liste des groupes"}
                             className="absolute inset-y-0 right-0 w-9"
                           />
                         </div>
-                        {groupListOpen && (
+                        {openList === 'groups' && (
                         <div className="flex max-h-40 flex-col gap-0.5 overflow-y-auto pb-1">
                         <Link
                           to="/groups"

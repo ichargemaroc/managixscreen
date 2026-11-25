@@ -90,6 +90,26 @@ it('keeps the group list closed until the accordion is opened', () => {
   expect(groupRows()).toHaveLength(0);
 });
 
+it('closing the group list when the screen list is opened, and the other way round', () => {
+  renderMenu();
+  const tvHeader = accordionHeader();
+  const groupHeader = groupsHeader();
+
+  fireEvent.click(tvHeader);
+  expect(tvHeader.getAttribute('aria-expanded')).toBe('true');
+  expect(groupHeader.getAttribute('aria-expanded')).toBe('false');
+  expect(groupRows()).toHaveLength(0);
+
+  fireEvent.click(groupHeader);
+  expect(groupHeader.getAttribute('aria-expanded')).toBe('true');
+  expect(tvHeader.getAttribute('aria-expanded')).toBe('false');
+  expect(tvRows()).toHaveLength(0);
+
+  fireEvent.click(tvHeader);
+  expect(tvHeader.getAttribute('aria-expanded')).toBe('true');
+  expect(groupHeader.getAttribute('aria-expanded')).toBe('false');
+});
+
 it('gives the group accordion the same card style as the screen accordion', () => {
   renderMenu();
   expect(cardOf(groupsHeader())?.className).toBe(cardOf(accordionHeader())?.className);
