@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ListVideo, Plus, GripVertical, Trash2, Film, ArrowLeft, Globe, Users, MonitorPlay } from "lucide-react";
+import { ListVideo, Plus, GripVertical, Trash2, Film, ArrowLeft, Globe, Users, MonitorPlay, Settings2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -87,6 +88,9 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
   const [transition, setTransition] = useState<SlideTransition>(playlist.slideTransition ?? 'default');
   const [savingTransition, setSavingTransition] = useState(false);
   const [items, setItems] = useState<PlaylistItem[]>(playlist.items);
+  const [query, setQuery] = useState("");
+  const [kind, setKind] = useState<"all" | "image" | "video" | "webpage">("all");
+  const shown = media.filter((m) => (kind === "all" || m.type === kind) && m.name.toLowerCase().includes(query.trim().toLowerCase()));
   const persist = async (next: PlaylistItem[]) => {
     if (busy) return;
     setBusy(true);
@@ -122,23 +126,21 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
     <div className="mx-auto max-w-7xl">
       <Button variant="ghost" size="sm" className="mb-4" onClick={onBack}><ArrowLeft /> Playlists</Button>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Input className="max-w-md font-display text-xl font-semibold" aria-label="Nom de la playlist" value={name} onChange={(e) => setName(e.target.value)} />
+        <div className="min-w-0 flex-1 space-y-1"><Input className="max-w-md font-display text-xl font-semibold" aria-label="Nom de la playlist" value={name} onChange={(e) => setName(e.target.value)} /><p className="text-xs text-muted-foreground">{items.length} élément(s) · {formatDuration(items.reduce((a, i) => a + i.duration, 0))} · {audienceScreenIds.length} TV</p></div>
         <Button variant="outline" className="text-destructive" onClick={() => void remove()}><Trash2 /> Supprimer</Button>
       </div>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row"><Input aria-label="Description de la playlist" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} /><Button disabled={!name.trim()} onClick={async () => { try { await renamePlaylist(playlist.id, name.trim(), description); refresh(); toast.success("Playlist enregistrée"); } catch { toast.error("L’enregistrement a échoué"); } }}>Enregistrer</Button></div>
-      <section className="mb-6 flex flex-col gap-3 border-y py-4 sm:flex-row sm:items-end">
-        <div className="min-w-0 flex-1 sm:max-w-md"><SlideTransitionSelect value={transition} onChange={setTransition} disabled={savingTransition} /></div>
-        <Button variant="outline" disabled={savingTransition || transition === (playlist.slideTransition ?? 'default')} onClick={async () => {
-          setSavingTransition(true);
-          try { await savePlaylistTransition(playlist.id, transition); refresh(); toast.success('Animation enregistrée'); }
-          catch (error) { toast.error(error instanceof Error ? error.message : 'L’animation n’a pas pu être enregistrée'); }
-          finally { setSavingTransition(false); }
-        }}>{savingTransition ? 'Enregistrement…' : 'Enregistrer l’animation'}</Button>
-      </section>
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <Tabs defaultValue="content">
+        <TabsList className="mb-4">
+          <TabsTrigger value="content"><ListVideo className="size-4" /> Contenu</TabsTrigger>
+          <TabsTrigger value="diffusion"><MonitorPlay className="size-4" /> Diffusion <span className="ml-1 rounded-full bg-muted px-1.5 text-xs">{audienceScreenIds.length}</span></TabsTrigger>
+          <TabsTrigger value="settings"><Settings2 className="size-4" /> Paramètres</TabsTrigger>
+        </TabsList>
+        <TabsContent value="content">
+      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <Card><CardContent className="p-4">
           <h2 className="mb-3 text-sm font-semibold">Ordre de diffusion</h2>
-          {items.length === 0 ? <p className="py-10 text-center text-sm text-muted-foreground">Ajoutez des médias depuis la colonne de droite.</p> : (
+          {items.length === 0 ? <p className="py-10 text-center text-sm text-muted-foreground">Ajoutez des médias depuis le panneau « Ajouter des médias ».</p> : (
             <ul className="space-y-2">
               {items.map((it, i) => {
                 const m = media.find((x) => x.id === it.mediaId); if (!m) return null;
@@ -158,7 +160,38 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
             </ul>
           )}
         </CardContent></Card>
-        <div className="space-y-6">
+        <div className="lg:sticky lg:top-4 lg:self-start">
+          <Card><CardContent className="p-4">
+            <Label className="mb-3 block">Ajouter des médias</Label>
+            <Input className="mb-2" placeholder="Rechercher…" aria-label="Rechercher un média" value={query} onChange={(e) => setQuery(e.target.value)} />
+            <div className="mb-3 flex flex-wrap gap-1">{(["all","image","video","webpage"] as const).map((t) => <Button key={t} size="sm" variant={kind === t ? "default" : "outline"} className="h-7 px-2 text-xs" onClick={() => setKind(t)}>{t === "all" ? "Tous" : t === "image" ? "Images" : t === "video" ? "Vidéos" : "Pages web"}</Button>)}</div>
+            {media.length === 0 ? <p className="text-sm text-muted-foreground">Importez d'abord des médias dans la Médiathèque.</p> : (
+              <ul className="max-h-[28rem] space-y-1 overflow-y-auto">
+                {shown.length === 0 ? <li className="p-2 text-sm text-muted-foreground">Aucun média trouvé.</li> : shown.map((m) => (
+                  <li key={m.id}><Button variant="ghost" disabled={busy} onClick={() => add(m.id)} className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-muted">
+                    {m.type === 'webpage' ? <Globe className="size-4 text-primary" /> : m.type === "video" ? <Film className="size-4 text-primary" /> : <Plus className="size-4 text-primary" />}<span className="truncate">{m.name}</span>
+                  </Button></li>
+                ))}
+              </ul>
+            )}
+          </CardContent></Card>
+        </div>
+      </div>
+        </TabsContent>
+        <TabsContent value="diffusion">
+          <div className="grid gap-6 lg:grid-cols-2">
+          <Card><CardContent className="space-y-3 p-4">
+            <h2 className="text-sm font-semibold">Affectation</h2>
+            {groups.length > 0 && <div className="space-y-2"><p className="text-xs font-medium text-muted-foreground">Groupes</p>
+              {groups.map((g) => <label key={g.id} className="flex items-center gap-2 text-sm"><Checkbox disabled={assigning} checked={pickedGroups.includes(g.id)} onCheckedChange={(v) => { setAssignmentDirty(true); setPickedGroups((l) => toggle(l, g.id, v === true)); }} /><span className="truncate">{g.name}</span></label>)}
+            </div>}
+            {screens.length > 0 && <div className="max-h-60 space-y-2 overflow-y-auto"><p className="text-xs font-medium text-muted-foreground">TV</p>
+              {screens.map((sc) => { const covered = resolved.coveredScreenIds.includes(sc.id); return <label key={sc.id} className="flex items-center gap-2 text-sm"><Checkbox disabled={covered || assigning} checked={covered || pickedScreens.includes(sc.id)} onCheckedChange={(v) => { setAssignmentDirty(true); setPickedScreens((l) => toggle(l, sc.id, v === true)); }} /><span className="min-w-0 flex-1 truncate">{sc.name}</span>{covered && <span className="shrink-0 text-xs text-muted-foreground">via son groupe</span>}</label>; })}
+            </div>}
+            <p className="text-xs text-muted-foreground">{selectedCount} TV sélectionnée(s)</p>
+            <Button className="w-full" disabled={assigning || !assignmentChanged} onClick={() => { void assign().catch((error) => toast.error(error instanceof Error ? error.message : "L’affectation a échoué")); }}>{assigning ? 'Enregistrement…' : 'Enregistrer l’affectation'}</Button>
+            {assignmentChanged && <Button variant="ghost" className="w-full" disabled={assigning} onClick={() => { setPickedGroups(assignedGroupIds); setPickedScreens(assignedScreenIds); setAssignmentDirty(false); }}>Annuler les modifications</Button>}
+          </CardContent></Card>
           <Card><CardContent className="space-y-3 p-4">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-semibold">Diffusée sur</h2>
@@ -194,33 +227,26 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
               </>
             )}
           </CardContent></Card>
-          <Card><CardContent className="space-y-3 p-4">
-            <h2 className="text-sm font-semibold">Affectation</h2>
-            {groups.length > 0 && <div className="space-y-2"><p className="text-xs font-medium text-muted-foreground">Groupes</p>
-              {groups.map((g) => <label key={g.id} className="flex items-center gap-2 text-sm"><Checkbox disabled={assigning} checked={pickedGroups.includes(g.id)} onCheckedChange={(v) => { setAssignmentDirty(true); setPickedGroups((l) => toggle(l, g.id, v === true)); }} /><span className="truncate">{g.name}</span></label>)}
-            </div>}
-            {screens.length > 0 && <div className="max-h-60 space-y-2 overflow-y-auto"><p className="text-xs font-medium text-muted-foreground">TV</p>
-              {screens.map((sc) => { const covered = resolved.coveredScreenIds.includes(sc.id); return <label key={sc.id} className="flex items-center gap-2 text-sm"><Checkbox disabled={covered || assigning} checked={covered || pickedScreens.includes(sc.id)} onCheckedChange={(v) => { setAssignmentDirty(true); setPickedScreens((l) => toggle(l, sc.id, v === true)); }} /><span className="min-w-0 flex-1 truncate">{sc.name}</span>{covered && <span className="shrink-0 text-xs text-muted-foreground">via son groupe</span>}</label>; })}
-            </div>}
-            <p className="text-xs text-muted-foreground">{selectedCount} TV sélectionnée(s)</p>
-            <Button className="w-full" disabled={assigning || !assignmentChanged} onClick={() => { void assign().catch((error) => toast.error(error instanceof Error ? error.message : "L’affectation a échoué")); }}>{assigning ? 'Enregistrement…' : 'Enregistrer l’affectation'}</Button>
-            {assignmentChanged && <Button variant="ghost" className="w-full" disabled={assigning} onClick={() => { setPickedGroups(assignedGroupIds); setPickedScreens(assignedScreenIds); setAssignmentDirty(false); }}>Annuler les modifications</Button>}
-          </CardContent></Card>
+          </div>
+        </TabsContent>
+        <TabsContent value="settings">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card><CardContent className="p-4">
+              <h2 className="mb-3 text-sm font-semibold">Animation entre les diapositives</h2>
+      <section className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="min-w-0 flex-1 sm:max-w-md"><SlideTransitionSelect value={transition} onChange={setTransition} disabled={savingTransition} /></div>
+        <Button variant="outline" disabled={savingTransition || transition === (playlist.slideTransition ?? 'default')} onClick={async () => {
+          setSavingTransition(true);
+          try { await savePlaylistTransition(playlist.id, transition); refresh(); toast.success('Animation enregistrée'); }
+          catch (error) { toast.error(error instanceof Error ? error.message : 'L’animation n’a pas pu être enregistrée'); }
+          finally { setSavingTransition(false); }
+        }}>{savingTransition ? 'Enregistrement…' : 'Enregistrer l’animation'}</Button>
+      </section>
+            </CardContent></Card>
           <Card><CardContent className="p-4 [&>section]:mt-0 [&>section]:border-t-0 [&>section]:pt-0"><PlaylistMusicPanel playlistId={playlist.id} /></CardContent></Card>
-          <Card><CardContent className="p-4">
-            <Label className="mb-3 block">Bibliothèque</Label>
-            {media.length === 0 ? <p className="text-sm text-muted-foreground">Importez d'abord des médias dans la Médiathèque.</p> : (
-              <ul className="max-h-96 space-y-1 overflow-y-auto">
-                {media.map((m) => (
-                  <li key={m.id}><Button variant="ghost" disabled={busy} onClick={() => add(m.id)} className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-muted">
-                    {m.type === 'webpage' ? <Globe className="size-4 text-primary" /> : m.type === "video" ? <Film className="size-4 text-primary" /> : <Plus className="size-4 text-primary" />}<span className="truncate">{m.name}</span>
-                  </Button></li>
-                ))}
-              </ul>
-            )}
-          </CardContent></Card>
-        </div>
-      </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
