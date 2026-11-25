@@ -185,6 +185,13 @@
 .console-shell [data-collapsible="icon"] [data-sidebar="menu-button"] > span { display: none; }
 .console-shell [data-slot="card"] { box-shadow: none; }
 
+.media-filter-tabs { height: 56px; justify-content: flex-start; gap: 0; padding: 0; border-radius: 0; background: transparent; }
+.media-filter-tabs [role="tab"] { position: relative; height: 100%; padding: 12px 20px; border-radius: 0; font-size: 14px; font-weight: 500; color: var(--muted-foreground); box-shadow: none; }
+.media-filter-tabs [role="tab"]:hover { background: var(--muted); }
+.media-filter-tabs [role="tab"][data-state="active"] { background: var(--secondary); color: var(--primary); box-shadow: none; }
+.media-filter-tabs [role="tab"][data-state="active"]::after { content: ""; position: absolute; inset: auto 0 0; height: 4px; border-radius: 4px 4px 0 0; background: var(--primary); }
+@media (max-width: 640px) { .media-filter-tabs [role="tab"] { padding-inline: 16px; } }
+
 .display-rotation-option { height: 164px; min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 16px 6px; border-radius: 8px; white-space: normal; background: var(--card); border: 2px solid var(--border); }
 .display-rotation-option.display-rotation-selected { border-color: var(--primary); background: var(--secondary); box-shadow: 0 0 0 1px var(--primary); }
 .display-rotation-icon { width: 64px; height: 64px; display: grid; place-items: center; background: var(--muted); border-radius: 8px; }
