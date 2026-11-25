@@ -73,14 +73,13 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
+                  {/* Invisible toggle: keeps the submenu collapsible without showing an arrow on the Écrans row. */}
                   <button
                     type="button"
                     onClick={() => toggleGroup(item.title, open)}
                     aria-label={open ? `Replier ${item.title}` : `Déplier ${item.title}`}
-                    className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-current group-data-[collapsible=icon]:hidden"
-                  >
-                    <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
-                  </button>
+                    className="absolute inset-y-0 right-0 w-9 group-data-[collapsible=icon]:hidden"
+                  />
                 </div>
                 {open && (
                   <div className="mt-1 flex flex-col gap-1.5 group-data-[collapsible=icon]:hidden">
@@ -91,7 +90,7 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                           onClick={() => setTvListOpen((v) => !v)}
                           aria-expanded={tvListOpen}
                           aria-label={tvListOpen ? "Replier la liste des téléviseurs" : "Déplier la liste des téléviseurs"}
-                          className="flex w-full items-center gap-2 rounded-xl bg-card/70 px-4 py-2.5 text-sm font-medium text-foreground/80 hover:bg-card"
+                          className="flex h-10 w-full items-center gap-2 rounded-xl bg-card/70 px-4 text-sm font-medium text-foreground/80 hover:bg-card"
                         >
                           <Monitor className="size-4 shrink-0 opacity-70" />
                           <span className="truncate">Téléviseurs</span>
@@ -127,7 +126,7 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                         to={child.url}
                         onClick={handleClick}
                         aria-current={currentUrl === child.url ? "page" : undefined}
-                        className={`block rounded-xl px-4 py-2.5 text-sm font-medium ${currentUrl === child.url ? "bg-card text-foreground shadow-sm" : "bg-card/70 text-foreground/80 hover:bg-card"}`}
+                        className={`flex h-10 items-center rounded-xl px-4 text-sm font-medium ${currentUrl === child.url ? "bg-card text-foreground shadow-sm" : "bg-card/70 text-foreground/80 hover:bg-card"}`}
                       >
                         {child.title}
                       </Link>
