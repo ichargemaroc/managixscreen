@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, expect, it, vi } from 'vitest';
 
@@ -48,8 +48,28 @@ import { NavLinks } from '@/components/app-shell';
 
 afterEach(cleanup);
 
-it('lists every screen one by one inside the Écrans submenu', () => {
-  render(<NavLinks currentUrl="/screens" path="/screens" onNavigate={vi.fn()} />);
+const renderMenu = () => render(<NavLinks currentUrl="/screens" path="/screens" onNavigate={vi.fn()} />);
+const accordionHeader = () => screen.getByRole('button', { name: /liste des téléviseurs/i });
+const tvRows = () => screen.queryAllByText(/TV (TERASSE|SALLE)/).filter((el) => el.closest('a'));
+
+it('keeps the screen list closed until the accordion is opened', () => {
+  renderMenu();
+  const header = accordionHeader();
+  expect(header.getAttribute('aria-expanded')).toBe('false');
+  expect(tvRows()).toHaveLength(0);
+
+  fireEvent.click(header);
+  expect(header.getAttribute('aria-expanded')).toBe('true');
+  expect(tvRows()).toHaveLength(2);
+
+  fireEvent.click(header);
+  expect(header.getAttribute('aria-expanded')).toBe('false');
+  expect(tvRows()).toHaveLength(0);
+});
+
+it('lists every screen one by one once the accordion is open', () => {
+  renderMenu();
+  fireEvent.click(accordionHeader());
   for (const tv of SCREENS) {
     const row = screen.getAllByText(tv.name).find((el) => el.closest('a'));
     expect(row, `missing submenu row for ${tv.name}`).toBeTruthy();
@@ -58,7 +78,7 @@ it('lists every screen one by one inside the Écrans submenu', () => {
 });
 
 it('lists every group as a clickable row that opens that group', () => {
-  render(<NavLinks currentUrl="/screens" path="/screens" onNavigate={vi.fn()} />);
+  renderMenu();
   const row = screen.getAllByText('Vitrines').find((el) => el.closest('a'));
   expect(row, 'missing submenu row for the group').toBeTruthy();
   expect(row?.closest('a')?.getAttribute('href')).toBe('/groups?g=g1');

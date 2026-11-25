@@ -38,6 +38,7 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
   const { screens, groups } = useStore();
   const search = useRouterState({ select: (r) => r.location.search as { g?: string } });
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [tvListOpen, setTvListOpen] = useState(false);
   const handleClick = () => {
     setOpenMobile(false);
     onNavigate();
@@ -95,7 +96,21 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                       </Link>
                     ))}
                     {item.showScreens && screens.length > 0 && (
-                      <div className="mt-1 flex max-h-60 flex-col gap-0.5 overflow-y-auto border-t border-border/50 pt-1.5">
+                      <div className="mt-1 border-t border-border/50 pt-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setTvListOpen((v) => !v)}
+                          aria-expanded={tvListOpen}
+                          aria-label={tvListOpen ? "Replier la liste des téléviseurs" : "Déplier la liste des téléviseurs"}
+                          className="flex w-full items-center gap-2 rounded-xl bg-card/70 px-4 py-2 text-xs font-medium text-foreground/80 hover:bg-card"
+                        >
+                          <Monitor className="size-3.5 shrink-0 opacity-70" />
+                          <span className="truncate">Téléviseurs</span>
+                          <span className="ml-auto shrink-0 tabular-nums opacity-60">{screens.length}</span>
+                          <ChevronDown className={`size-3.5 shrink-0 transition-transform ${tvListOpen ? "rotate-180" : ""}`} />
+                        </button>
+                        {tvListOpen && (
+                        <div className="mt-1 flex max-h-60 flex-col gap-0.5 overflow-y-auto pb-1">
                         {screens.map((screen) => {
                           const url = `/screens/${screen.id}`;
                           const active = path === url;
@@ -113,6 +128,8 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                             </Link>
                           );
                         })}
+                        </div>
+                        )}
                       </div>
                     )}
                     {item.showScreens && groups.length > 0 && (
