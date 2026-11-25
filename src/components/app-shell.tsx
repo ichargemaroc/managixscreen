@@ -64,7 +64,6 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                       to={item.children[0]?.url ?? "/"}
                       onClick={() => {
                         setOpenGroups((prev) => ({ ...prev, [item.title]: true }));
-                        handleClick();
                       }}
                       aria-label={item.title}
                       aria-expanded={open}
