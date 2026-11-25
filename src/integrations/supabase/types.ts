@@ -730,6 +730,7 @@ export type Database = {
           start_time: string
           target_id: string
           target_type: string
+          timezone: string
           user_id: string
         }
         Insert: {
@@ -747,6 +748,7 @@ export type Database = {
           start_time: string
           target_id: string
           target_type: string
+          timezone?: string
           user_id: string
         }
         Update: {
@@ -764,6 +766,7 @@ export type Database = {
           start_time?: string
           target_id?: string
           target_type?: string
+          timezone?: string
           user_id?: string
         }
         Relationships: [
@@ -1367,6 +1370,7 @@ export type Database = {
         Args: { p_id: string; p_token: string }
         Returns: undefined
       }
+      active_schedule_playlist: { Args: { p_screen: string }; Returns: string }
       assign_screen_layout: {
         Args: { p_layout: string; p_screen: string }
         Returns: undefined

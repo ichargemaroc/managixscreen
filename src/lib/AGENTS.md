@@ -4,3 +4,5 @@
 - Screen compositions use owner-scoped transactional RPCs and token-revalidated device manifests; they do not add screens or bypass existing entitlements, and wall/composition assignments are mutually exclusive.
 - Content teams use separate owner/member rows, expiring hashed invitations and pending proposals; only the owner can approve live playlist changes, and cross-owner media are copied to owner-scoped storage after authorization.
 - Published Canva links and public Instagram embeds do not imply account connections; weather fetches use fixed MET Norway endpoints, bounded coordinates, attribution and fail-closed persistent abuse counters.- Background music is configured per playlist and follows the screen's playlist; screen music is only a fallback when the playlist has none.
+
+- Scheduled playlists override default screen/group playlists in device_content (screen beats group, schedule timezone); fingerprints switch TVs at slot boundaries.

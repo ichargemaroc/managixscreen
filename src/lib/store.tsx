@@ -475,14 +475,30 @@ export async function addSchedule(s: Omit<Schedule, "id">, id?: string) {
     start_date: s.startDate, end_date: s.endDate, start_time: s.startTime, end_time: s.endTime, days: s.days,
     start_datetime: new Date(`${s.startDate}T${s.startTime}`).toISOString(),
     end_datetime: new Date(`${s.endDate}T${s.endTime}`).toISOString(),
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Africa/Casablanca",
   };
   const { error } = id ? await supabase.from("schedules").update(row).eq("id", id) : await supabase.from("schedules").insert(row);
   if (error) throw error;
+  await refreshScheduleTargets(s.targetType, s.targetId);
+}
+
+async function refreshScheduleTargets(targetType: string, targetId: string) {
+  let ids = [targetId];
+  if (targetType === "group") {
+    const [{ data: a }, { data: b }] = await Promise.all([
+      supabase.from("screen_group_members").select("screen_id").eq("group_id", targetId),
+      supabase.from("screens").select("id").eq("group_id", targetId),
+    ]);
+    ids = [...new Set([...(a ?? []).map((r) => r.screen_id), ...(b ?? []).map((r) => r.id)])];
+  }
+  for (const screenId of ids) void enqueueCommand({ data: { screenId, command: "refresh_content" } }).catch(() => {});
 }
 
 export async function deleteSchedule(id: string) {
+  const { data: old } = await supabase.from("schedules").select("target_type,target_id").eq("id", id).maybeSingle();
   const { error } = await supabase.from("schedules").delete().eq("id", id);
   if (error) throw error;
+  if (old) await refreshScheduleTargets(old.target_type, old.target_id);
 }
 
 // ===== Utilitaires =====

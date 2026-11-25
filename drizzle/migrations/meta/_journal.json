@@ -225,6 +225,13 @@
       "when": 1795565060978,
       "tag": "0031_replace_playlist_assignments",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1795566073056,
+      "tag": "0032_active_schedule_playlist",
+      "breakpoints": true
     }
   ]
 }
