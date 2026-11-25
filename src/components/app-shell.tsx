@@ -143,7 +143,7 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                         <div className="relative">
                           <Link
                             to="/groups"
-                            onClick={() => { setOpenList('groups'); handleClick(); }}
+                            onClick={() => setOpenList('groups')}
                             aria-current={path === "/groups" && !search.g ? "page" : undefined}
                             className="flex h-10 w-full items-center gap-2 px-4 text-sm font-medium text-foreground/80 hover:bg-card"
                           >
