@@ -50,18 +50,35 @@ function NavLinks({ currentUrl, onNavigate }: { currentUrl: string | undefined; 
           return (
             <SidebarMenuItem key={item.title}>
               <div className={open ? "rounded-2xl bg-accent p-1.5 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0" : ""}>
-                <SidebarMenuButton
-                  onClick={() => toggleGroup(item.title, open)}
-                  isActive={childActive}
-                  tooltip={item.title}
-                  aria-expanded={open}
-                  aria-label={item.title}
-                  className={open ? "text-accent-foreground hover:bg-transparent" : ""}
-                >
-                  <item.icon />
-                  <span>{item.title}</span>
-                  <ChevronDown className={`ml-auto transition-transform group-data-[collapsible=icon]:hidden ${open ? "rotate-180" : ""}`} />
-                </SidebarMenuButton>
+                <div className="relative">
+                  <SidebarMenuButton
+                    asChild
+                    isActive={childActive}
+                    tooltip={item.title}
+                    className={open ? "text-accent-foreground hover:bg-transparent" : ""}
+                  >
+                    <Link
+                      to={item.children[0]?.url ?? "/"}
+                      onClick={() => {
+                        setOpenGroups((prev) => ({ ...prev, [item.title]: true }));
+                        handleClick();
+                      }}
+                      aria-label={item.title}
+                      aria-expanded={open}
+                    >
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(item.title, open)}
+                    aria-label={open ? `Replier ${item.title}` : `Déplier ${item.title}`}
+                    className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-current group-data-[collapsible=icon]:hidden"
+                  >
+                    <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
+                  </button>
+                </div>
                 {open && (
                   <div className="mt-1 flex flex-col gap-1.5 group-data-[collapsible=icon]:hidden">
                     {item.children.map((child) => (
