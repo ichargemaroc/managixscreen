@@ -19,7 +19,7 @@ export const manifestSchema = z.object({
   slide_transition: slideTransitionSchema.catch('default'),
   wall: wallPlaybackSchema.nullable().optional(), server_time: z.string().optional(),
   screen_id: z.string().uuid(), assignment_updated_at: z.string(),
-  playlist: z.object({ id: z.string().uuid(), name: z.string(), updated_at: z.string(), items: z.array(z.object({
+  playlist: z.object({ id: z.string().uuid(), name: z.string(), updated_at: z.string(), slide_transition: slideTransitionSchema.optional(), items: z.array(z.object({
     id: z.string().uuid(), position: z.number(), display_duration: z.number(), media: manifestMediaSchema,
   })) }).nullable(),
 });

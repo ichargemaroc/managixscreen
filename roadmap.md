@@ -1,5 +1,11 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Animation des playlists
+- [x] Animation enregistrée sur la playlist ; réglages existants repris, transmission compatible aux lecteurs et par zone ; murs sans animation.
+- [x] Sélecteur déplacé des fiches Écran au détail de playlist ; Zoom enregistré puis relu après rechargement dans une session réelle, réglage initial restauré ; tablette et téléphone vérifiés.
+- [x] Tests ciblés : 53 réussis ; compilation correcte.
+- [ ] Validation des animations par zone sur Android TV physique : nouvel APK et matériel nécessaires.
+
 ## Aperçu depuis Supervision
 - [x] Bouton par TV, aperçu du média réellement signalé, images/vidéos/pages Web et états indisponible/hors ligne ; aucune fausse capture en direct
 - [x] Ouverture connectée vérifiée sur trois TV, tablette/téléphone sans débordement ni erreur ; trois tests du store réussis et compilation correcte

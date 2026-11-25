@@ -30,12 +30,11 @@ export type Screen = {
   status: "online" | "offline" | "pending"; lastSeen: string | null; playlistId: string | null; location: string; deviceId: string | null; revoked: boolean;
   playerVersion: string | null; lastSyncAt: string | null; deviceInfo: unknown; playbackStatus: unknown; enabled?: boolean;
   displayRotation?: DisplayRotation;
-  slideTransition?: SlideTransition;
 };
 export type DeviceCommand = { id: string; screenId: string; command: z.infer<typeof deviceCommand>; status: string; createdAt: string; deliveredAt: string | null; acknowledgedAt: string | null; expiresAt: string; error: string | null; wallId: string | null; testId: string | null; payload: unknown };
 export type Media = { id: string; name: string; type: "image" | "video" | "webpage"; size: number; duration: number | null; url: string; thumbnailUrl?: string; path: string; createdAt: string; refreshMinutes?: number; fullscreen?: boolean };
 export type PlaylistItem = { id: string; mediaId: string; duration: number };
-export type Playlist = { id: string; name: string; description: string; items: PlaylistItem[]; createdAt: string };
+export type Playlist = { id: string; name: string; description: string; items: PlaylistItem[]; createdAt: string; slideTransition?: SlideTransition };
 export type Schedule = {
   id: string; playlistId: string; targetType: "screen" | "group"; targetId: string;
   startDate: string; endDate: string; startTime: string; endTime: string; days: number[];
@@ -133,7 +132,6 @@ export async function fetchAll(queryClient: QueryClient, scope: StoreScope = 'me
     screens: (screens.data ?? []).map((s) => ({
       id: s.id, name: s.name, pairingCode: s.pairing_code, groupId: s.group_id,
       displayRotation: displayRotationSchema.parse(s.display_rotation ?? 0),
-      slideTransition: slideTransitionSchema.catch('default').parse(s.slide_transition),
       status: sessions.data?.some((p) => p.screen_id === s.id && p.status === "revoked") ? "offline" : screenStatus(s.status, s.last_seen), lastSeen: s.last_seen, playlistId: s.playlist_id, location: s.location,
       deviceId: sessions.data?.find((p) => p.screen_id === s.id)?.device_id ?? null,
       revoked: sessions.data?.some((p) => p.screen_id === s.id && p.status === "revoked") ?? false,
@@ -145,7 +143,7 @@ export async function fetchAll(queryClient: QueryClient, scope: StoreScope = 'me
     })),
     commands: (commands.data ?? []).map((c) => ({ id: c.id, screenId: c.screen_id, command: c.command as DeviceCommand["command"], status: c.status, createdAt: c.created_at, deliveredAt: c.delivered_at, acknowledgedAt: c.acknowledged_at, expiresAt: c.expires_at, error: c.error_message, wallId: c.wall_id, testId: c.test_id, payload: c.payload })),
     media: mediaRows,
-    playlists: (playlists.data ?? []).map((p) => ({ id: p.id, name: p.name, description: p.description, items: itemsByPlaylist.get(p.id) ?? [], createdAt: p.created_at })),
+    playlists: (playlists.data ?? []).map((p) => ({ id: p.id, name: p.name, description: p.description, items: itemsByPlaylist.get(p.id) ?? [], createdAt: p.created_at, slideTransition: slideTransitionSchema.catch('default').parse(p.slide_transition) })),
     schedules: (schedules.data ?? []).map((s) => ({
       id: s.id, playlistId: s.playlist_id, targetType: s.target_type as "screen" | "group", targetId: s.target_id,
       startDate: s.start_date, endDate: s.end_date, startTime: s.start_time.slice(0, 5), endTime: s.end_time.slice(0, 5), days: s.days,
@@ -220,9 +218,8 @@ export async function sendDeviceCommand(screenId: string, command: DeviceCommand
   return enqueueCommand({ data: { screenId, command } });
 }
 
-export async function updateScreen(id: string, patch: { name?: string; groupId?: string | null; playlistId?: string | null; location?: string; displayRotation?: DisplayRotation; slideTransition?: SlideTransition; pairingCode?: string }) {
-  const row: { name?: string; group_id?: string | null; playlist_id?: string | null; location?: string; display_rotation?: DisplayRotation; slide_transition?: SlideTransition } = {};
-  if (patch.slideTransition !== undefined) row.slide_transition = slideTransitionSchema.parse(patch.slideTransition);
+export async function updateScreen(id: string, patch: { name?: string; groupId?: string | null; playlistId?: string | null; location?: string; displayRotation?: DisplayRotation; pairingCode?: string }) {
+  const row: { name?: string; group_id?: string | null; playlist_id?: string | null; location?: string; display_rotation?: DisplayRotation } = {};
   if (patch.displayRotation !== undefined) row.display_rotation = displayRotationSchema.parse(patch.displayRotation);
   if (patch.location !== undefined) row.location = patch.location;
   if (patch.name !== undefined) row.name = patch.name;
@@ -236,7 +233,7 @@ export async function updateScreen(id: string, patch: { name?: string; groupId?:
   const { error } = Object.keys(row).length ? await supabase.from("screens").update(row).eq("id", id) : { error: null };
   if (error) throw error;
   // Wake the TV within ~5 s instead of waiting for its next periodic check; best effort.
-  if (patch.playlistId !== undefined || patch.groupId !== undefined || patch.displayRotation !== undefined || patch.slideTransition !== undefined) void enqueueCommand({ data: { screenId: id, command: "refresh_content" } }).catch(() => {});
+  if (patch.playlistId !== undefined || patch.groupId !== undefined || patch.displayRotation !== undefined) void enqueueCommand({ data: { screenId: id, command: "refresh_content" } }).catch(() => {});
 }
 
 export async function deleteScreen(id: string) {
@@ -403,6 +400,13 @@ export async function createPlaylist(name: string) {
 export async function renamePlaylist(id: string, name: string, description?: string) {
   const { error } = await supabase.from("playlists").update({ name, ...(description === undefined ? {} : { description }) }).eq("id", id);
   if (error) throw error;
+}
+
+export async function savePlaylistTransition(id: string, transition: SlideTransition) {
+  const slide_transition = slideTransitionSchema.parse(transition);
+  const { error } = await supabase.from('playlists').update({ slide_transition }).eq('id', id).select('id').single();
+  if (error) throw new Error('L’animation n’a pas pu être enregistrée.');
+  await refreshPlaylistScreens(id);
 }
 
 export async function deletePlaylist(id: string) {

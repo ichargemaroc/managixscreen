@@ -211,6 +211,13 @@
       "when": 1795562628811,
       "tag": "0029_playlist_background_music",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1795564698879,
+      "tag": "0030_playlist_slide_transition",
+      "breakpoints": true
     }
   ]
 }

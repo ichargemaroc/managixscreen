@@ -18,8 +18,6 @@ import { availablePlaces } from '@/lib/billing';
 import { PairingScanner } from "@/components/pairing-scanner";
 import { DisplayRotationPicker } from '@/components/display-rotation-picker';
 import type { DisplayRotation } from '@/lib/display-rotation';
-import { SlideTransitionSelect } from '@/components/slide-transition-select';
-import type { SlideTransition } from '@/lib/slide-transition';
 import { Music2 } from 'lucide-react';
 
 export const Route = createFileRoute("/_authenticated/screens")({
@@ -173,7 +171,6 @@ function EditForm({ screen, onSave }: { screen: Screen; onSave: (p: Partial<Scre
   const { playlists } = useStore();
   const [location, setLocation] = useState(screen.location);
   const [rotation, setRotation] = useState<DisplayRotation>(screen.displayRotation ?? 0);
-  const [transition, setTransition] = useState<SlideTransition>(screen.slideTransition ?? 'default');
   const [code, setCode] = useState(screen.pairingCode);
   const [name, setName] = useState(screen.name); const [group, setGroup] = useState(screen.groupId); const [pl, setPl] = useState(screen.playlistId);
   return (
@@ -189,8 +186,7 @@ function EditForm({ screen, onSave }: { screen: Screen; onSave: (p: Partial<Scre
         </Select>
       </div>
       <DisplayRotationPicker value={rotation} onChange={setRotation} />
-      <SlideTransitionSelect value={transition} onChange={setTransition} />
-      <DialogFooter><Button disabled={!name.trim() || !/^\d{6}$/.test(code)} onClick={() => onSave({ ...(code !== screen.pairingCode ? { pairingCode: code } : {}), name: name.trim(), groupId: group, playlistId: pl, location, displayRotation: rotation, slideTransition: transition })}>Enregistrer</Button></DialogFooter>
+      <DialogFooter><Button disabled={!name.trim() || !/^\d{6}$/.test(code)} onClick={() => onSave({ ...(code !== screen.pairingCode ? { pairingCode: code } : {}), name: name.trim(), groupId: group, playlistId: pl, location, displayRotation: rotation })}>Enregistrer</Button></DialogFooter>
     </div>
   );
 }

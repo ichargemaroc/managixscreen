@@ -10,8 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { resolveAssignmentTargets, resolvePlaylistAudience } from "@/lib/assignment-targets";
 import { PlaylistMusicPanel } from "@/components/screen-music-panel";
+import { SlideTransitionSelect } from '@/components/slide-transition-select';
+import type { SlideTransition } from '@/lib/slide-transition';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useStore, formatDuration, createPlaylist, renamePlaylist, deletePlaylist, savePlaylistItems, assignPlaylistMany, type Playlist, type PlaylistItem } from "@/lib/store";
+import { useStore, formatDuration, createPlaylist, renamePlaylist, deletePlaylist, savePlaylistItems, savePlaylistTransition, assignPlaylistMany, type Playlist, type PlaylistItem } from "@/lib/store";
 
 export const Route = createFileRoute("/_authenticated/playlists")({
   head: () => ({ meta: [
@@ -71,6 +73,8 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
   const [name, setName] = useState(playlist.name);
   const [description, setDescription] = useState(playlist.description);
   const [busy, setBusy] = useState(false);
+  const [transition, setTransition] = useState<SlideTransition>(playlist.slideTransition ?? 'default');
+  const [savingTransition, setSavingTransition] = useState(false);
   const [items, setItems] = useState<PlaylistItem[]>(playlist.items);
   const persist = async (next: PlaylistItem[]) => {
     if (busy) return;
@@ -108,6 +112,15 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
         <Button variant="outline" className="text-destructive" onClick={() => void remove()}><Trash2 /> Supprimer</Button>
       </div>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row"><Input aria-label="Description de la playlist" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} /><Button disabled={!name.trim()} onClick={async () => { try { await renamePlaylist(playlist.id, name.trim(), description); refresh(); toast.success("Playlist enregistrée"); } catch { toast.error("L’enregistrement a échoué"); } }}>Enregistrer</Button></div>
+      <section className="mb-6 flex flex-col gap-3 border-y py-4 sm:flex-row sm:items-end">
+        <div className="min-w-0 flex-1 sm:max-w-md"><SlideTransitionSelect value={transition} onChange={setTransition} disabled={savingTransition} /></div>
+        <Button variant="outline" disabled={savingTransition || transition === (playlist.slideTransition ?? 'default')} onClick={async () => {
+          setSavingTransition(true);
+          try { await savePlaylistTransition(playlist.id, transition); refresh(); toast.success('Animation enregistrée'); }
+          catch (error) { toast.error(error instanceof Error ? error.message : 'L’animation n’a pas pu être enregistrée'); }
+          finally { setSavingTransition(false); }
+        }}>{savingTransition ? 'Enregistrement…' : 'Enregistrer l’animation'}</Button>
+      </section>
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <Card><CardContent className="p-4">
           <h2 className="mb-3 text-sm font-semibold">Ordre de diffusion</h2>
