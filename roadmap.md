@@ -208,3 +208,7 @@
 - [x] Icône téléviseur devant chaque nom de téléviseur dans l'accordéon du menu
 - [x] Carte « Groupes » menant à la page Groupes ; accordéon ouvrant « Nouveau groupe » en première ligne
 - [x] Vérification à l'écran : menu déplié, accordéon Groupes ouvert (groupe temporaire créé puis supprimé sur le compte de test), « Nouveau groupe » en tête, fenêtre de création ouverte puis paramètre d'URL effacé à la fermeture ; trois TV contrôlées avec icône
+
+## Documentation API clients
+- [x] Onglet API Développeur, exemples copiables et guide Markdown téléchargeable ; lien depuis les playlists.
+- [x] Session connectée : onglets, lien depuis une playlist, copie des en-têtes et téléchargement de 4 952 octets vérifiés ; téléphone sans débordement, 10 tests réussis et aucune erreur observée.

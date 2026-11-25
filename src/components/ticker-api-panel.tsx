@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Copy, KeyRound } from 'lucide-react';
@@ -23,5 +24,6 @@ export function TickerApiPanel({ playlistId }: { playlistId: string }) {
       {status && <Button variant="ghost" disabled={busy} onClick={() => void run(async () => { await revokeTickerKey({ data: { playlistId } }); setKey(''); toast.success('Clé désactivée'); })}>Désactiver</Button>}
     </div>
     <div className="grid gap-1"><div className="flex items-center justify-between"><span className="text-xs font-medium">Exemple d’appel</span><Button size="sm" variant="ghost" onClick={() => copy(example)}><Copy className="size-3.5" />Copier</Button></div><pre className="overflow-x-auto rounded-md bg-muted p-3 text-xs">{example}</pre></div>
+    <Button variant="link" className="h-auto justify-start p-0" asChild><Link to="/integrations" search={{ tab: 'api' }}>Consulter la documentation complète de l’API</Link></Button>
   </section>;
 }
