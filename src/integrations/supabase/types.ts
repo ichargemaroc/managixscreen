@@ -1002,6 +1002,7 @@ export type Database = {
           pairing_code: string
           playlist_id: string | null
           slide_transition: string
+          sound_enabled: boolean
           status: string
           user_id: string
         }
@@ -1018,6 +1019,7 @@ export type Database = {
           pairing_code: string
           playlist_id?: string | null
           slide_transition?: string
+          sound_enabled?: boolean
           status?: string
           user_id: string
         }
@@ -1034,6 +1036,7 @@ export type Database = {
           pairing_code?: string
           playlist_id?: string | null
           slide_transition?: string
+          sound_enabled?: boolean
           status?: string
           user_id?: string
         }

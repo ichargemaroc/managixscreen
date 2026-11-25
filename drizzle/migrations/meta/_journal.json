@@ -239,6 +239,13 @@
       "when": 1795642193579,
       "tag": "0033_playlist_ticker",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1795644259054,
+      "tag": "0034_screen_sound",
+      "breakpoints": true
     }
   ]
 }

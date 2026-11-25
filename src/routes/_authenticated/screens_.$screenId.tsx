@@ -14,7 +14,7 @@ import { COMMAND_LABELS, COMMAND_STATUSES } from "@/lib/player-protocol";
 import { sendApkUpdate } from "@/lib/player.functions";
 import { DisplayRotationPicker } from '@/components/display-rotation-picker';
 import type { DisplayRotation } from '@/lib/display-rotation';
-import { ScreenMusicPanel } from '@/components/screen-music-panel';
+import { Switch } from '@/components/ui/switch';
 
 export const Route = createFileRoute("/_authenticated/screens_/$screenId")({
   head: () => ({ meta: [
@@ -48,6 +48,7 @@ function Details({ screen }: { screen: Screen }) {
   const [groupId, setGroupId] = useState(screen.groupId ?? "none");
   const [command, setCommand] = useState<DeviceCommand["command"]>("refresh_content");
   const [busy, setBusy] = useState(false);
+  const [sound, setSound] = useState(screen.soundEnabled ?? true);
   const [confirm, setConfirm] = useState<"revoke" | "delete" | 'disable' | 'enable' | null>(null);
   const act = async () => {
     setBusy(true);
@@ -74,16 +75,16 @@ function Details({ screen }: { screen: Screen }) {
       {screen.playbackStatus !== null && typeof screen.playbackStatus === "object" && "state" in screen.playbackStatus && <div><dt className="text-sm text-muted-foreground">Lecture déclarée</dt><dd>{({ idle: "Inactive", playing: "En lecture", paused: "En pause", buffering: "Chargement", error: "Erreur" } as Record<string, string>)[String(screen.playbackStatus.state)] ?? "Non communiquée"}</dd></div>}
       {screen.deviceId && <div className="sm:col-span-2"><dt className="text-sm text-muted-foreground">Identifiant de l’appareil</dt><dd className="break-all text-sm">{screen.deviceId}</dd></div>}
     </dl>
-    <form className="space-y-4" onSubmit={async (event) => { event.preventDefault(); setBusy(true); try { await updateScreen(screen.id, { name: name.trim(), location: location.trim(), groupId: groupId === "none" ? null : groupId, playlistId: playlistId === "none" ? null : playlistId, displayRotation: rotation, ...(code !== screen.pairingCode ? { pairingCode: code } : {}) }); refresh(); toast.success("Écran enregistré"); } catch (err) { toast.error(err instanceof Error && err.message ? err.message : "L’enregistrement a échoué"); } finally { setBusy(false); } }}>
+    <form className="space-y-4" onSubmit={async (event) => { event.preventDefault(); setBusy(true); try { await updateScreen(screen.id, { name: name.trim(), location: location.trim(), groupId: groupId === "none" ? null : groupId, playlistId: playlistId === "none" ? null : playlistId, displayRotation: rotation, soundEnabled: sound, ...(code !== screen.pairingCode ? { pairingCode: code } : {}) }); refresh(); toast.success("Écran enregistré"); } catch (err) { toast.error(err instanceof Error && err.message ? err.message : "L’enregistrement a échoué"); } finally { setBusy(false); } }}>
       <div className="space-y-2"><Label htmlFor="screen-name">Nom</Label><Input id="screen-name" required maxLength={120} value={name} onChange={(e) => setName(e.target.value)} /></div>
       <div className="space-y-2"><Label htmlFor="screen-pairing-code">Code d’appairage</Label><Input id="screen-pairing-code" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} /><p className="text-xs text-muted-foreground">6 chiffres, enregistré sur le serveur et unique parmi vos écrans.</p></div>
       <div className="space-y-2"><Label htmlFor="screen-location">Lieu</Label><Input id="screen-location" maxLength={240} value={location} onChange={(e) => setLocation(e.target.value)} /></div>
       <div className="space-y-2"><Label htmlFor="screen-group">Groupe</Label><Select value={groupId} onValueChange={setGroupId}><SelectTrigger id="screen-group" className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">Aucun groupe</SelectItem>{groups.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent></Select><p className="text-xs text-muted-foreground">La playlist du groupe est appliquée automatiquement à la TV.</p></div>
       <div className="space-y-2"><Label htmlFor="screen-playlist">Playlist affectée</Label><Select value={playlistId} onValueChange={setPlaylistId}><SelectTrigger id="screen-playlist" className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">Aucune</SelectItem>{playlists.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
       <DisplayRotationPicker value={rotation} onChange={setRotation} disabled={busy} />
+      <div className="flex items-center justify-between gap-4 rounded-md border p-4"><div><Label htmlFor="screen-sound">Son de la musique de fond</Label><p className="text-xs text-muted-foreground">La musique est choisie dans la playlist ; ici, vous l’activez ou la coupez sur cette TV.</p></div><Switch id="screen-sound" checked={sound} disabled={busy} onCheckedChange={setSound} /></div>
       <Button disabled={busy || !name.trim() || !/^\d{6}$/.test(code)}>Enregistrer</Button>
     </form>
-    <ScreenMusicPanel screenId={screen.id} />
     <section className="mt-8 border-t pt-6">
       <h2 className="mb-4 font-display text-lg font-semibold">Commandes du lecteur</h2>
       <div className="flex flex-col gap-3 sm:flex-row">
