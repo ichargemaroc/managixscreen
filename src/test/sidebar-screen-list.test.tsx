@@ -9,13 +9,13 @@ const SCREENS = [
 const GROUPS = [{ id: 'g1', name: 'Vitrines' }];
 
 vi.mock('@tanstack/react-router', () => ({
-  Link: ({ to, params, search, className, children }: { to: string; params?: Record<string, string>; search?: Record<string, string>; className?: string; children: ReactNode }) => {
+  Link: ({ to, params, search, className, onClick, children }: { to: string; params?: Record<string, string>; search?: Record<string, string>; className?: string; onClick?: () => void; children: ReactNode }) => {
     const href = params
       ? Object.entries(params).reduce((u, [k, v]) => u.replace(`$${k}`, v), to)
       : search && Object.keys(search).length
         ? `${to}?${new URLSearchParams(search).toString()}`
         : to;
-    return <a href={href} className={className}>{children}</a>;
+    return <a href={href} className={className} onClick={onClick}>{children}</a>;
   },
   useRouterState: (opts: { select: (state: { location: { pathname: string; search: Record<string, string> } }) => unknown }) =>
     opts.select({ location: { pathname: '/screens', search: {} } }),
@@ -184,6 +184,26 @@ it('opens the Écrans submenu only on click, never on hover', () => {
 
   fireEvent.click(row);
   expect(row.getAttribute('aria-expanded')).toBe('true');
+});
+
+it('closes the Écrans submenu and restores its plain color when another button is clicked', () => {
+  render(<NavLinks currentUrl="/media" path="/media" onNavigate={vi.fn()} />);
+  const row = screen.getAllByText('Écrans')[0]?.closest('button');
+  if (!row) throw new Error('Écrans row is not a button');
+  const wrapper = row.parentElement?.parentElement;
+  if (!wrapper) throw new Error('Écrans wrapper is missing');
+  expect(wrapper.className).not.toContain('bg-accent');
+
+  fireEvent.click(row);
+  expect(row.getAttribute('aria-expanded')).toBe('true');
+  expect(wrapper.className).toContain('bg-accent');
+
+  const playlists = screen.getByText('Playlists')?.closest('a');
+  if (!playlists) throw new Error('Playlists link is missing');
+  fireEvent.click(playlists);
+
+  expect(row.getAttribute('aria-expanded')).toBe('false');
+  expect(wrapper.className).not.toContain('bg-accent');
 });
 
 it('renders the Écrans row as a button, never as a link', () => {

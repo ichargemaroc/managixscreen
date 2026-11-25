@@ -43,6 +43,13 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
     setOpenMobile(false);
     onNavigate();
   };
+  // Clicking any other top-level button collapses the open submenu and restores
+  // the row's plain appearance, so only one section is ever highlighted at a time.
+  const handleTopLevelClick = () => {
+    setOpenGroups({});
+    setOpenList(null);
+    handleClick();
+  };
   const toggleGroup = (title: string, effectiveOpen: boolean) => setOpenGroups((prev) => ({ ...prev, [title]: !effectiveOpen }));
   return (
     <SidebarMenu className="gap-2">
@@ -184,7 +191,7 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
         return (
           <SidebarMenuItem key={item.url}>
             <SidebarMenuButton asChild isActive={currentUrl === item.url} tooltip={item.title}>
-              <Link to={item.url} onClick={handleClick} aria-label={item.title} aria-current={currentUrl === item.url ? "page" : undefined}>
+              <Link to={item.url} onClick={handleTopLevelClick} aria-label={item.title} aria-current={currentUrl === item.url ? "page" : undefined}>
                 <item.icon />
                 <span>{item.title}</span>
               </Link>
@@ -192,7 +199,7 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
           </SidebarMenuItem>
         );
       })}
-      {isAdmin && <SidebarMenuItem><SidebarMenuButton asChild isActive={currentUrl === '/billing-admin'} tooltip="Administration"><Link to="/billing-admin" onClick={handleClick} aria-label="Administration"><Shield /><span>Administration</span></Link></SidebarMenuButton></SidebarMenuItem>}
+      {isAdmin && <SidebarMenuItem><SidebarMenuButton asChild isActive={currentUrl === '/billing-admin'} tooltip="Administration"><Link to="/billing-admin" onClick={handleTopLevelClick} aria-label="Administration"><Shield /><span>Administration</span></Link></SidebarMenuButton></SidebarMenuItem>}
     </SidebarMenu>
   );
 }
