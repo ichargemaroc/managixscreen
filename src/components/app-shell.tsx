@@ -119,7 +119,6 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
                               aria-current={active ? "page" : undefined}
                               className={`flex items-center gap-2 rounded-lg px-4 py-1.5 text-xs font-medium ${active ? "bg-card text-foreground shadow-sm" : "text-foreground/70 hover:bg-card"}`}
                             >
-                              <span className={`size-1.5 shrink-0 rounded-full ${screen.status === "online" ? "bg-success" : screen.status === "pending" ? "bg-warning" : "bg-muted-foreground"}`} />
                               <span className="truncate">{screen.name}</span>
                             </Link>
                           );
