@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Image as ImageIcon, Upload, Trash2, Globe, ListPlus, ListX, X, Check } from "lucide-react";
+import { Image as ImageIcon, Upload, Trash2, ListPlus, ListX, X, Check } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { WebpagePreview } from '@/components/webpage-preview';
 import { MediaActionMenu } from '@/components/media-action-menu';
 import { addLibraryItems, removeLibraryItems } from '@/lib/media-playlist-items';
 import { VideoThumbnail } from '@/components/video-thumbnail';
+import { WebpageThumbnail } from '@/components/webpage-thumbnail';
 
 export const Route = createFileRoute("/_authenticated/media")({
   head: () => ({ meta: [
@@ -146,7 +147,7 @@ function MediaPage() {
                 <div className="relative">
                 {managing && <div className="absolute left-2 top-2 z-10 flex rounded bg-background p-2 shadow-sm"><Checkbox aria-label={`Sélectionner ${m.name}`} checked={selected.includes(m.id)} onCheckedChange={checked => setSelected(ids => checked ? [...new Set([...ids, m.id])] : ids.filter(id => id !== m.id))} /></div>}
                 <Button variant="ghost" aria-label={`Ouvrir ${m.name}`} className="relative block h-auto aspect-video w-full overflow-hidden rounded-none bg-muted p-0" onClick={() => setPreview(m)}>
-                  {m.type === 'webpage' ? <div className="flex size-full flex-col items-center justify-center gap-3 text-primary"><Globe className="size-10" /><span className="max-w-full truncate px-3 text-sm">{new URL(m.url).hostname}</span></div> : m.type === "image" ? <img src={m.thumbnailUrl || m.url} alt={m.name} loading={index < 4 ? "eager" : "lazy"} decoding="async" width={480} height={270} className="size-full object-cover" onError={(event) => { const image = event.currentTarget; if (image.src !== m.url) image.src = m.url; }} /> : <VideoThumbnail media={m} />}
+                  {m.type === 'webpage' ? <WebpageThumbnail url={m.url} name={m.name} /> : m.type === "image" ? <img src={m.thumbnailUrl || m.url} alt={m.name} loading={index < 4 ? "eager" : "lazy"} decoding="async" width={480} height={270} className="size-full object-cover" onError={(event) => { const image = event.currentTarget; if (image.src !== m.url) image.src = m.url; }} /> : <VideoThumbnail media={m} />}
                 </Button>
                 </div>
                 <div className="flex items-start justify-between gap-2 p-3">
