@@ -20,7 +20,6 @@ import { Route as AuthenticatedBillingAdminRouteImport } from './routes/_authent
 import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated/groups'
 import { Route as AuthenticatedIntegrationsRouteImport } from './routes/_authenticated/integrations'
 import { Route as AuthenticatedMediaRouteImport } from './routes/_authenticated/media'
-import { Route as AuthenticatedMonitoringRouteImport } from './routes/_authenticated/monitoring'
 import { Route as AuthenticatedMultiZonesRouteImport } from './routes/_authenticated/multi-zones'
 import { Route as AuthenticatedPlaylistsRouteImport } from './routes/_authenticated/playlists'
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
@@ -96,11 +95,6 @@ const AuthenticatedIntegrationsRoute =
 const AuthenticatedMediaRoute = AuthenticatedMediaRouteImport.update({
   id: '/media',
   path: '/media',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedMonitoringRoute = AuthenticatedMonitoringRouteImport.update({
-  id: '/monitoring',
-  path: '/monitoring',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMultiZonesRoute = AuthenticatedMultiZonesRouteImport.update({
@@ -221,7 +215,6 @@ export interface FileRoutesByFullPath {
   '/groups': typeof AuthenticatedGroupsRoute
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/media': typeof AuthenticatedMediaRoute
-  '/monitoring': typeof AuthenticatedMonitoringRoute
   '/multi-zones': typeof AuthenticatedMultiZonesRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/schedule': typeof AuthenticatedScheduleRoute
@@ -253,7 +246,6 @@ export interface FileRoutesByTo {
   '/groups': typeof AuthenticatedGroupsRoute
   '/integrations': typeof AuthenticatedIntegrationsRoute
   '/media': typeof AuthenticatedMediaRoute
-  '/monitoring': typeof AuthenticatedMonitoringRoute
   '/multi-zones': typeof AuthenticatedMultiZonesRoute
   '/playlists': typeof AuthenticatedPlaylistsRoute
   '/schedule': typeof AuthenticatedScheduleRoute
@@ -288,7 +280,6 @@ export interface FileRoutesById {
   '/_authenticated/groups': typeof AuthenticatedGroupsRoute
   '/_authenticated/integrations': typeof AuthenticatedIntegrationsRoute
   '/_authenticated/media': typeof AuthenticatedMediaRoute
-  '/_authenticated/monitoring': typeof AuthenticatedMonitoringRoute
   '/_authenticated/multi-zones': typeof AuthenticatedMultiZonesRoute
   '/_authenticated/playlists': typeof AuthenticatedPlaylistsRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
@@ -324,7 +315,6 @@ export interface FileRouteTypes {
     | '/groups'
     | '/integrations'
     | '/media'
-    | '/monitoring'
     | '/multi-zones'
     | '/playlists'
     | '/schedule'
@@ -356,7 +346,6 @@ export interface FileRouteTypes {
     | '/groups'
     | '/integrations'
     | '/media'
-    | '/monitoring'
     | '/multi-zones'
     | '/playlists'
     | '/schedule'
@@ -390,7 +379,6 @@ export interface FileRouteTypes {
     | '/_authenticated/groups'
     | '/_authenticated/integrations'
     | '/_authenticated/media'
-    | '/_authenticated/monitoring'
     | '/_authenticated/multi-zones'
     | '/_authenticated/playlists'
     | '/_authenticated/schedule'
@@ -509,13 +497,6 @@ declare module '@tanstack/react-router' {
       path: '/media'
       fullPath: '/media'
       preLoaderRoute: typeof AuthenticatedMediaRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/monitoring': {
-      id: '/_authenticated/monitoring'
-      path: '/monitoring'
-      fullPath: '/monitoring'
-      preLoaderRoute: typeof AuthenticatedMonitoringRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/multi-zones': {
@@ -666,7 +647,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedGroupsRoute: typeof AuthenticatedGroupsRoute
   AuthenticatedIntegrationsRoute: typeof AuthenticatedIntegrationsRoute
   AuthenticatedMediaRoute: typeof AuthenticatedMediaRoute
-  AuthenticatedMonitoringRoute: typeof AuthenticatedMonitoringRoute
   AuthenticatedMultiZonesRoute: typeof AuthenticatedMultiZonesRoute
   AuthenticatedPlaylistsRoute: typeof AuthenticatedPlaylistsRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
@@ -685,7 +665,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedGroupsRoute: AuthenticatedGroupsRoute,
   AuthenticatedIntegrationsRoute: AuthenticatedIntegrationsRoute,
   AuthenticatedMediaRoute: AuthenticatedMediaRoute,
-  AuthenticatedMonitoringRoute: AuthenticatedMonitoringRoute,
   AuthenticatedMultiZonesRoute: AuthenticatedMultiZonesRoute,
   AuthenticatedPlaylistsRoute: AuthenticatedPlaylistsRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,

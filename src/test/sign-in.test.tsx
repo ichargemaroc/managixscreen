@@ -16,7 +16,10 @@ vi.mock('@tanstack/react-router', () => ({
   }),
   useNavigate: () => mocks.navigate,
 }));
-vi.mock('@tanstack/react-query', () => ({ useQueryClient: () => mocks }));
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => mocks,
+  useQuery: () => ({ data: undefined }),
+}));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { auth: { signInWithPassword: mocks.signIn } } }));
 vi.mock('@/integrations/lovable', () => ({ lovable: { auth: {} } }));
 vi.mock('@/components/theme-toggle', () => ({ ThemeToggle: () => null }));

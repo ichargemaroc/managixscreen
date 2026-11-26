@@ -101,7 +101,7 @@ export type StoreScope = 'dashboard' | 'metadata' | 'media';
 
 export function storeScope(pathname: string): StoreScope {
   if (pathname === '/') return 'dashboard';
-  if (['/media', '/playlists', '/video-walls', '/multi-zones', '/team', '/monitoring'].includes(pathname)) return 'media';
+  if (['/media', '/playlists', '/video-walls', '/multi-zones', '/team'].includes(pathname)) return 'media';
   return 'metadata';
 }
 

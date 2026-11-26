@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, Settings, Grid2X2, CreditCard, Shield, Columns2,Plug,Users,Activity,ChevronDown,FolderTree,Plus, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Monitor, Image, ListVideo, CalendarClock, Settings, Grid2X2, CreditCard, Shield, Columns2,Plug,Users,ChevronDown,FolderTree,Plus, type LucideIcon } from "lucide-react";
 import { usePlatformAdmin, useStore } from '@/lib/store';
 import markAsset from "@/assets/screenflow-mark.webp.asset.json";
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -16,7 +16,6 @@ type NavEntry =
 
 const nav: readonly NavEntry[] = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
-  { title: "Supervision", url: "/monitoring", icon: Activity },
   { title: "Écrans", icon: Monitor, showScreens: true, children: [
     { title: "Écrans", url: "/screens" },
     { title: "Groupes", url: "/groups" },
