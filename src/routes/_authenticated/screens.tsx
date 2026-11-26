@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import { useQueryClient } from '@tanstack/react-query';
 import { Monitor, Plus, MoreHorizontal, ScanLine } from "lucide-react";
 import { toast } from "sonner";
@@ -38,7 +38,7 @@ export const Route = createFileRoute("/_authenticated/screens")({
 
 const NONE = "__none";
 
-function Screens() {
+export function Screens() {
   const { screens, groups, playlists, refresh } = useStore();
   const queryClient = useQueryClient();
   const { data: billing } = useBillingStore();
@@ -90,8 +90,13 @@ function Screens() {
               <TableBody>
                 {list.map((s) => {
                   const g = groups.find((x) => x.id === s.groupId);
+                  const openDetail = (event: MouseEvent<HTMLElement>) => {
+                    const target = event.target as HTMLElement;
+                    if (target.closest("a, button, input, select, [role='menuitem']")) return;
+                    navigate({ to: "/screens/$screenId", params: { screenId: s.id } });
+                  };
                   return (
-                    <TableRow key={s.id}>
+                    <TableRow key={s.id} className="cursor-pointer" onClick={openDetail}>
                       <TableCell className="font-medium"><Link to="/screens/$screenId" params={{ screenId: s.id }} className="hover:underline">{s.name}</Link><div className="text-xs text-muted-foreground">{s.revoked ? "Accès révoqué" : s.enabled === false ? 'Désactivé' : s.deviceId ? "Jumelé" : "Non jumelé"}</div></TableCell>
                       <TableCell><StatusBadge status={s.status} /></TableCell>
                       <TableCell>{[g?.name, s.location || g?.location].filter(Boolean).join(" · ") || "—"}</TableCell>
