@@ -1,3 +1,4 @@
 - Share appearance through ThemeProvider and semantic CSS tokens; persist only browser appearance locally, never alter playback media when switching dashboard themes.
 - Internal weather/Instagram preview frames may retain their origin only for allow-listed ScreenFlow display paths; external pages remain opaque-origin sandboxed to protect account storage.
 - The dashboard reuses ScreenMonitoring for its television section; it loads telemetry but resolves only the opened media preview through store query options to avoid signing the entire library on entry.
+- Inline TV group creation selects the store-returned saved identity and retains the option until shared data refreshes, so delayed refresh cannot hide the newly selected group.

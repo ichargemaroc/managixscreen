@@ -20,6 +20,7 @@ import { DisplayRotationPicker } from '@/components/display-rotation-picker';
 import type { DisplayRotation } from '@/lib/display-rotation';
 import { Music2 } from 'lucide-react';
 import { ScreenHealthChart } from '@/components/screen-health-chart';
+import { TvGroupSelect } from '@/components/tv-group-select';
 
 export const Route = createFileRoute("/_authenticated/screens")({
   head: () => ({ meta: [
@@ -148,13 +149,14 @@ function GroupSelect({ value, onChange }: { value: string | null; onChange: (v: 
 
 function AddDialog({ open, onOpenChange, onAdd }: { open: boolean; onOpenChange: (o: boolean) => void; onAdd: (n: string, c: string, g: string | null, location: string) => Promise<void> }) {
   const [code, setCode] = useState(""); const [name, setName] = useState(""); const [group, setGroup] = useState<string | null>(null);
+  const [creatingGroup, setCreatingGroup] = useState(false);
   const [busy, setBusy] = useState(false);
   const [location, setLocation] = useState("");
   const [error, setError] = useState("");
   const [scanning, setScanning] = useState(false);
-  const ok = isValidPairingCode(code) && name.trim().length > 0;
+  const ok = isValidPairingCode(code) && name.trim().length > 0 && !creatingGroup;
   return (
-    <Dialog open={open} onOpenChange={(value) => { setScanning(false); onOpenChange(value); }}>
+    <Dialog open={open} onOpenChange={(value) => { setScanning(false); if (!value) setCreatingGroup(false); onOpenChange(value); }}>
       <DialogContent className="max-h-[90svh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Ajouter une TV</DialogTitle>
@@ -169,7 +171,7 @@ function AddDialog({ open, onOpenChange, onAdd }: { open: boolean; onOpenChange:
           </div>
           <div className="space-y-2"><Label>Nom de la TV</Label><Input maxLength={120} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex. Accueil — Hall principal" /></div>
           <div className="space-y-2"><Label>Lieu (facultatif)</Label><Input maxLength={240} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Ex. Casablanca — Accueil" /></div>
-          <div className="space-y-2"><Label>Groupe</Label><GroupSelect value={group} onChange={setGroup} /></div>
+          <div className="space-y-2"><Label>Groupe</Label><TvGroupSelect value={group} onChange={setGroup} onCreatingChange={setCreatingGroup} /></div>
         </div>
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         <DialogFooter>

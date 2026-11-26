@@ -339,8 +339,10 @@ export async function removePlaylistMusic(playlistId: string) {
 }
 
 export async function addGroup(name: string, location: string) {
-  const { error } = await supabase.from("groups").insert({ user_id: await userId(), name, location });
+  const { data, error } = await supabase.from("groups").insert({ user_id: await userId(), name, location }).select("id,name").single();
   if (error) throw error;
+  if (!data) throw new Error("Le groupe n’a pas pu être enregistré.");
+  return data;
 }
 
 export async function deleteGroup(id: string) {

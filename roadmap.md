@@ -1,3 +1,7 @@
+## Création de groupe depuis Ajouter une TV
+- [x] Proposer la création sans quitter le jumelage, enregistrer et sélectionner automatiquement le groupe.
+- [x] Groupe temporaire créé, automatiquement sélectionné et relu après rechargement dans une session connectée, puis supprimé ; téléphone sans débordement, 21 tests ciblés réussis et compilation correcte.
+
 ## Graphique et accès Écrans
 - [x] Ajouter l’anneau de connexion et la répartition par groupe.
 - [x] Ouvrir /screens au clic sur Écrans dans le menu, en conservant les sous-menus.
