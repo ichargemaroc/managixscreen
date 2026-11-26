@@ -9,13 +9,13 @@ const SCREENS = [
 const GROUPS = [{ id: 'g1', name: 'Vitrines' }];
 
 vi.mock('@tanstack/react-router', () => ({
-  Link: ({ to, params, search, className, onClick, children }: { to: string; params?: Record<string, string>; search?: Record<string, string>; className?: string; onClick?: () => void; children: ReactNode }) => {
+  Link: ({ to, params, search, className, onClick, children, ...props }: { to: string; params?: Record<string, string>; search?: Record<string, string>; className?: string; onClick?: () => void; children: ReactNode; 'aria-expanded'?: boolean }) => {
     const href = params
       ? Object.entries(params).reduce((u, [k, v]) => u.replace(`$${k}`, v), to)
       : search && Object.keys(search).length
         ? `${to}?${new URLSearchParams(search).toString()}`
         : to;
-    return <a href={href} className={className} onClick={onClick}>{children}</a>;
+    return <a href={href} className={className} onClick={onClick} aria-expanded={props['aria-expanded']}>{children}</a>;
   },
   useRouterState: (opts: { select: (state: { location: { pathname: string; search: Record<string, string> } }) => unknown }) =>
     opts.select({ location: { pathname: '/screens', search: {} } }),
@@ -33,7 +33,7 @@ vi.mock('@/components/ui/sidebar', () => {
     SidebarInset: pass,
     SidebarMenu: ({ children }: { children: ReactNode }) => <ul>{children}</ul>,
     SidebarMenuItem: ({ children }: { children: ReactNode }) => <li>{children}</li>,
-    SidebarMenuButton: ({ children, ...props }: { children: ReactNode; 'aria-label'?: string; 'aria-expanded'?: boolean; onClick?: () => void }) => (
+    SidebarMenuButton: ({ children, asChild, ...props }: { children: ReactNode; asChild?: boolean; 'aria-label'?: string; 'aria-expanded'?: boolean; onClick?: () => void }) => asChild ? <>{children}</> : (
       <button type="button" aria-label={props['aria-label']} aria-expanded={props['aria-expanded']} onClick={props.onClick}>{children}</button>
     ),
     SidebarProvider: pass,
@@ -174,8 +174,8 @@ it('opens the Écrans submenu only on click, never on hover', () => {
     <NavLinks currentUrl="/media" path="/media" onNavigate={vi.fn()} />,
   );
   const label = screen.getAllByText('Écrans')[0];
-  const row = label?.closest('button');
-  if (!row) throw new Error('Écrans row is not a button');
+  const row = label?.closest('a');
+  if (!row) throw new Error('Écrans link is missing');
   expect(row.getAttribute('aria-expanded')).toBe('false');
 
   fireEvent.pointerEnter(row.parentElement ?? row);
@@ -197,8 +197,8 @@ it('lists Médiathèque before Playlists in the menu', () => {
 
 it('closes the Écrans submenu and restores its plain color when another button is clicked', () => {
   render(<NavLinks currentUrl="/media" path="/media" onNavigate={vi.fn()} />);
-  const row = screen.getAllByText('Écrans')[0]?.closest('button');
-  if (!row) throw new Error('Écrans row is not a button');
+  const row = screen.getAllByText('Écrans')[0]?.closest('a');
+  if (!row) throw new Error('Écrans link is missing');
   const wrapper = row.parentElement?.parentElement;
   if (!wrapper) throw new Error('Écrans wrapper is missing');
   expect(wrapper.className).not.toContain('bg-accent');
@@ -215,11 +215,10 @@ it('closes the Écrans submenu and restores its plain color when another button 
   expect(wrapper.className).not.toContain('bg-accent');
 });
 
-it('renders the Écrans row as a button, never as a link', () => {
+it('opens the screens page from the Écrans row', () => {
   renderMenu();
   const row = screen.getAllByText('Écrans')[0];
-  expect(row?.closest('a')).toBeNull();
-  expect(row?.closest('button')).toBeTruthy();
+  expect(row?.closest('a')?.getAttribute('href')).toBe('/screens');
 });
 
 it('keeps the Téléviseurs and Groupes cards visible with no screen and no group', () => {

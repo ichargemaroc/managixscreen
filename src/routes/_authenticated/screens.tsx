@@ -19,6 +19,7 @@ import { PairingScanner } from "@/components/pairing-scanner";
 import { DisplayRotationPicker } from '@/components/display-rotation-picker';
 import type { DisplayRotation } from '@/lib/display-rotation';
 import { Music2 } from 'lucide-react';
+import { ScreenHealthChart } from '@/components/screen-health-chart';
 
 export const Route = createFileRoute("/_authenticated/screens")({
   head: () => ({ meta: [
@@ -68,6 +69,7 @@ function Screens() {
           action={<Button onClick={() => setAdding(true)}><Plus /> Ajouter une TV</Button>} />
       ) : (
         <>
+          <ScreenHealthChart screens={screens} groups={groups} filter={filter} onFilter={setFilter} />
           <div className="mb-4 w-56">
             <Select value={filter} onValueChange={setFilter}>
               <SelectTrigger><SelectValue /></SelectTrigger>

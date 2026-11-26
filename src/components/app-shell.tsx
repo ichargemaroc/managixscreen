@@ -61,15 +61,15 @@ export function NavLinks({ currentUrl, path, onNavigate }: { currentUrl: string 
               <div className={open ? "rounded-2xl bg-accent p-1.5 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0" : ""}>
                 <div className="relative">
                   <SidebarMenuButton
+                    asChild
                     isActive={childActive}
                     tooltip={item.title}
-                    onClick={() => toggleGroup(item.title, open)}
-                    aria-label={item.title}
-                    aria-expanded={open}
                     className={open ? "text-accent-foreground hover:bg-transparent" : ""}
                   >
+                    <Link to="/screens" onClick={() => toggleGroup(item.title, open)} aria-label={item.title} aria-expanded={open}>
                     <item.icon />
                     <span>{item.title}</span>
+                    </Link>
                   </SidebarMenuButton>
                 </div>
                 {open && (

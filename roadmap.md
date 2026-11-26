@@ -1,7 +1,7 @@
 ## Graphique et accès Écrans
-- [ ] Ajouter l’anneau de connexion et la répartition par groupe.
-- [ ] Ouvrir /screens au clic sur Écrans dans le menu, en conservant les sous-menus.
-- [ ] Vérifier les calculs et les interactions avec une session connectée.
+- [x] Ajouter l’anneau de connexion et la répartition par groupe.
+- [x] Ouvrir /screens au clic sur Écrans dans le menu, en conservant les sous-menus.
+- [x] 18 tests réussis ; trois TV réelles relues, filtre et navigation vérifiés, téléphone sans débordement et compilation correcte.
 
 # Roadmap — Sauvegarde réelle ScreenFlow
 
