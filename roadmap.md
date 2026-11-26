@@ -1,3 +1,7 @@
+## Filtres de la médiathèque
+- [x] Ajouter « Filtrer par » : date d’import, types multiples, appliquer et réinitialiser ; orientation et étiquettes indisponibles sans métadonnées.
+- [x] Filtres type/date combinés et réinitialisés dans la médiathèque connectée avec une image temporaire supprimée après contrôle ; ordinateur et téléphone vérifiés, 7 tests réussis et compilation correcte.
+
 ## Miniatures et pagination de la médiathèque
 - [x] Affichage limité à douze médias par page ; miniatures photo/vidéo compressées en 320 × 180, liens résolus par carte et aperçus originaux à la demande.
 - [x] Treize images temporaires sur deux pages, recherche, sélection conservée entre pages, aperçu original 960 pixels et miniatures photo/vidéo 320 pixels relus ; téléphone sans débordement, nettoyage effectué, 20 tests réussis et compilation correcte.

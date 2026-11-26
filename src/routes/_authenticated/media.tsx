@@ -20,6 +20,8 @@ import { VideoThumbnail } from '@/components/video-thumbnail';
 import { WebpageThumbnail } from '@/components/webpage-thumbnail';
 import { MediaThumbnail } from '@/components/media-thumbnail';
 import { mediaPage } from '@/lib/media-pagination';
+import { MediaFilterMenu } from '@/components/media-filter-menu';
+import { emptyMediaFilters, matchesMediaFilters } from '@/lib/media-filters';
 
 export const Route = createFileRoute("/_authenticated/media")({
   head: () => ({ meta: [
@@ -53,8 +55,10 @@ function MediaPage() {
   const [playlistIds, setPlaylistIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
+  const [filters, setFilters] = useState(emptyMediaFilters);
   const grid = useRef<HTMLDivElement>(null);
-  const list = media.filter((m) => (tab === "all" || m.type === tab) && m.name.toLowerCase().includes(q.toLowerCase()));
+  const now = new Date();
+  const list = media.filter((m) => (tab === "all" || m.type === tab) && m.name.toLowerCase().includes(q.toLowerCase()) && matchesMediaFilters(m, filters, now));
   const pagination = mediaPage(list, pageNumber);
   const pageItems = pagination.items;
   function changePage(next: number) {
@@ -142,7 +146,10 @@ function MediaPage() {
             <Tabs className="min-w-0 overflow-x-auto" value={tab} onValueChange={value => { setTab(value); setPageNumber(1); }}><TabsList className="console-content-tabs" aria-label="Type de média">
               <TabsTrigger value="all">Tous</TabsTrigger><TabsTrigger value="image">Photos</TabsTrigger><TabsTrigger value="video">Vidéos</TabsTrigger><TabsTrigger value="webpage">Pages Web</TabsTrigger>
             </TabsList></Tabs>
-            <Input className="mb-3 h-10 shrink-0 sm:w-64" aria-label="Rechercher un média" placeholder="Rechercher…" value={q} onChange={(e) => { setQ(e.target.value); setPageNumber(1); }} />
+            <div className="mb-3 flex min-w-0 flex-wrap items-center gap-2">
+              <Input className="h-10 min-w-0 flex-1 sm:w-44" aria-label="Rechercher un média" placeholder="Rechercher…" value={q} onChange={(e) => { setQ(e.target.value); setPageNumber(1); }} />
+              <MediaFilterMenu value={filters} onApply={next => { setFilters(next); setTab('all'); setPageNumber(1); }} />
+            </div>
           </div>
           {managing && <div className="mb-4 flex flex-wrap items-center gap-2 border-b border-border pb-4">
             <label className="mr-2 flex items-center gap-2 text-sm"><Checkbox aria-label="Sélectionner tous les médias affichés" checked={pageItems.length > 0 && pageItems.every(m => selected.includes(m.id)) ? true : pageItems.some(m => selected.includes(m.id)) ? 'indeterminate' : false} onCheckedChange={checked => setSelected(ids => checked ? [...new Set([...ids, ...pageItems.map(m => m.id)])] : ids.filter(id => !pageItems.some(m => m.id === id)))} />Sélectionner cette page</label>

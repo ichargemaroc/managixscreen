@@ -69,3 +69,4 @@ use the editor.
 - Library video thumbnails extract muted, bounded frames only for visible items, serialize extraction and cache images in the session QueryClient; never alter stored videos or player playback.
 - The paginated media library reads metadata first and resolves thumbnail or original links only for mounted cards and opened previews, avoiding full-library signing while preserving other media consumers.
 - Web library thumbnails use visible-only, non-interactive sandboxed miniature frames with autoplay denied; only allow-listed internal display paths retain origin, and embedding restrictions are never bypassed.
+- Library filters use existing metadata before pagination; unsupported orientation/tags stay disabled to avoid extra downloads or invented metadata.
