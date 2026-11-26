@@ -66,3 +66,4 @@ use the editor.
 - Screen detail tabs share one local settings draft and existing store actions; content remains read-only so presentation changes cannot alter playlist editing or device permissions.
 - Screen-detail image previews use per-media compressed thumbnail queries from the store and reuse the media-library cache, avoiding full-library signing on metadata pages.
 - Media library menus reuse existing store actions and transactional playlist saves; unsupported folder and replacement operations stay explicitly disabled to avoid implying unimplemented capabilities.
+- Library video thumbnails extract muted, bounded frames only for visible items, serialize extraction and cache images in the session QueryClient; never alter stored videos or player playback.
