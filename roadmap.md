@@ -1,3 +1,7 @@
+## Miniatures et pagination de la médiathèque
+- [x] Affichage limité à douze médias par page ; miniatures photo/vidéo compressées en 320 × 180, liens résolus par carte et aperçus originaux à la demande.
+- [x] Treize images temporaires sur deux pages, recherche, sélection conservée entre pages, aperçu original 960 pixels et miniatures photo/vidéo 320 pixels relus ; téléphone sans débordement, nettoyage effectué, 20 tests réussis et compilation correcte.
+
 ## Menu de la médiathèque
 - [x] Ajouter le menu de référence, sélection multiple et confirmations en réutilisant les actions existantes ; dossiers et remplacement signalés indisponibles.
 - [x] Deux médias ajoutés puis retirés de deux playlists temporaires et relus après navigation ; annulation de suppression, menu sur téléphone sans débordement, nettoyage des données temporaires, 13 tests réussis et compilation correcte.

@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { Film, Globe, ImageIcon } from 'lucide-react';
 import { mediaThumbnailOptions, type Media } from '@/lib/store';
 
-export function MediaThumbnail({ media }: { media: Media }) {
-  const { data: url } = useQuery({ ...mediaThumbnailOptions(media), enabled: media.type === 'image' });
+export function MediaThumbnail({ media, compact = false }: { media: Media; compact?: boolean }) {
+  const { data: url } = useQuery({ ...mediaThumbnailOptions(media, compact), enabled: media.type === 'image' });
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const Icon = media.type === 'video' ? Film : media.type === 'webpage' ? Globe : ImageIcon;
   return url && url !== failedUrl

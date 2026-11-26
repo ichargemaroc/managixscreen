@@ -84,15 +84,15 @@ export async function loadMediaUrls(queryClient: QueryClient, rows: { path: stri
 }
 
 // Resolve visible image thumbnails without signing the entire library.
-export const mediaThumbnailOptions = (media: Media) => queryOptions({
-  queryKey: ['media-private-links', 'thumbnail', media.path],
+export const mediaThumbnailOptions = (media: Media, compact = false) => queryOptions({
+  queryKey: ['media-private-links', compact ? 'thumbnail-small' : 'thumbnail', media.path],
   staleTime: 50 * 60_000,
   retry: false,
   queryFn: async () => {
-    if (media.thumbnailUrl) return media.thumbnailUrl;
+    if (media.thumbnailUrl && !compact) return media.thumbnailUrl;
     if (media.type !== 'image') return '';
     const { data, error } = await supabase.storage.from('media').createSignedUrl(media.path, 3600, {
-      transform: { width: 480, height: 270, resize: 'cover', quality: 70 },
+      transform: compact ? { width: 320, height: 180, resize: 'cover', quality: 55 } : { width: 480, height: 270, resize: 'cover', quality: 70 },
     });
     if (error || !data?.signedUrl) throw new Error('Aperçu indisponible.');
     return data.signedUrl;
@@ -117,7 +117,7 @@ export type StoreScope = 'dashboard' | 'metadata' | 'media';
 
 export function storeScope(pathname: string): StoreScope {
   if (pathname === '/') return 'dashboard';
-  if (['/media', '/playlists', '/video-walls', '/multi-zones', '/team'].includes(pathname)) return 'media';
+  if (['/playlists', '/video-walls', '/multi-zones', '/team'].includes(pathname)) return 'media';
   return 'metadata';
 }
 

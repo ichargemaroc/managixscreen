@@ -67,4 +67,5 @@ use the editor.
 - Screen-detail image previews use per-media compressed thumbnail queries from the store and reuse the media-library cache, avoiding full-library signing on metadata pages.
 - Media library menus reuse existing store actions and transactional playlist saves; unsupported folder and replacement operations stay explicitly disabled to avoid implying unimplemented capabilities.
 - Library video thumbnails extract muted, bounded frames only for visible items, serialize extraction and cache images in the session QueryClient; never alter stored videos or player playback.
+- The paginated media library reads metadata first and resolves thumbnail or original links only for mounted cards and opened previews, avoiding full-library signing while preserving other media consumers.
 - Web library thumbnails use visible-only, non-interactive sandboxed miniature frames with autoplay denied; only allow-listed internal display paths retain origin, and embedding restrictions are never bypassed.

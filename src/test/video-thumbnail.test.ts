@@ -2,11 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { captureVideoThumbnail, videoThumbnailSize } from '@/lib/video-thumbnail';
 
 describe('video thumbnails', () => {
-  it('bounds landscape frames to 480×270 without distorting them', () => {
-    expect(videoThumbnailSize(1920, 1080)).toEqual({ width: 480, height: 270 });
+  it('bounds landscape frames to 320×180 without distorting them', () => {
+    expect(videoThumbnailSize(1920, 1080)).toEqual({ width: 320, height: 180 });
   });
   it('keeps portrait aspect ratio and does not upscale small sources', () => {
-    expect(videoThumbnailSize(1080, 1920)).toEqual({ width: 152, height: 270 });
+    expect(videoThumbnailSize(1080, 1920)).toEqual({ width: 101, height: 180 });
     expect(videoThumbnailSize(160, 90)).toEqual({ width: 160, height: 90 });
     expect(() => videoThumbnailSize(0, 0)).toThrow();
   });
@@ -39,7 +39,8 @@ describe('video thumbnails', () => {
     expect(video.currentTime).toBe(1);
     video.dispatchEvent(new Event('seeked'));
     await expect(result).resolves.toBe('data:image/jpeg;base64,frame');
-    expect(draw).toHaveBeenCalledWith(video, 0, 0, 480, 270);
+    expect(draw).toHaveBeenCalledWith(video, 0, 0, 320, 180);
+    expect(canvas.toDataURL).toHaveBeenCalledWith('image/jpeg', 0.55);
     expect(video.hasAttribute('src')).toBe(false);
     expect(load).toHaveBeenCalledTimes(2);
     create.mockRestore();

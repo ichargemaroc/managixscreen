@@ -4,7 +4,7 @@ let pending: Promise<unknown> = Promise.resolve();
 
 export function videoThumbnailSize(width: number, height: number) {
   if (width <= 0 || height <= 0) throw new Error('Dimensions vidéo invalides');
-  const scale = Math.min(1, 480 / width, 270 / height);
+  const scale = Math.min(1, 320 / width, 180 / height);
   return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)) };
 }
 
@@ -49,7 +49,7 @@ function extractFrame(url: string, signal: AbortSignal): Promise<string> {
         const context = canvas.getContext('2d');
         if (!context) throw new Error('Aperçu vidéo indisponible');
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const image = canvas.toDataURL('image/jpeg', 0.7);
+        const image = canvas.toDataURL('image/jpeg', 0.55);
         settled = true;
         cleanup();
         resolve(image);

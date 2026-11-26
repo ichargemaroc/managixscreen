@@ -88,12 +88,28 @@ describe('Dashboard loading', () => {
   it('loads signed originals and thumbnails when entering a media-preview page', async () => {
     const client = new QueryClient();
     await fetchAll(client, 'dashboard');
-    const data = await fetchAll(client, storeScope('/media'));
+    const data = await fetchAll(client, storeScope('/playlists'));
     expect(data.media[0]?.url).toBe('https://media.test/original');
     expect(data.media[0]?.thumbnailUrl).toBe('https://media.test/thumbnail');
     expect(mocks.sign).toHaveBeenCalledTimes(1);
     expect(mocks.thumbnail).toHaveBeenCalledTimes(1);
     for (const path of ['/playlists', '/video-walls', '/multi-zones', '/team']) expect(storeScope(path)).toBe('media');
+    client.clear();
+  });
+
+  it('does not sign the entire library when entering the paginated media page', async () => {
+    const client = new QueryClient();
+    const data = await fetchAll(client, storeScope('/media'));
+    expect(data.media[0]?.url).toBe('');
+    expect(mocks.sign).not.toHaveBeenCalled();
+    expect(mocks.thumbnail).not.toHaveBeenCalled();
+    expect(mocks.from).toHaveBeenCalledWith('playlist_items');
+    const photo = data.media[0];
+    if (!photo) throw new Error('Missing media fixture');
+    await client.fetchQuery(mediaThumbnailOptions(photo, true));
+    expect(mocks.thumbnail).toHaveBeenCalledWith('owner/photo.jpg', 3600, {
+      transform: { width: 320, height: 180, resize: 'cover', quality: 55 },
+    });
     client.clear();
   });
 

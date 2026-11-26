@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Image as ImageIcon, Upload, Trash2, ListPlus, ListX, X, Check } from "lucide-react";
+import { useQuery } from '@tanstack/react-query';
+import { Image as ImageIcon, Upload, Trash2, ListPlus, ListX, X, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -10,13 +11,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { mediaKind } from "@/lib/signage-rules";
-import { useStore, formatBytes, formatDuration, addMedia, deleteMedia, renameMedia, savePlaylistItems, type Media } from "@/lib/store";
+import { useStore, formatBytes, formatDuration, addMedia, deleteMedia, renameMedia, savePlaylistItems, mediaPreviewOptions, type Media } from "@/lib/store";
 import { WebpageEditor } from '@/components/webpage-editor';
 import { WebpagePreview } from '@/components/webpage-preview';
 import { MediaActionMenu } from '@/components/media-action-menu';
 import { addLibraryItems, removeLibraryItems } from '@/lib/media-playlist-items';
 import { VideoThumbnail } from '@/components/video-thumbnail';
 import { WebpageThumbnail } from '@/components/webpage-thumbnail';
+import { MediaThumbnail } from '@/components/media-thumbnail';
+import { mediaPage } from '@/lib/media-pagination';
 
 export const Route = createFileRoute("/_authenticated/media")({
   head: () => ({ meta: [
@@ -49,7 +52,15 @@ function MediaPage() {
   const [action, setAction] = useState<{ kind: 'add' | 'remove' | 'delete'; media: Media[] } | null>(null);
   const [playlistIds, setPlaylistIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [pageNumber, setPageNumber] = useState(1);
+  const grid = useRef<HTMLDivElement>(null);
   const list = media.filter((m) => (tab === "all" || m.type === tab) && m.name.toLowerCase().includes(q.toLowerCase()));
+  const pagination = mediaPage(list, pageNumber);
+  const pageItems = pagination.items;
+  function changePage(next: number) {
+    setPageNumber(next);
+    grid.current?.scrollIntoView({ block: 'start' });
+  }
   const selectedMedia = media.filter(m => selected.includes(m.id));
   const affectedPlaylists = playlists.filter(p => p.items.some(item => action?.media.some(m => m.id === item.mediaId)));
 
@@ -128,26 +139,26 @@ function MediaPage() {
       ) : (
         <>
           <div className="mb-6 flex min-w-0 flex-col gap-3 border-b border-border sm:flex-row sm:items-end sm:justify-between sm:gap-6">
-            <Tabs className="min-w-0 overflow-x-auto" value={tab} onValueChange={setTab}><TabsList className="console-content-tabs" aria-label="Type de média">
+            <Tabs className="min-w-0 overflow-x-auto" value={tab} onValueChange={value => { setTab(value); setPageNumber(1); }}><TabsList className="console-content-tabs" aria-label="Type de média">
               <TabsTrigger value="all">Tous</TabsTrigger><TabsTrigger value="image">Photos</TabsTrigger><TabsTrigger value="video">Vidéos</TabsTrigger><TabsTrigger value="webpage">Pages Web</TabsTrigger>
             </TabsList></Tabs>
-            <Input className="mb-3 h-10 shrink-0 sm:w-64" aria-label="Rechercher un média" placeholder="Rechercher…" value={q} onChange={(e) => setQ(e.target.value)} />
+            <Input className="mb-3 h-10 shrink-0 sm:w-64" aria-label="Rechercher un média" placeholder="Rechercher…" value={q} onChange={(e) => { setQ(e.target.value); setPageNumber(1); }} />
           </div>
           {managing && <div className="mb-4 flex flex-wrap items-center gap-2 border-b border-border pb-4">
-            <label className="mr-2 flex items-center gap-2 text-sm"><Checkbox aria-label="Sélectionner tous les médias affichés" checked={list.length > 0 && list.every(m => selected.includes(m.id)) ? true : list.some(m => selected.includes(m.id)) ? 'indeterminate' : false} onCheckedChange={checked => setSelected(ids => checked ? [...new Set([...ids, ...list.map(m => m.id)])] : ids.filter(id => !list.some(m => m.id === id)))} />Tout sélectionner</label>
+            <label className="mr-2 flex items-center gap-2 text-sm"><Checkbox aria-label="Sélectionner tous les médias affichés" checked={pageItems.length > 0 && pageItems.every(m => selected.includes(m.id)) ? true : pageItems.some(m => selected.includes(m.id)) ? 'indeterminate' : false} onCheckedChange={checked => setSelected(ids => checked ? [...new Set([...ids, ...pageItems.map(m => m.id)])] : ids.filter(id => !pageItems.some(m => m.id === id)))} />Sélectionner cette page</label>
             <span className="mr-auto text-sm text-muted-foreground">{selectedMedia.length} sélectionné(s)</span>
             <Button variant="outline" size="sm" disabled={busy || !selectedMedia.length} onClick={() => openAction('add', selectedMedia)}><ListPlus />Ajouter aux playlists</Button>
             <Button variant="outline" size="sm" disabled={busy || !selectedMedia.length} onClick={() => openAction('remove', selectedMedia)}><ListX />Retirer des playlists</Button>
             <Button variant="destructive" size="sm" disabled={busy || !selectedMedia.length} onClick={() => openAction('delete', selectedMedia)}><Trash2 />Supprimer</Button>
             <Button variant="ghost" size="icon" aria-label="Terminer la sélection" title="Terminer la sélection" onClick={() => { setManaging(false); setSelected([]); }}><X /></Button>
           </div>}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); onFiles(e.dataTransfer.files); }}>
-            {list.map((m, index) => (
+          <div ref={grid} className="grid scroll-mt-24 grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); onFiles(e.dataTransfer.files); }}>
+            {pageItems.map((m) => (
               <Card key={m.id} className="group overflow-hidden p-0">
                 <div className="relative">
                 {managing && <div className="absolute left-2 top-2 z-10 flex rounded bg-background p-2 shadow-sm"><Checkbox aria-label={`Sélectionner ${m.name}`} checked={selected.includes(m.id)} onCheckedChange={checked => setSelected(ids => checked ? [...new Set([...ids, m.id])] : ids.filter(id => id !== m.id))} /></div>}
                 <Button variant="ghost" aria-label={`Ouvrir ${m.name}`} className="relative block h-auto aspect-video w-full overflow-hidden rounded-none bg-muted p-0" onClick={() => setPreview(m)}>
-                  {m.type === 'webpage' ? <WebpageThumbnail url={m.url} name={m.name} /> : m.type === "image" ? <img src={m.thumbnailUrl || m.url} alt={m.name} loading={index < 4 ? "eager" : "lazy"} decoding="async" width={480} height={270} className="size-full object-cover" onError={(event) => { const image = event.currentTarget; if (image.src !== m.url) image.src = m.url; }} /> : <VideoThumbnail media={m} />}
+                  {m.type === 'webpage' ? <WebpageThumbnail url={m.url} name={m.name} /> : m.type === "image" ? <MediaThumbnail media={m} compact /> : <VideoThumbnail media={m} />}
                 </Button>
                 </div>
                 <div className="flex items-start justify-between gap-2 p-3">
@@ -161,6 +172,15 @@ function MediaPage() {
               </Card>
             ))}
           </div>
+          {!list.length && <p className="py-10 text-center text-sm text-muted-foreground">Aucun média trouvé.</p>}
+          <nav aria-label="Pagination de la médiathèque" className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+            <span className="text-sm text-muted-foreground">{list.length ? `${pagination.start + 1}–${pagination.start + pageItems.length} sur ${list.length} médias` : '0 média'}</span>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="icon" aria-label="Page précédente" title="Page précédente" disabled={pagination.page === 1} onClick={() => changePage(pagination.page - 1)}><ChevronLeft /></Button>
+              <span className="min-w-24 text-center text-sm" aria-live="polite">Page {pagination.page} / {pagination.pages}</span>
+              <Button variant="outline" size="icon" aria-label="Page suivante" title="Page suivante" disabled={pagination.page === pagination.pages} onClick={() => changePage(pagination.page + 1)}><ChevronRight /></Button>
+            </div>
+          </nav>
         </>
       )}
       <Dialog open={!!action} onOpenChange={open => { if (!open && !busy) setAction(null); }}>
@@ -189,9 +209,16 @@ function MediaPage() {
       <Dialog open={!!preview} onOpenChange={() => setPreview(null)}>
         <DialogContent className="max-w-3xl">
           <DialogHeader><DialogTitle className="truncate">{preview?.name}</DialogTitle></DialogHeader>
-          {preview && (preview.type === 'webpage' ? <WebpagePreview url={preview.url} name={preview.name} /> : preview.type === "image" ? <img src={preview.url} alt={preview.name} className="w-full rounded-md" /> : <video src={preview.url} controls autoPlay className="w-full rounded-md" />)}
+          {preview && (preview.type === 'webpage' ? <WebpagePreview url={preview.url} name={preview.name} /> : <OriginalMediaPreview media={preview} />)}
         </DialogContent>
       </Dialog>
     </div>
   );
+}
+
+function OriginalMediaPreview({ media }: { media: Media }) {
+  const { data: url, isError } = useQuery(mediaPreviewOptions(media));
+  if (isError) return <p role="alert" className="text-sm text-destructive">Aperçu indisponible.</p>;
+  if (!url) return <p role="status" className="text-sm text-muted-foreground">Chargement…</p>;
+  return media.type === 'image' ? <img src={url} alt={media.name} className="w-full rounded-md" /> : <video src={url} controls autoPlay className="w-full rounded-md" />;
 }

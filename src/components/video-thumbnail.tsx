@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Film, Play } from 'lucide-react';
 import type { Media } from '@/lib/store';
-import { formatDuration } from '@/lib/store';
+import { formatDuration, mediaPreviewOptions } from '@/lib/store';
 import { captureVideoThumbnail } from '@/lib/video-thumbnail';
 
 export function VideoThumbnail({ media }: { media: Media }) {
+  const queryClient = useQueryClient();
   const container = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -19,9 +20,12 @@ export function VideoThumbnail({ media }: { media: Media }) {
     return () => observer.disconnect();
   }, []);
   const { data: image } = useQuery({
-    queryKey: ['media-private-links', 'video-frame', media.path, media.size],
-    enabled: visible && !!media.url,
-    queryFn: ({ signal }) => captureVideoThumbnail(media.url, signal),
+    queryKey: ['media-private-links', 'video-frame-small', media.path, media.size],
+    enabled: visible,
+    queryFn: async ({ signal }) => {
+      const url = await queryClient.fetchQuery(mediaPreviewOptions(media));
+      return captureVideoThumbnail(url, signal);
+    },
     staleTime: Infinity,
     gcTime: 50 * 60_000,
     retry: false,
