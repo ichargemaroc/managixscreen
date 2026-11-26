@@ -22,7 +22,7 @@ afterEach(cleanup);
 
 it("selects the saved group's identity immediately, before shared data refresh", async () => {
   render(<Picker />);
-  fireEvent.click(screen.getByRole("button", { name: "Créer un groupe" }));
+  fireEvent.change(screen.getByRole("combobox"), { target: { value: "__create_group" } });
   fireEvent.change(screen.getByLabelText("Nom du nouveau groupe"), { target: { value: " Terrasse " } });
   fireEvent.change(screen.getByLabelText("Lieu du groupe (facultatif)"), { target: { value: " Rabat " } });
   fireEvent.click(screen.getByRole("button", { name: "Créer et sélectionner" }));
@@ -35,7 +35,7 @@ it("selects the saved group's identity immediately, before shared data refresh",
 it("keeps the previous selection and does not refresh on failed creation", async () => {
   mocks.addGroup.mockRejectedValue(new Error("failure"));
   render(<Picker />);
-  fireEvent.click(screen.getByRole("button", { name: "Créer un groupe" }));
+  fireEvent.change(screen.getByRole("combobox"), { target: { value: "__create_group" } });
   fireEvent.change(screen.getByLabelText("Nom du nouveau groupe"), { target: { value: "Terrasse" } });
   fireEvent.click(screen.getByRole("button", { name: "Créer et sélectionner" }));
   await screen.findByRole("alert");
@@ -45,9 +45,17 @@ it("keeps the previous selection and does not refresh on failed creation", async
 
 it("cancels creation without writing or changing the selection", () => {
   render(<Picker />);
-  fireEvent.click(screen.getByRole("button", { name: "Créer un groupe" }));
+  fireEvent.change(screen.getByRole("combobox"), { target: { value: "__create_group" } });
   fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
   expect(mocks.addGroup).not.toHaveBeenCalled();
   expect(screen.getByRole("combobox")).toHaveValue("existing");
   expect(onCreatingChange).toHaveBeenLastCalledWith(false);
+});
+
+it("opens creation from the dropdown without assigning the action as a group", () => {
+  render(<Picker />);
+  fireEvent.change(screen.getByRole("combobox"), { target: { value: "__create_group" } });
+  expect(screen.getByRole("combobox")).toHaveValue("existing");
+  expect(onCreatingChange).toHaveBeenLastCalledWith(true);
+  expect(mocks.addGroup).not.toHaveBeenCalled();
 });

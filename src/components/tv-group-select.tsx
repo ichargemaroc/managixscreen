@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const NONE = "__none";
+const CREATE = "__create_group";
 
 export function TvGroupSelect({ value, onChange, onCreatingChange }: {
   value: string | null;
@@ -46,11 +47,19 @@ export function TvGroupSelect({ value, onChange, onCreatingChange }: {
   };
   return (
     <div className="space-y-3">
-      <Select value={value ?? NONE} onValueChange={(id) => onChange(id === NONE ? null : id)} disabled={busy}>
+      <Select value={value ?? NONE} onValueChange={(id) => {
+        if (id === CREATE) {
+          setCreating(true);
+          onCreatingChange(true);
+          return;
+        }
+        onChange(id === NONE ? null : id);
+      }} disabled={busy}>
         <SelectTrigger aria-label="Groupe de la TV" className="w-full"><SelectValue /></SelectTrigger>
         <SelectContent>
           <SelectItem value={NONE}>Aucun groupe</SelectItem>
           {options.map((group) => <SelectItem key={group.id} value={group.id}>{group.name}</SelectItem>)}
+          <SelectItem value={CREATE}><span className="flex items-center gap-2 text-accent-foreground"><Plus className="size-4" />Créer un groupe</span></SelectItem>
         </SelectContent>
       </Select>
       {creating ? (
@@ -63,7 +72,7 @@ export function TvGroupSelect({ value, onChange, onCreatingChange }: {
             <Button type="button" variant="ghost" disabled={busy} onClick={close}>Annuler</Button>
           </div>
         </div>
-      ) : <Button type="button" variant="outline" onClick={() => { setCreating(true); onCreatingChange(true); }}><Plus />Créer un groupe</Button>}
+      ) : null}
     </div>
   );
 }
