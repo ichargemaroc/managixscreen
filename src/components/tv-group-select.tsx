@@ -59,7 +59,7 @@ export function TvGroupSelect({ value, onChange, onCreatingChange }: {
         <SelectContent>
           <SelectItem value={NONE}>Aucun groupe</SelectItem>
           {options.map((group) => <SelectItem key={group.id} value={group.id}>{group.name}</SelectItem>)}
-          <SelectItem value={CREATE}><span className="flex items-center gap-2 text-accent-foreground"><Plus className="size-4" />Créer un groupe</span></SelectItem>
+          <SelectItem value={CREATE} className="mt-1 bg-accent text-accent-foreground font-medium focus:bg-accent/80"><span className="flex items-center gap-2"><Plus className="size-4" />Créer un groupe</span></SelectItem>
         </SelectContent>
       </Select>
       {creating ? (
