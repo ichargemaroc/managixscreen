@@ -70,3 +70,5 @@ use the editor.
 - The paginated media library reads metadata first and resolves thumbnail or original links only for mounted cards and opened previews, avoiding full-library signing while preserving other media consumers.
 - Web library thumbnails use visible-only, non-interactive sandboxed miniature frames with autoplay denied; only allow-listed internal display paths retain origin, and embedding restrictions are never bypassed.
 - Library filters use existing metadata before pagination; unsupported orientation/tags stay disabled to avoid extra downloads or invented metadata.
+- Billing catalogs are versioned per subscription; launch prices never mutate legacy plans or account rights. Founder slots are reserved transactionally on eligible signup, and service-only quotes apply monthly discounts without charging; the discount period starts at paid monthly activation.
+- Public pricing reads use an anon-scoped server function and store query options; the landing and tariff page share PricingSection to keep amounts and terms consistent.

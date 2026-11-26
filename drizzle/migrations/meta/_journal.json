@@ -260,6 +260,20 @@
       "when": 1795649734530,
       "tag": "0036_public_pricing",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1795730320863,
+      "tag": "0037_launch_pricing_catalog",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1795730621199,
+      "tag": "0038_scope_launch_plan_changes",
+      "breakpoints": true
     }
   ]
 }

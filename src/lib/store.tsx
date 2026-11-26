@@ -20,6 +20,9 @@ import { displayRotationSchema, type DisplayRotation } from './display-rotation'
 import { slideTransitionSchema, type SlideTransition } from './slide-transition';
 import { parseTicker, tickerSchema, type Ticker } from './ticker';
 import { musicSettingsSchema, validateMusicFile, type MusicSettings } from './background-music';
+import { getPublicPricing } from './public-pricing.functions';
+
+export const publicPricingOptions = queryOptions({ queryKey: ['public-pricing'], queryFn: () => getPublicPricing(), staleTime: 30_000 });
 
 // Données ScreenFlow lues depuis Lovable Cloud. Les pages utilisent useStore()
 // et les actions ci-dessous ; la synchronisation temps réel des écrans est

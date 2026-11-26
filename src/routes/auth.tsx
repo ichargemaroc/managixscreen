@@ -1,13 +1,14 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import logoAsset from "@/assets/screenflow-logo.webp.asset.json";
 import heroAsset from '@/assets/screenflow-tv-hero.webp.asset.json';
 import markAsset from '@/assets/screenflow-mark.webp.asset.json';
-import { ArrowRight, Image, Globe, ListVideo, Monitor, Check, Grid2X2, Columns2, CalendarClock, Music, Megaphone, Activity, Users, WifiOff, Plug, Smartphone } from "lucide-react";
+import { ArrowRight, Image, Globe, ListVideo, Monitor, Grid2X2, Columns2, CalendarClock, Music, Megaphone, Activity, Users, WifiOff, Plug, Smartphone } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { publicPricingSchema, displayMonthly, annualTotal, formatPrice } from "@/lib/public-pricing";
+import { publicPricingOptions } from '@/lib/store';
+import { PricingSection } from '@/components/pricing-section';
 
 const FEATURES = [
   { icon: Smartphone, title: 'Jumelage simple', detail: 'Code à 6 chiffres ou QR code, groupes d’écrans, rotation d’affichage.' },
@@ -26,7 +27,7 @@ const FEATURES = [
 
 const FAQ = [
   ['Comment connecter ma télévision ?', 'Ouvrez Screenflow Player sur votre TV Android, puis associez-la à votre compte avec le code affiché ou son QR code.'],
-  ['L’essai gratuit est-il sans engagement ?', 'Oui. L’essai dure 14 jours, jusqu’à 5 écrans, sans carte bancaire.'],
+  ['L’essai gratuit est-il sans engagement ?', 'L’essai est sans carte bancaire et sans engagement.'],
   ['Que se passe-t-il si Internet coupe ?', 'Le player continue de diffuser les contenus déjà téléchargés, musique comprise.'],
   ['Puis-je changer de palier ?', 'Oui. Le passage à un palier supérieur est immédiat ; une baisse s’applique au renouvellement, sans supprimer vos données.'],
   ['Quelles TV sont compatibles ?', 'Android TV et Google TV, ainsi que tout navigateur web. Pour Samsung ou LG, branchez un boîtier Android TV.'],
@@ -41,9 +42,9 @@ import { Label } from "@/components/ui/label";
 import { pairingCode, pairingUrl } from "@/lib/qr-pairing";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>): { pairCode?: string } => {
+  validateSearch: (search: Record<string, unknown>): { pairCode?: string; signup?: boolean } => {
     const code = pairingCode(search['pairCode']);
-    return code ? { pairCode: code } : {};
+    return { ...(code ? { pairCode: code } : {}), ...(search['signup'] === true ? { signup: true } : {}) };
   },
   head: () => ({ meta: [
     { property: "og:type", content: "website" },
@@ -72,22 +73,17 @@ function GoogleLogo() {
 function AuthPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { pairCode } = Route.useSearch();
-  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
+  const { pairCode, signup } = Route.useSearch();
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">(signup ? "signup" : "login");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [connecting, setConnecting] = useState(Boolean(pairCode));
-  const [cycle, setCycle] = useState<'monthly' | 'annual'>('monthly');
-  const { data: pricing } = useQuery({ queryKey: ['public-pricing'], queryFn: async () => {
-    const { data, error } = await supabase.rpc('public_pricing');
-    if (error) throw error;
-    return publicPricingSchema.parse(data);
-  }, staleTime: 5 * 60_000 });
+  const [connecting, setConnecting] = useState(Boolean(pairCode || signup));
+  const { data: pricing } = useQuery(publicPricingOptions);
   function openAuth(next: 'login' | 'signup') { setMode(next); setConnecting(true); }
-  function choosePlan(planId: string) {
-    try { sessionStorage.setItem('screenflow:chosen-plan', planId); } catch { /* optional */ }
+  function choosePlan(planId: string, cycle: 'monthly' | 'annual') {
+    try { sessionStorage.setItem('screenflow:chosen-plan', planId); sessionStorage.setItem('screenflow:chosen-cycle', cycle); } catch { /* optional */ }
     openAuth('signup');
   }
 
@@ -146,7 +142,7 @@ function AuthPage() {
         <img src={logoAsset.url} alt="Screenflow" className="welcome-logo h-10 w-auto max-w-32 shrink-0 object-contain" />
         <nav aria-label="Navigation de l’accueil" className="welcome-nav">
           <Button variant="ghost" asChild><a href="#fonctionnalites">Fonctionnalités</a></Button>
-          <Button variant="ghost" asChild><a href="#tarifs">Tarifs</a></Button>
+          <Button variant="ghost" asChild><Link to="/tarifs">Tarifs</Link></Button>
           <Button variant="ghost" asChild><a href="#questions">Questions fréquentes</a></Button>
         </nav>
         <div className="flex items-center gap-1 sm:gap-2">
@@ -183,43 +179,11 @@ function AuthPage() {
             <p className="mt-8 text-center text-sm text-muted-foreground">Compatible Android TV, Google TV et navigateur web. Les TV Samsung (Tizen) et LG (webOS) ne sont pas prises en charge : utilisez un boîtier Android TV en HDMI.</p>
           </div>
         </section>
-        <section id="tarifs" className="bg-background px-6 py-16 sm:px-12">
-          <div className="mx-auto max-w-6xl">
-            <h2 className="text-center text-3xl font-medium">Des tarifs simples, selon votre nombre d’écrans</h2>
-            <p className="mt-3 text-center text-muted-foreground">Essai gratuit de {pricing?.trial_days ?? 14} jours jusqu’à {pricing?.trial_capacity ?? 5} écrans, sans carte bancaire.</p>
-            <div className="mt-8 flex justify-center">
-              <div role="group" aria-label="Période de facturation" className="inline-flex rounded-full border p-1">
-                {(['monthly', 'annual'] as const).map((c) => <Button key={c} size="sm" variant={cycle === c ? 'default' : 'ghost'} className="rounded-full" onClick={() => setCycle(c)}>{c === 'monthly' ? 'Mensuel' : 'Annuel — 2 mois offerts'}</Button>)}
-              </div>
-            </div>
-            {!pricing ? <p className="mt-10 text-center text-muted-foreground">Chargement des tarifs…</p> : (
-              <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                {pricing.plans.map((plan, i) => {
-                  const discount = pricing.annual_discount_percent ?? 0;
-                  const currency = pricing.currency ?? 'MAD';
-                  return (
-                    <div key={plan.id} className={`flex flex-col rounded-2xl border p-6 ${i === 1 ? 'border-primary bg-accent/40' : 'bg-card'}`}>
-                      {i === 1 && <span className="mb-2 w-fit rounded-full bg-primary px-3 py-0.5 text-xs text-primary-foreground">Le plus choisi</span>}
-                      <h3 className="text-lg font-medium">{plan.name}</h3>
-                      <p className="text-sm text-muted-foreground">Jusqu’à {plan.capacity} écrans</p>
-                      <p className="mt-5 text-3xl font-medium tabular-nums">{formatPrice(displayMonthly(plan.monthly_amount, cycle, discount), currency)}<span className="text-sm font-normal text-muted-foreground"> /mois</span></p>
-                      <p className="mt-1 h-5 text-xs text-muted-foreground">{cycle === 'annual' ? `Soit ${formatPrice(annualTotal(plan.monthly_amount, discount), currency)} par an` : ''}</p>
-                      <ul className="mt-5 flex-1 space-y-2 text-sm">
-                        {['Toutes les fonctionnalités', 'Lecture hors ligne', 'Équipe et programmation'].map((f) => <li key={f} className="flex gap-2"><Check className="size-4 shrink-0 text-primary" />{f}</li>)}
-                      </ul>
-                      <Button className="mt-6 w-full rounded-full" variant={i === 1 ? 'default' : 'outline'} onClick={() => choosePlan(plan.id)}>Commencer l’essai</Button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            <p className="mt-6 text-center text-xs text-muted-foreground">Prix hors taxes. L’abonnement se choisit depuis votre espace à la fin de l’essai.</p>
-          </div>
-        </section>
+        {pricing ? <PricingSection pricing={pricing} onChoose={choosePlan} /> : <section id="tarifs" className="px-6 py-12 text-center"><h2 className="text-3xl font-medium">Tarifs Screenflow</h2><p className="mt-4 text-muted-foreground">Les tarifs sont momentanément indisponibles.</p><Button className="mt-5" variant="outline" asChild><Link to="/tarifs">Consulter les tarifs</Link></Button></section>}
         <section id="questions" className="bg-muted px-6 py-16 sm:px-12">
           <div className="mx-auto max-w-3xl">
             <h2 className="mb-8 text-center text-3xl font-medium">Questions fréquentes</h2>
-            {FAQ.map(([question, answer]) => <details className="welcome-faq border-b py-5" key={question}><summary className="cursor-pointer text-lg font-medium">{question}</summary><p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">{answer}</p></details>)}
+            {FAQ.map(([question, answer]) => <details className="welcome-faq border-b py-5" key={question}><summary className="cursor-pointer text-lg font-medium">{question}</summary><p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">{question === 'L’essai gratuit est-il sans engagement ?' && pricing ? `Oui. L’essai dure ${pricing.trial_days} jours, jusqu’à ${pricing.trial_capacity} écrans, sans carte bancaire.` : answer}</p></details>)}
           </div>
         </section>
         <section className="bg-background px-6 py-16 text-center sm:px-12">

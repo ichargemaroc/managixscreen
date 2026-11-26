@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as PairRouteImport } from './routes/pair'
 import { Route as PlayerRouteImport } from './routes/player'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as TeamInviteRouteImport } from './routes/team-invite'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedBillingAdminRouteImport } from './routes/_authenticated/billing-admin'
@@ -63,6 +64,11 @@ const PlayerRoute = PlayerRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TarifsRoute = TarifsRouteImport.update({
+  id: '/tarifs',
+  path: '/tarifs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TeamInviteRoute = TeamInviteRouteImport.update({
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/pair': typeof PairRoute
   '/player': typeof PlayerRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/tarifs': typeof TarifsRoute
   '/team-invite': typeof TeamInviteRoute
   '/billing-admin': typeof AuthenticatedBillingAdminRoute
   '/groups': typeof AuthenticatedGroupsRoute
@@ -241,6 +248,7 @@ export interface FileRoutesByTo {
   '/pair': typeof PairRoute
   '/player': typeof PlayerRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/tarifs': typeof TarifsRoute
   '/team-invite': typeof TeamInviteRoute
   '/billing-admin': typeof AuthenticatedBillingAdminRoute
   '/groups': typeof AuthenticatedGroupsRoute
@@ -275,6 +283,7 @@ export interface FileRoutesById {
   '/pair': typeof PairRoute
   '/player': typeof PlayerRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/tarifs': typeof TarifsRoute
   '/team-invite': typeof TeamInviteRoute
   '/_authenticated/billing-admin': typeof AuthenticatedBillingAdminRoute
   '/_authenticated/groups': typeof AuthenticatedGroupsRoute
@@ -310,6 +319,7 @@ export interface FileRouteTypes {
     | '/pair'
     | '/player'
     | '/reset-password'
+    | '/tarifs'
     | '/team-invite'
     | '/billing-admin'
     | '/groups'
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
     | '/pair'
     | '/player'
     | '/reset-password'
+    | '/tarifs'
     | '/team-invite'
     | '/billing-admin'
     | '/groups'
@@ -374,6 +385,7 @@ export interface FileRouteTypes {
     | '/pair'
     | '/player'
     | '/reset-password'
+    | '/tarifs'
     | '/team-invite'
     | '/_authenticated/billing-admin'
     | '/_authenticated/groups'
@@ -408,6 +420,7 @@ export interface RootRouteChildren {
   PairRoute: typeof PairRoute
   PlayerRoute: typeof PlayerRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  TarifsRoute: typeof TarifsRoute
   TeamInviteRoute: typeof TeamInviteRoute
   DisplayInstagramRoute: typeof DisplayInstagramRoute
   DisplayWeatherRoute: typeof DisplayWeatherRoute
@@ -455,6 +468,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tarifs': {
+      id: '/tarifs'
+      path: '/tarifs'
+      fullPath: '/tarifs'
+      preLoaderRoute: typeof TarifsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/team-invite': {
@@ -701,6 +721,7 @@ const rootRouteChildren: RootRouteChildren = {
   PairRoute: PairRoute,
   PlayerRoute: PlayerRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  TarifsRoute: TarifsRoute,
   TeamInviteRoute: TeamInviteRoute,
   DisplayInstagramRoute: DisplayInstagramRoute,
   DisplayWeatherRoute: DisplayWeatherRoute,

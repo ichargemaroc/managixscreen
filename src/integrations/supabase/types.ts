@@ -44,9 +44,36 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_launch_campaign: {
+        Row: {
+          account_limit: number
+          code: string
+          discount_months: number
+          discount_percent: number
+          reserved: number
+        }
+        Insert: {
+          account_limit: number
+          code: string
+          discount_months: number
+          discount_percent: number
+          reserved?: number
+        }
+        Update: {
+          account_limit?: number
+          code?: string
+          discount_months?: number
+          discount_percent?: number
+          reserved?: number
+        }
+        Relationships: []
+      }
       billing_plans: {
         Row: {
           capacity: number
+          catalog_version: string
+          comparison: Json
+          features: Json
           id: string
           monthly_amount: number | null
           name: string
@@ -54,10 +81,14 @@ export type Database = {
           provider_annual_price: string | null
           provider_monthly_price: string | null
           published: boolean
+          quote_only: boolean
           updated_at: string
         }
         Insert: {
           capacity: number
+          catalog_version?: string
+          comparison?: Json
+          features?: Json
           id?: string
           monthly_amount?: number | null
           name: string
@@ -65,10 +96,14 @@ export type Database = {
           provider_annual_price?: string | null
           provider_monthly_price?: string | null
           published?: boolean
+          quote_only?: boolean
           updated_at?: string
         }
         Update: {
           capacity?: number
+          catalog_version?: string
+          comparison?: Json
+          features?: Json
           id?: string
           monthly_amount?: number | null
           name?: string
@@ -76,6 +111,7 @@ export type Database = {
           provider_annual_price?: string | null
           provider_monthly_price?: string | null
           published?: boolean
+          quote_only?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -1128,10 +1164,16 @@ export type Database = {
           amount: number | null
           cancel_at_period_end: boolean
           capacity: number
+          catalog_version: string
           complimentary_screens: number
           currency: string | null
           current_period_end: string | null
           enforce_capacity: boolean
+          founder_discount_months: number | null
+          founder_discount_percent: number | null
+          founder_ends_at: string | null
+          founder_rank: number | null
+          founder_started_at: string | null
           grace_until: string | null
           interval: string
           legacy_access: boolean
@@ -1151,10 +1193,16 @@ export type Database = {
           amount?: number | null
           cancel_at_period_end?: boolean
           capacity?: number
+          catalog_version?: string
           complimentary_screens?: number
           currency?: string | null
           current_period_end?: string | null
           enforce_capacity?: boolean
+          founder_discount_months?: number | null
+          founder_discount_percent?: number | null
+          founder_ends_at?: string | null
+          founder_rank?: number | null
+          founder_started_at?: string | null
           grace_until?: string | null
           interval?: string
           legacy_access?: boolean
@@ -1174,10 +1222,16 @@ export type Database = {
           amount?: number | null
           cancel_at_period_end?: boolean
           capacity?: number
+          catalog_version?: string
           complimentary_screens?: number
           currency?: string | null
           current_period_end?: string | null
           enforce_capacity?: boolean
+          founder_discount_months?: number | null
+          founder_discount_percent?: number | null
+          founder_ends_at?: string | null
+          founder_rank?: number | null
+          founder_started_at?: string | null
           grace_until?: string | null
           interval?: string
           legacy_access?: boolean
@@ -1451,6 +1505,10 @@ export type Database = {
         Returns: undefined
       }
       billing_check_place: { Args: { p_user: string }; Returns: undefined }
+      billing_launch_quote: {
+        Args: { p_interval: string; p_plan: string; p_user: string }
+        Returns: Json
+      }
       billing_lock_account: { Args: { p_user: string }; Returns: undefined }
       billing_my_account: { Args: never; Returns: Json }
       billing_schedule_downgrade: {

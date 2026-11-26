@@ -1,9 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { annualAmount, availablePlaces, capacityAllows, nextCapacity, planInputSchema, billingError, minorUnit, deviceEntitlementSchema } from '@/lib/billing';
+import { annualAmount, availablePlaces, capacityAllows, nextCapacity, planInputSchema, billingError, minorUnit, deviceEntitlementSchema, trialSettingsInputSchema } from '@/lib/billing';
 
 describe('Screenflow capacity rules', () => {
   it.each([5, 10, 15, 20, 25, 30])('accepts the %i screen tier', (capacity) => { expect(planInputSchema.safeParse({ id: null, name: 'Tier', capacity, amount: null, published: true }).success).toBe(true); });
-  it('rejects a tier outside increments of five', () => { expect(planInputSchema.safeParse({ id: null, name: 'Tier', capacity: 6, amount: null, published: true }).success).toBe(false); });
+  it('rejects a tier outside increments of five except Starter', () => { expect(planInputSchema.safeParse({ id: null, name: 'Tier', capacity: 6, amount: null, published: true }).success).toBe(false); });
+  it('accepts Starter at two screens and refuses the third activation', () => {
+    expect(planInputSchema.safeParse({ id: null, name: 'Starter', capacity: 2, amount: 19900, published: true }).success).toBe(true);
+    expect(capacityAllows(2, 1)).toBe(true);
+    expect(capacityAllows(2, 2)).toBe(false);
+  });
+  it('accepts the fourteen-day trial at two screens', () => {
+    expect(trialSettingsInputSchema.parse({ days:14, capacity:2, onePerEmail:true })).toEqual({ days:14, capacity:2, onePerEmail:true });
+    expect(trialSettingsInputSchema.safeParse({ days:14, capacity:3, onePerEmail:true }).success).toBe(false);
+  });
   it('refuses the sixth screen on Starter', () => { expect(capacityAllows(5, 5)).toBe(false); });
   it('permits the sixth screen after upgrading to ten', () => { expect(capacityAllows(10, 5)).toBe(true); });
   it('a released entitlement frees one place', () => { expect(availablePlaces(5, 4)).toBe(1); });

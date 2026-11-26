@@ -1,6 +1,9 @@
 ## Nouveaux tarifs marocains
-- [ ] Confirmer si Starter/Pro/Business, l’essai à deux écrans et l’offre Fondateurs remplacent réellement les conditions actuelles ou constituent un aperçu seulement ; ne pas modifier les abonnements existants.
-- [ ] Refaire les cartes tarifaires, le sélecteur mensuel/annuel, la comparaison et la FAQ de la page Tarifs et de l’accueil après confirmation.
+- [x] Appliquer Starter/Pro/Business, l’essai à deux écrans et l’offre Fondateurs aux nouveaux comptes ; préserver les abonnements existants.
+- [x] Relier les demandes de devis Enterprise à karim.gharbi@me.com via un e-mail prérempli.
+- [x] Refaire les cartes tarifaires, le sélecteur mensuel/annuel, la comparaison et la FAQ de la page /tarifs et de l’accueil ; mêmes cartes dans l’abonnement des nouveaux comptes, paiement explicitement non activé.
+- [x] Catalogue versionné et réservation transactionnelle des places Fondateurs ; essai à 2 écrans pendant 14 jours relu dans un nouveau compte temporaire confirmé, remise relue après rechargement ; données temporaires supprimées et place restituée.
+- [x] Conditions des 11 anciens comptes inchangées (empreinte identique), anciens tarifs relus dans un compte connecté ; tarifs mensuels/annuels, inscription et devis vérifiés sur ordinateur et téléphone ; 365 tests réussis et compilation correcte.
 
 ## Filtres de la médiathèque
 - [x] Ajouter « Filtrer par » : date d’import, types multiples, appliquer et réinitialiser ; orientation et étiquettes indisponibles sans métadonnées.

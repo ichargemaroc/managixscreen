@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@tanstack/react-router', () => ({
+  Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a>,
   createFileRoute: () => (options: { component: () => React.ReactNode }) => ({
     options,
     useSearch: () => ({}),
@@ -20,6 +21,7 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => mocks,
   useQuery: () => ({ data: undefined }),
 }));
+vi.mock('@/lib/store', () => ({ publicPricingOptions: { queryKey: ['public-pricing'] } }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { auth: { signInWithPassword: mocks.signIn } } }));
 vi.mock('@/integrations/lovable', () => ({ lovable: { auth: {} } }));
 vi.mock('@/components/theme-toggle', () => ({ ThemeToggle: () => null }));
