@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type MouseEvent } from "react";
 import { useQueryClient } from '@tanstack/react-query';
-import { Monitor, Plus, MoreHorizontal, ScanLine } from "lucide-react";
+import { Monitor, Plus, ScanLine, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, EmptyState, StatusBadge } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -11,14 +11,10 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useStore, useBillingStore, isValidPairingCode, addScreen, updateScreen, deleteScreen, type Screen } from "@/lib/store";
+import { useStore, useBillingStore, isValidPairingCode, addScreen, deleteScreen, type Screen } from "@/lib/store";
 import { availablePlaces } from '@/lib/billing';
 import { PairingScanner } from "@/components/pairing-scanner";
-import { DisplayRotationPicker } from '@/components/display-rotation-picker';
-import type { DisplayRotation } from '@/lib/display-rotation';
-import { Music2 } from 'lucide-react';
 import { ScreenHealthChart } from '@/components/screen-health-chart';
 import { TvGroupSelect } from '@/components/tv-group-select';
 
@@ -45,6 +41,8 @@ export function Screens() {
   const navigate = useNavigate();
   const addParam = Route.useSearch()["new"];
   const [adding, setAdding] = useState(addParam === "1");
+  const [confirmDelete, setConfirmDelete] = useState<Screen | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const closeAdd = (open: boolean) => {
     setAdding(open);
     if (!open && addParam === "1") navigate({ to: "/screens", search: {}, replace: true });
@@ -52,13 +50,8 @@ export function Screens() {
   useEffect(() => {
     if (addParam === "1") setAdding(true);
   }, [addParam]);
-  const [editing, setEditing] = useState<Screen | null>(null);
   const [filter, setFilter] = useState("all");
   const list = filter === "all" ? screens : screens.filter((s) => (s.groupId ?? NONE) === filter);
-  const update = async (id: string, patch: Partial<Screen>) => {
-    await updateScreen(id, patch);
-    refresh();
-  };
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -103,15 +96,9 @@ export function Screens() {
                       <TableCell className="text-muted-foreground">{s.lastSeen ? new Date(s.lastSeen).toLocaleString("fr-FR") : "Jamais"}</TableCell>
                       <TableCell>{playlists.find((p) => p.id === s.playlistId)?.name ?? "—"}</TableCell>
                       <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="Actions"><MoreHorizontal /></Button></DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild><Link to="/screens/$screenId" params={{ screenId: s.id }}>Détails / accès</Link></DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setEditing(s)}>Gérer / renommer</DropdownMenuItem>
-                            <DropdownMenuItem asChild><Link to="/screens/$screenId" params={{ screenId: s.id }}><Music2 />Musique de fond</Link></DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={async () => { await deleteScreen(s.id); refresh(); toast.success("TV supprimée"); }}>Supprimer</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setConfirmDelete(s)}>
+                          <Trash2 /> Supprimer
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
@@ -127,28 +114,33 @@ export function Screens() {
         void queryClient.invalidateQueries({ queryKey: ['billing-account'] });
         toast.success("TV jumelée — en attente de sa première connexion");
       }} />
-      {editing && (
-        <Dialog open onOpenChange={() => setEditing(null)}>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Gérer la TV</DialogTitle></DialogHeader>
-            <EditForm screen={editing} onSave={async (p) => { try { await update(editing.id, p); setEditing(null); toast.success("TV mise à jour"); } catch (err) { toast.error(err instanceof Error ? err.message : "Enregistrement impossible"); } }} />
-          </DialogContent>
-        </Dialog>
-      )}
+      <Dialog open={confirmDelete !== null} onOpenChange={(open) => { if (!open && !deleting) setConfirmDelete(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Supprimer cette TV ?</DialogTitle>
+            <DialogDescription>{confirmDelete?.name} perdra immédiatement son accès et une place sera libérée dans le forfait.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" disabled={deleting} onClick={() => setConfirmDelete(null)}>Annuler</Button>
+            <Button variant="destructive" disabled={deleting} onClick={async () => {
+              if (!confirmDelete) return;
+              setDeleting(true);
+              try {
+                await deleteScreen(confirmDelete.id);
+                refresh();
+                void queryClient.invalidateQueries({ queryKey: ['billing-account'] });
+                toast.success("TV supprimée");
+                setConfirmDelete(null);
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : "La suppression a échoué");
+              } finally {
+                setDeleting(false);
+              }
+            }}>{deleting ? "Suppression…" : "Supprimer"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
-  );
-}
-
-function GroupSelect({ value, onChange }: { value: string | null; onChange: (v: string | null) => void }) {
-  const { groups } = useStore();
-  return (
-    <Select value={value ?? NONE} onValueChange={(v) => onChange(v === NONE ? null : v)}>
-      <SelectTrigger><SelectValue /></SelectTrigger>
-      <SelectContent>
-        <SelectItem value={NONE}>Aucun groupe</SelectItem>
-        {groups.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-      </SelectContent>
-    </Select>
   );
 }
 
@@ -184,29 +176,5 @@ function AddDialog({ open, onOpenChange, onAdd }: { open: boolean; onOpenChange:
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function EditForm({ screen, onSave }: { screen: Screen; onSave: (p: Partial<Screen>) => void }) {
-  const { playlists } = useStore();
-  const [location, setLocation] = useState(screen.location);
-  const [rotation, setRotation] = useState<DisplayRotation>(screen.displayRotation ?? 0);
-  const [code, setCode] = useState(screen.pairingCode);
-  const [name, setName] = useState(screen.name); const [group, setGroup] = useState(screen.groupId); const [pl, setPl] = useState(screen.playlistId);
-  return (
-    <div className="space-y-4">
-      <div className="space-y-2"><Label>Nom</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-      <div className="space-y-2"><Label htmlFor="screen-pairing-code">Code d’appairage</Label><Input id="screen-pairing-code" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} /><p className="text-xs text-muted-foreground">6 chiffres, enregistré sur le serveur et unique parmi vos écrans.</p></div>
-      <div className="space-y-2"><Label>Lieu</Label><Input value={location} onChange={(e) => setLocation(e.target.value)} /></div>
-      <div className="space-y-2"><Label>Groupe</Label><GroupSelect value={group} onChange={setGroup} /></div>
-      <div className="space-y-2"><Label>Playlist affectée</Label>
-        <Select value={pl ?? NONE} onValueChange={(v) => setPl(v === NONE ? null : v)}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value={NONE}>Aucune</SelectItem>{playlists.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
-        </Select>
-      </div>
-      <DisplayRotationPicker value={rotation} onChange={setRotation} />
-      <DialogFooter><Button disabled={!name.trim() || !/^\d{6}$/.test(code)} onClick={() => onSave({ ...(code !== screen.pairingCode ? { pairingCode: code } : {}), name: name.trim(), groupId: group, playlistId: pl, location, displayRotation: rotation })}>Enregistrer</Button></DialogFooter>
-    </div>
   );
 }
