@@ -1,5 +1,10 @@
 # Roadmap — Sauvegarde réelle ScreenFlow
 
+## Stockage des téléviseurs sur l'accueil
+- [x] Afficher le total et l'espace disponible dans chaque carte, sans inventer les valeurs absentes ; trois cartes relues sur l'accueil connecté, tablette et téléphone sans débordement.
+- [x] Transmettre les relevés réels Android et distinguer le quota navigateur ; 14 tests réussis, compilation correcte ; les lecteurs actuellement installés ne transmettent pas encore de relevé.
+- [ ] Validation sur TV physique — nécessite un nouvel APK et une TV.
+
 ## Modification des affectations de playlist
 - [x] Ajout et retrait des TV et groupes déjà affectés ; couverture par groupe et sélection multiple sans doublons.
 - [x] Remplacement transactionnel propriétaire ; les retraits ciblent uniquement cette playlist, actualisation des TV modifiées.

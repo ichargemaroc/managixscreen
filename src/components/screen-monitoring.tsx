@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { WebpagePreview } from "@/components/webpage-preview";
 import { useStore, mediaPreviewOptions, type Media } from "@/lib/store";
 import { useQuery } from "@tanstack/react-query";
+import { parseStorageReport, formatStorageBytes } from '@/lib/device-storage';
 
 type Filter = "all" | "online" | "offline";
 const playbackLabels: Record<string, string> = { playing: "En lecture", paused: "En pause", idle: "Inactif" };
@@ -68,6 +69,7 @@ export function ScreenMonitoring({ showSummary = true }: { showSummary?: boolean
             const pb = (s.playbackStatus ?? {}) as { state?: string; playlist_id?: string | null; media_id?: string | null };
             const pl = playlists.find((p) => p.id === (pb.playlist_id ?? s.playlistId));
             const md = media.find((m) => m.id === pb.media_id);
+            const storage = parseStorageReport(s.deviceInfo);
             return (
               <Card key={s.id} className={s.status === "online" ? "" : "opacity-80"}>
                 <CardContent className="space-y-3 p-5">
@@ -82,7 +84,10 @@ export function ScreenMonitoring({ showSummary = true }: { showSummary?: boolean
                     <dt className="text-muted-foreground">Média</dt><dd className="truncate">{md?.name ?? "—"}</dd>
                     <dt className="text-muted-foreground">Lecture</dt><dd className="flex items-center gap-1"><Activity className="size-3" />{pb.state ? playbackLabels[pb.state] ?? pb.state : "Inconnue"}</dd>
                     <dt className="text-muted-foreground">Version</dt><dd className="truncate">{s.playerVersion ?? "—"}</dd>
+                    <dt className="text-muted-foreground">Stockage total</dt><dd>{storage ? formatStorageBytes(storage.storage_total_bytes) : '—'}</dd>
+                    <dt className="text-muted-foreground">Stockage disponible</dt><dd>{storage ? formatStorageBytes(storage.storage_available_bytes) : '—'}</dd>
                   </dl>
+                  {storage?.storage_source === 'browser' && <p className="text-xs text-muted-foreground">Quota du navigateur, pas la capacité de la TV.</p>}
                   <Button variant="outline" className="w-full" onClick={() => setPreviewScreenId(s.id)} aria-label={`Voir le contenu de ${s.name}`}>
                     <Eye className="size-4" /> Voir le contenu
                   </Button>

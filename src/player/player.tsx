@@ -20,6 +20,7 @@ import { vaultError, vaultErrorMessage } from "./vault-errors";
 import { WebpageStage } from './webpage-stage';
 import { MultiZoneStage } from './multi-zone-stage';
 import { BackgroundMusic } from './background-music';
+import { readDeviceStorage } from './device-storage';
 
 /** Bottom scrolling banner: loops forever, or crosses once each time the playlist restarts. */
 function PlayerTicker({ ticker, cycle }: { ticker: Ticker; cycle: number }) {
@@ -157,7 +158,8 @@ export function TVPlayer() {
         }
         if (Date.now() - lastBeat.current >= 29000) try {
           lastBeat.current = Date.now();
-          await deviceApi("heartbeat", identity, { player_version: `${nativePlayer ? 'android-tv' : 'web'}-${playerVersion}`, playback_status: { state: playback.current, playlist_id: current.current.content?.playlist?.id ?? null, media_id: current.current.content?.playlist?.items[current.current.index]?.media.id ?? null } });
+          const storage = await readDeviceStorage();
+          await deviceApi("heartbeat", identity, { player_version: `${nativePlayer ? 'android-tv' : 'web'}-${playerVersion}`, ...(storage ? { device_info: storage } : {}), playback_status: { state: playback.current, playlist_id: current.current.content?.playlist?.id ?? null, media_id: current.current.content?.playlist?.items[current.current.index]?.media.id ?? null } });
         } catch (e) {
           // A telemetry outage must not prevent fetching an updated assigned playlist.
           if (e instanceof DeviceApiError && e.status === 401) throw e;
