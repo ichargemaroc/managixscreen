@@ -65,3 +65,4 @@ use the editor.
 - Wall media placement uses normalized offsets and a uniform scale persisted by the owner-scoped wall RPC; previews and native playback share wallMediaRect so movement and resizing change actual cropping without distortion.
 - Screen detail tabs share one local settings draft and existing store actions; content remains read-only so presentation changes cannot alter playlist editing or device permissions.
 - Screen-detail image previews use per-media compressed thumbnail queries from the store and reuse the media-library cache, avoiding full-library signing on metadata pages.
+- Media library menus reuse existing store actions and transactional playlist saves; unsupported folder and replacement operations stay explicitly disabled to avoid implying unimplemented capabilities.
