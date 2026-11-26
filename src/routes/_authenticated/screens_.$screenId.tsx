@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ShieldOff, Trash2, Send, Monitor, Settings2, ListVideo, MapPin, RefreshCw, Save, Film, ImageIcon, Globe, ExternalLink } from "lucide-react";
+import { ArrowLeft, ShieldOff, Trash2, Send, Monitor, Settings2, ListVideo, MapPin, RefreshCw, Save, Film, ImageIcon, Globe, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +49,11 @@ function Details({ screen }: { screen: Screen }) {
   const [playlistId, setPlaylistId] = useState(screen.playlistId ?? "none");
   const [groupId, setGroupId] = useState(screen.groupId ?? "none");
   const [command, setCommand] = useState<DeviceCommand["command"]>("refresh_content");
+  const [commandPage, setCommandPage] = useState(1);
+  const screenCommands = commands.filter((c) => c.screenId === screen.id);
+  const commandPages = Math.max(1, Math.ceil(screenCommands.length / 10));
+  const currentCommandPage = Math.min(commandPage, commandPages);
+  const commandOffset = (currentCommandPage - 1) * 10;
   const [busy, setBusy] = useState(false);
   const [sound, setSound] = useState(screen.soundEnabled ?? true);
   const [confirm, setConfirm] = useState<"revoke" | "delete" | 'disable' | 'enable' | null>(null);
@@ -135,7 +140,11 @@ function Details({ screen }: { screen: Screen }) {
         <Button disabled={busy || !screen.deviceId || screen.revoked} onClick={async () => { setBusy(true); try { await sendDeviceCommand(screen.id, command); refresh(); toast.success("Commande mise en attente"); } catch (error) { toast.error(error instanceof Error ? error.message : "Commande refusée"); } finally { setBusy(false); } }}><Send /> Envoyer</Button>
       </div>
       <div className="mt-6 grid grid-cols-1 items-center gap-4 border-y border-border py-5 sm:grid-cols-[minmax(0,1fr)_auto]"><div className="min-w-0"><p className="font-medium">Application Android TV</p><p className="text-sm text-muted-foreground">Envoie la dernière version publiée. La TV télécharge l’APK puis affiche l’écran d’installation Android.</p></div><Button variant="outline" disabled={busy || !screen.deviceId || screen.revoked} onClick={async () => { setBusy(true); try { const r = await sendApkUpdate({ data: { screenId: screen.id } }); refresh(); toast.success(`Mise à jour ${r.versionName} envoyée`); } catch (error) { toast.error(error instanceof Error ? error.message : "Mise à jour refusée"); } finally { setBusy(false); } }}>Mettre à jour l’APK</Button></div>
-      <ul className="mt-5 divide-y">{commands.filter((c) => c.screenId === screen.id).slice(0, 30).map((c) => <li key={c.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 py-3 text-sm"><div className="min-w-0"><p className="font-medium">{COMMAND_LABELS[c.command]}</p><p className="text-muted-foreground">{new Date(c.createdAt).toLocaleString("fr-FR")}</p>{c.error && <p className="break-words text-destructive">{c.error}</p>}</div><span className="text-muted-foreground">{COMMAND_STATUSES[(c.status === "pending" || c.status === "delivered") && Date.parse(c.expiresAt) <= Date.now() ? "expired" : c.status]}</span></li>)}</ul>
+      <ul className="mt-5 divide-y">{screenCommands.slice(commandOffset, commandOffset + 10).map((c) => <li key={c.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 py-3 text-sm"><div className="min-w-0"><p className="font-medium">{COMMAND_LABELS[c.command]}</p><p className="text-muted-foreground">{new Date(c.createdAt).toLocaleString("fr-FR")}</p>{c.error && <p className="break-words text-destructive">{c.error}</p>}</div><span className="text-muted-foreground">{COMMAND_STATUSES[(c.status === "pending" || c.status === "delivered") && Date.parse(c.expiresAt) <= Date.now() ? "expired" : c.status]}</span></li>)}</ul>
+      {screenCommands.length > 0 && <nav aria-label="Pagination des commandes" className="mt-4 grid grid-cols-1 items-center gap-3 border-t border-border pt-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <p className="min-w-0 text-sm text-muted-foreground">{commandOffset + 1}–{Math.min(commandOffset + 10, screenCommands.length)} sur {screenCommands.length} commandes chargées</p>
+        <div className="flex shrink-0 items-center gap-3"><Button variant="outline" size="icon" aria-label="Page précédente des commandes" title="Page précédente" disabled={currentCommandPage <= 1} onClick={() => setCommandPage(currentCommandPage - 1)}><ChevronLeft /></Button><span className="min-w-24 text-center text-sm tabular-nums" aria-live="polite">Page {currentCommandPage} / {commandPages}</span><Button variant="outline" size="icon" aria-label="Page suivante des commandes" title="Page suivante" disabled={currentCommandPage >= commandPages} onClick={() => setCommandPage(currentCommandPage + 1)}><ChevronRight /></Button></div>
+      </nav>}
       {!commands.some((c) => c.screenId === screen.id) && <p className="mt-4 text-sm text-muted-foreground">Aucune commande envoyée.</p>}
     </section>
       </TabsContent>
