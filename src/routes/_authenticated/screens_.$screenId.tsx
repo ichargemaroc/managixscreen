@@ -16,6 +16,7 @@ import { DisplayRotationPicker } from '@/components/display-rotation-picker';
 import type { DisplayRotation } from '@/lib/display-rotation';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Switch } from '@/components/ui/switch';
+import { MediaThumbnail } from '@/components/media-thumbnail';
 
 export const Route = createFileRoute("/_authenticated/screens_/$screenId")({
   head: () => ({ meta: [
@@ -93,7 +94,7 @@ function Details({ screen }: { screen: Screen }) {
           {assignedPlaylist?.items.length ? <ol className="mt-5 divide-y divide-border border-y border-border">{assignedPlaylist.items.map((item, index) => {
             const file = media.find((m) => m.id === item.mediaId);
             const Icon = file?.type === "video" ? Film : file?.type === "webpage" ? Globe : ImageIcon;
-            return <li key={item.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3"><span className="w-6 text-center text-xs text-muted-foreground">{index + 1}</span><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-16 shrink-0 items-center justify-center overflow-hidden rounded border border-border bg-muted">{file?.thumbnailUrl && file.type === "image" ? <img src={file.thumbnailUrl} alt="" loading="lazy" className="size-full object-cover" /> : <Icon className="size-5 text-muted-foreground" />}</div><div className="min-w-0"><p className="truncate text-sm font-medium">{file?.name ?? "Média indisponible"}</p><p className="text-xs text-muted-foreground">{file?.type === "video" ? "Vidéo" : file?.type === "webpage" ? "Page Web" : "Image"}</p></div></div><span className="text-xs tabular-nums text-muted-foreground">{item.duration} s</span></li>;
+            return <li key={item.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3"><span className="w-6 text-center text-xs text-muted-foreground">{index + 1}</span><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-16 shrink-0 items-center justify-center overflow-hidden rounded border border-border bg-muted">{file ? <MediaThumbnail media={file} /> : <Icon className="size-5 text-muted-foreground" />}</div><div className="min-w-0"><p className="truncate text-sm font-medium">{file?.name ?? "Média indisponible"}</p><p className="text-xs text-muted-foreground">{file?.type === "video" ? "Vidéo" : file?.type === "webpage" ? "Page Web" : "Image"}</p></div></div><span className="text-xs tabular-nums text-muted-foreground">{item.duration} s</span></li>;
           })}</ol> : <div className="mt-5 flex flex-col items-center justify-center gap-3 border-y border-border py-12 text-muted-foreground"><ListVideo className="size-9" strokeWidth={1.25} /><p className="text-sm">{assignedPlaylist ? "Cette playlist est vide." : "Aucune playlist affectée à cette TV."}</p></div>}
           </section>
           <section className="min-w-0 lg:border-l lg:border-border lg:pl-8"><h2 className="mb-5 text-lg font-semibold">Informations du lecteur</h2>

@@ -64,3 +64,4 @@ use the editor.
 - Player D-pad focus and native Back handling live in src/player/tv-navigation.ts; Back closes playback controls before exiting at root without changing cached media or paired identity.
 - Wall media placement uses normalized offsets and a uniform scale persisted by the owner-scoped wall RPC; previews and native playback share wallMediaRect so movement and resizing change actual cropping without distortion.
 - Screen detail tabs share one local settings draft and existing store actions; content remains read-only so presentation changes cannot alter playlist editing or device permissions.
+- Screen-detail image previews use per-media compressed thumbnail queries from the store and reuse the media-library cache, avoiding full-library signing on metadata pages.

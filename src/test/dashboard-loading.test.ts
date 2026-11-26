@@ -6,7 +6,7 @@ vi.mock('@/integrations/supabase/client', () => ({ supabase: {
   from: mocks.from,
   storage: { from: () => ({ createSignedUrls: mocks.sign, createSignedUrl: mocks.thumbnail }) },
 } }));
-import { fetchAll, storeScope, mediaPreviewOptions } from '@/lib/store';
+import { fetchAll, storeScope, mediaPreviewOptions, mediaThumbnailOptions } from '@/lib/store';
 
 type Result = { data: Record<string, unknown>[]; error: null };
 type ReadQuery = Promise<Result> & { select: () => ReadQuery; order: () => ReadQuery; limit: () => ReadQuery };
@@ -66,6 +66,22 @@ describe('Dashboard loading', () => {
     const data = await fetchAll(client, 'dashboard');
     expect(data.screens[0]?.status).toBe('offline');
     expect(data.screens[0]?.revoked).toBe(true);
+    client.clear();
+  });
+
+  it('loads only a compressed image thumbnail from screen metadata and reuses its cache', async () => {
+    const client = new QueryClient();
+    const data = await fetchAll(client, storeScope('/screens/screen-1'));
+    const photo = data.media[0];
+    if (!photo) throw new Error('Missing media fixture');
+    expect(photo.thumbnailUrl).toBe('');
+    expect(await client.fetchQuery(mediaThumbnailOptions(photo))).toBe('https://media.test/thumbnail');
+    expect(mocks.thumbnail).toHaveBeenCalledWith('owner/photo.jpg', 3600, {
+      transform: { width: 480, height: 270, resize: 'cover', quality: 70 },
+    });
+    await client.fetchQuery(mediaThumbnailOptions(photo));
+    expect(mocks.thumbnail).toHaveBeenCalledTimes(1);
+    expect(mocks.sign).not.toHaveBeenCalled();
     client.clear();
   });
 

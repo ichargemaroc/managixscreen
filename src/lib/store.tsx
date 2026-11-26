@@ -83,6 +83,22 @@ export async function loadMediaUrls(queryClient: QueryClient, rows: { path: stri
   return new Map(originals.map((m) => [m.path, { url: m.url, thumbnailUrl: thumbnailByPath.get(m.path) || m.url }]));
 }
 
+// Resolve visible image thumbnails without signing the entire library.
+export const mediaThumbnailOptions = (media: Media) => queryOptions({
+  queryKey: ['media-private-links', 'thumbnail', media.path],
+  staleTime: 50 * 60_000,
+  retry: false,
+  queryFn: async () => {
+    if (media.thumbnailUrl) return media.thumbnailUrl;
+    if (media.type !== 'image') return '';
+    const { data, error } = await supabase.storage.from('media').createSignedUrl(media.path, 3600, {
+      transform: { width: 480, height: 270, resize: 'cover', quality: 70 },
+    });
+    if (error || !data?.signedUrl) throw new Error('Aperçu indisponible.');
+    return data.signedUrl;
+  },
+});
+
 // Resolve only the opened preview; the dashboard never signs the whole library.
 export const mediaPreviewOptions = (media: Media) => queryOptions({
   queryKey: ['media-preview-link', media.id, media.path, media.url],
