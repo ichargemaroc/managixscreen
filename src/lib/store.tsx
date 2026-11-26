@@ -83,6 +83,20 @@ export async function loadMediaUrls(queryClient: QueryClient, rows: { path: stri
   return new Map(originals.map((m) => [m.path, { url: m.url, thumbnailUrl: thumbnailByPath.get(m.path) || m.url }]));
 }
 
+// Resolve only the opened preview; the dashboard never signs the whole library.
+export const mediaPreviewOptions = (media: Media) => queryOptions({
+  queryKey: ['media-preview-link', media.id, media.path, media.url],
+  staleTime: 50 * 60_000,
+  retry: false,
+  queryFn: async () => {
+    if (media.url) return media.url;
+    if (media.type === 'webpage') throw new Error('Aperçu indisponible.');
+    const { data, error } = await supabase.storage.from('media').createSignedUrl(media.path, 3600);
+    if (error || !data?.signedUrl) throw new Error('Aperçu indisponible.');
+    return data.signedUrl;
+  },
+});
+
 export type StoreScope = 'dashboard' | 'metadata' | 'media';
 
 export function storeScope(pathname: string): StoreScope {
@@ -103,7 +117,7 @@ export async function fetchAll(queryClient: QueryClient, scope: StoreScope = 'me
     full ? supabase.from("schedules").select("*").order("created_at") : empty,
     full ? supabase.from("screen_group_members").select("*") : empty,
     supabase.from("pairing_sessions").select("screen_id, device_id, status"),
-    full ? supabase.from("device_telemetry").select("*") : empty,
+    supabase.from("device_telemetry").select("device_id,player_version,last_sync_at,device_info,playback_status"),
     full ? supabase.from("device_commands").select("*").order("created_at", { ascending: false }).limit(200) : empty,
     full ? supabase.from("video_walls").select("*").order("created_at") : empty,
     full ? supabase.from("video_wall_screens").select("*") : empty,

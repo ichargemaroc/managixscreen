@@ -6,7 +6,7 @@ vi.mock('@/integrations/supabase/client', () => ({ supabase: {
   from: mocks.from,
   storage: { from: () => ({ createSignedUrls: mocks.sign, createSignedUrl: mocks.thumbnail }) },
 } }));
-import { fetchAll, storeScope } from '@/lib/store';
+import { fetchAll, storeScope, mediaPreviewOptions } from '@/lib/store';
 
 type Result = { data: Record<string, unknown>[]; error: null };
 type ReadQuery = Promise<Result> & { select: () => ReadQuery; order: () => ReadQuery; limit: () => ReadQuery };
@@ -18,6 +18,7 @@ describe('Dashboard loading', () => {
         screens: [{ id: 'screen-1', name: 'Écran réel', status: 'online', last_seen: new Date().toISOString(), playlist_id: 'playlist-1' }],
         media: [{ id: 'photo-1', name: 'Photo', type: 'image', path: 'owner/photo.jpg' }],
         playlists: [{ id: 'playlist-1', name: 'Playlist réelle' }],
+        device_telemetry: [{ device_id: 'device-1', player_version: 'android-tv-1.0.5', last_sync_at: '2026-11-26T20:17:00Z', playback_status: { state: 'playing', media_id: 'photo-1', playlist_id: 'playlist-1' } }],
         pairing_sessions: [{ screen_id: 'screen-1', device_id: 'device-1', status: 'revoked' }],
       };
       const query: ReadQuery = Object.assign(Promise.resolve({ data: fixtures[table] ?? [], error: null }), {
@@ -31,15 +32,32 @@ describe('Dashboard loading', () => {
     mocks.thumbnail.mockReset().mockResolvedValue({ data: { signedUrl: 'https://media.test/thumbnail' }, error: null });
   });
 
-  it('loads only four useful tables and never waits for storage signing', async () => {
+  it('loads only five useful tables and never waits for storage signing', async () => {
     const client = new QueryClient();
     const data = await fetchAll(client, storeScope('/'));
-    expect(mocks.from.mock.calls.map(([table]) => table).sort()).toEqual(['media', 'pairing_sessions', 'playlists', 'screens']);
+    expect(mocks.from.mock.calls.map(([table]) => table).sort()).toEqual(['device_telemetry', 'media', 'pairing_sessions', 'playlists', 'screens']);
     expect(data.screens.map((screen) => screen.name)).toEqual(['Écran réel']);
     expect(data.media).toHaveLength(1);
     expect(data.playlists).toHaveLength(1);
+    expect(data.screens[0]?.playerVersion).toBe('android-tv-1.0.5');
+    expect(data.screens[0]?.lastSyncAt).toBe('2026-11-26T20:17:00Z');
+    expect(data.screens[0]?.playbackStatus).toEqual({ state: 'playing', media_id: 'photo-1', playlist_id: 'playlist-1' });
     expect(mocks.sign).not.toHaveBeenCalled();
     expect(mocks.thumbnail).not.toHaveBeenCalled();
+    client.clear();
+  });
+
+  it('signs only the selected media when opening a dashboard preview', async () => {
+    const client = new QueryClient();
+    const data = await fetchAll(client, 'dashboard');
+    const media = data.media[0];
+    if (!media) throw new Error('Missing media fixture');
+    expect(mocks.thumbnail).not.toHaveBeenCalled();
+    expect(await client.fetchQuery(mediaPreviewOptions(media))).toBe('https://media.test/thumbnail');
+    expect(mocks.thumbnail).toHaveBeenCalledWith('owner/photo.jpg', 3600);
+    expect(mocks.sign).not.toHaveBeenCalled();
+    await client.fetchQuery(mediaPreviewOptions(media));
+    expect(mocks.thumbnail).toHaveBeenCalledTimes(1);
     client.clear();
   });
 
