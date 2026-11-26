@@ -1,3 +1,7 @@
+## Nouveaux tarifs marocains
+- [ ] Confirmer si Starter/Pro/Business, l’essai à deux écrans et l’offre Fondateurs remplacent réellement les conditions actuelles ou constituent un aperçu seulement ; ne pas modifier les abonnements existants.
+- [ ] Refaire les cartes tarifaires, le sélecteur mensuel/annuel, la comparaison et la FAQ de la page Tarifs et de l’accueil après confirmation.
+
 ## Filtres de la médiathèque
 - [x] Ajouter « Filtrer par » : date d’import, types multiples, appliquer et réinitialiser ; orientation et étiquettes indisponibles sans métadonnées.
 - [x] Filtres type/date combinés et réinitialisés dans la médiathèque connectée avec une image temporaire supprimée après contrôle ; ordinateur et téléphone vérifiés, 7 tests réussis et compilation correcte.
