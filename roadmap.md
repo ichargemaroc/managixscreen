@@ -2,6 +2,10 @@
 - [x] Ouvrir la page détail d'une TV au clic n'importe où sur sa ligne, sans détourner le lien du nom ni le bouton d'actions.
 - [x] 3 tests ciblés et 331 tests réussis ; trois TV réelles relues, navigation et bouton d'actions vérifiés, compilation correcte.
 
+## Ergonomie de la fiche TV
+- [x] En-tête, résumé et onglets Contenu, Paramètres, Commandes, Accès au style de la page Écrans, sans changer les actions existantes.
+- [x] Fiche réelle ouverte, modification locale puis annulation, confirmation de suppression annulée ; téléphone sans débordement, 24 tests réussis et compilation correcte.
+
 ## Création de groupe depuis Ajouter une TV
 - [x] Proposer la création sans quitter le jumelage, enregistrer et sélectionner automatiquement le groupe.
 - [x] Groupe temporaire créé, automatiquement sélectionné et relu après rechargement dans une session connectée, puis supprimé ; téléphone sans débordement, 21 tests ciblés réussis et compilation correcte.

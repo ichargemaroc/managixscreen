@@ -63,3 +63,4 @@ use the editor.
 - Wall position tests reuse device_commands with server-derived assignment snapshots, expiring sessions and owner-only RPCs; independent five-second player polling must not wait for media downloads, and acknowledgements confirm rendered tests rather than enqueue success.
 - Player D-pad focus and native Back handling live in src/player/tv-navigation.ts; Back closes playback controls before exiting at root without changing cached media or paired identity.
 - Wall media placement uses normalized offsets and a uniform scale persisted by the owner-scoped wall RPC; previews and native playback share wallMediaRect so movement and resizing change actual cropping without distortion.
+- Screen detail tabs share one local settings draft and existing store actions; content remains read-only so presentation changes cannot alter playlist editing or device permissions.
