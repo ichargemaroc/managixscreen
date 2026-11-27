@@ -41,8 +41,10 @@ export function WebpageStage({ url, name, fullscreen = true, refreshMinutes = 0,
   }, [url, refreshMinutes, fullscreen, active, muted, rotation, rectangle?.x, rectangle?.y, rectangle?.width, rectangle?.height]);
   const youtube = !!youtubeEmbedUrl(url);
   const trusted=isScreenflowDisplay(url,typeof window!=='undefined'?window.location.origin:'https://screenflow.live');
+  // Modern sites load module scripts with CORS; an opaque (null) origin blanks them. A different origin keeps its own isolation.
+  const crossOrigin=(()=>{try{return typeof window!=='undefined'&&new URL(displayWebpageUrl(url),window.location.href).origin!==window.location.origin;}catch{return false;}})();
   return <div className={fullscreen ? 'tv-webpage' : 'tv-webpage tv-webpage-inset'}>
-    {active && web && !failed && <iframe key={revision} title={name} src={displayWebpageUrl(url)} sandbox={trusted?'allow-scripts allow-same-origin':youtube ? 'allow-scripts allow-same-origin allow-presentation' : 'allow-scripts allow-forms'} allow={muted?'autoplay \'none\'; encrypted-media':youtube ? 'autoplay; encrypted-media; picture-in-picture' : undefined} referrerPolicy="no-referrer" onLoad={loaded} onError={fail} />}
+    {active && web && !failed && <iframe key={revision} title={name} src={displayWebpageUrl(url)} sandbox={trusted?'allow-scripts allow-same-origin':youtube ? 'allow-scripts allow-same-origin allow-presentation' : crossOrigin ? 'allow-scripts allow-same-origin allow-forms' : 'allow-scripts allow-forms'} allow={muted?'autoplay \'none\'; encrypted-media':youtube ? 'autoplay; encrypted-media; picture-in-picture' : undefined} referrerPolicy="no-referrer" onLoad={loaded} onError={fail} />}
     {active && loading && <p role="status" className="tv-webpage-status">Chargement de la page…</p>}
     {active && failed && <p role="alert" className="tv-webpage-status">Page Web indisponible.</p>}
   </div>;
