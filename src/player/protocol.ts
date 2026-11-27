@@ -7,6 +7,7 @@ import { displayRotationSchema } from '@/lib/display-rotation';
 import { tickerSchema } from '@/lib/ticker';
 import { slideTransitionSchema } from '@/lib/slide-transition';
 import { musicPlaybackSchema } from '@/lib/background-music';
+import { itemScheduleSchema } from '@/lib/playlist-item-settings';
 
 export const playerMediaSchema = z.object({ id: z.string().uuid(), name: z.string(), type: z.enum(['image', 'video', 'webpage']), size: z.number(), duration: z.number().nullable(), download_url: z.string().url().optional(), webpage_url: z.string().nullable().optional(), refresh_minutes: z.number().int().min(0).max(1440).optional(), webpage_fullscreen: z.boolean().optional() }).superRefine((media, ctx) => {
   if (media.type === 'webpage') { try { webpageUrl(media.webpage_url ?? ''); } catch { ctx.addIssue({ code: 'custom', message: 'Invalid webpage URL' }); } }
@@ -15,7 +16,7 @@ export const playerMediaSchema = z.object({ id: z.string().uuid(), name: z.strin
 
 export const credentialsSchema = z.object({ device_id: z.string().uuid(), device_token: z.string().regex(/^[a-f0-9]{64}$/), pairing_code: z.string().regex(/^\d{6}$/), expires_at: z.number(), paired: z.boolean() });
 export type Credentials = z.infer<typeof credentialsSchema>;
-export const playerPlaylistSchema = z.object({ id: z.string().uuid(), name: z.string(), updated_at: z.string(), slide_transition: slideTransitionSchema.optional(), ticker: tickerSchema.nullable().optional().catch(null), items: z.array(z.object({ id: z.string().uuid(), position: z.number().int().min(0), display_duration: z.number().positive(), media: playerMediaSchema })) });
+export const playerPlaylistSchema = z.object({ id: z.string().uuid(), name: z.string(), updated_at: z.string(), slide_transition: slideTransitionSchema.optional(), ticker: tickerSchema.nullable().optional().catch(null), items: z.array(z.object({ id: z.string().uuid(), position: z.number().int().min(0), display_duration: z.number().positive(), schedule: itemScheduleSchema.nullable().optional(), transition: slideTransitionSchema.nullable().optional(), media: playerMediaSchema })) });
 export const playerLayoutSchema = z.object({ id:z.string().uuid(),name:z.string(),revision:z.number(),zones:z.array(zoneSchema.extend({ playlist:playerPlaylistSchema.nullable() })).min(2).max(4) });
 export const contentSchema = z.object({ background_music: musicPlaybackSchema.nullable().optional(), display_rotation: displayRotationSchema.default(0), slide_transition: slideTransitionSchema.catch('default'), layout:playerLayoutSchema.nullable().optional(),entitlement: deviceEntitlementSchema.optional(), wall: wallPlaybackSchema.nullable().optional(), server_time: z.string().optional(), clock_offset: z.number().optional(), screen_id: z.string().uuid(), assignment_updated_at: z.string(), last_sync_at: z.string(), fingerprint: z.string().optional(), playlist: playerPlaylistSchema.nullable() });
 export const unchangedSchema = z.object({ unchanged: z.literal(true), fingerprint: z.string(), entitlement: deviceEntitlementSchema.optional(), server_time: z.string().optional(), last_sync_at: z.string() });

@@ -1,3 +1,9 @@
+## Réglages individuels des médias
+- [x] Enregistrer les horaires quotidiens, périodes/jours et transitions par élément ; duplication explicite sans réimporter le fichier.
+- [x] Conserver les identités et réglages lors du tri et des modifications depuis la médiathèque ou les playlists ; les ajouts ordinaires restent sans doublons.
+- [x] Lecteur temporaire réellement jumelé : photo affichée avec Zoom, horaires/période/jours relus après rechargement, copie avec transition indépendante puis réordonnée ; arrêt et reprise depuis le cache hors connexion, téléphone sans débordement. Données temporaires supprimées ; règles multi-zones testées.
+- [ ] Validation sur Android TV physique : nouvel APK et matériel nécessaires.
+
 ## Menu des médias sur la fiche TV
 - [x] Ajouter le menu de référence aux médias de la playlist par défaut ; déplacement et retrait avec confirmation de l’impact sur toutes les TV, options individuelles non prises en charge et duplication désactivées.
 - [x] Menu connecté vérifié sur une playlist temporaire : déplacement et retrait relus après rechargement, annulation conservant le média, téléphone sans débordement ; affectation initiale restaurée et données temporaires supprimées. Sept tests réussis, compilation correcte.

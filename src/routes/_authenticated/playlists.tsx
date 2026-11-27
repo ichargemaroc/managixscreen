@@ -97,7 +97,7 @@ function Editor({ playlist, onBack }: { playlist: Playlist; onBack: () => void }
     if (busy) return;
     setBusy(true);
     try {
-      await savePlaylistItems(playlist.id, next.map((it) => ({ mediaId: it.mediaId, duration: it.duration })));
+      await savePlaylistItems(playlist.id, next);
       setItems(next); refresh();
     } catch { toast.error("La playlist n’a pas pu être enregistrée"); } finally { setBusy(false); }
   };

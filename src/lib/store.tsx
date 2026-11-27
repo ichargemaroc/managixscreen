@@ -21,6 +21,7 @@ import { slideTransitionSchema, type SlideTransition } from './slide-transition'
 import { parseTicker, tickerSchema, type Ticker } from './ticker';
 import { musicSettingsSchema, validateMusicFile, type MusicSettings } from './background-music';
 import { getPublicPricing } from './public-pricing.functions';
+import { itemScheduleSchema, itemSettingsSchema, type ItemSchedule, type ItemSettings } from './playlist-item-settings';
 
 export const publicPricingOptions = queryOptions({ queryKey: ['public-pricing'], queryFn: () => getPublicPricing(), staleTime: 30_000 });
 
@@ -37,7 +38,7 @@ export type Screen = {
 };
 export type DeviceCommand = { id: string; screenId: string; command: z.infer<typeof deviceCommand>; status: string; createdAt: string; deliveredAt: string | null; acknowledgedAt: string | null; expiresAt: string; error: string | null; wallId: string | null; testId: string | null; payload: unknown };
 export type Media = { id: string; name: string; type: "image" | "video" | "webpage"; size: number; duration: number | null; url: string; thumbnailUrl?: string; path: string; createdAt: string; refreshMinutes?: number; fullscreen?: boolean };
-export type PlaylistItem = { id: string; mediaId: string; duration: number };
+export type PlaylistItem = { id: string; mediaId: string; duration: number; schedule?: ItemSchedule | null; transition?: SlideTransition | null };
 export type Playlist = { id: string; name: string; description: string; items: PlaylistItem[]; createdAt: string; slideTransition?: SlideTransition; ticker?: Ticker };
 export type Schedule = {
   id: string; playlistId: string; targetType: "screen" | "group"; targetId: string;
@@ -156,7 +157,7 @@ export async function fetchAll(queryClient: QueryClient, scope: StoreScope = 'me
   const itemsByPlaylist = new Map<string, PlaylistItem[]>();
   for (const it of items.data ?? []) {
     const list = itemsByPlaylist.get(it.playlist_id) ?? [];
-    list.push({ id: it.id, mediaId: it.media_id, duration: it.duration });
+    list.push({ id: it.id, mediaId: it.media_id, duration: it.duration, schedule: it.playback_schedule == null ? null : itemScheduleSchema.parse(it.playback_schedule), transition: it.slide_transition == null ? null : slideTransitionSchema.parse(it.slide_transition) });
     itemsByPlaylist.set(it.playlist_id, list);
   }
   return {
@@ -459,14 +460,20 @@ export async function deletePlaylist(id: string) {
 }
 
 // Remplace tout le contenu d'une playlist (ordre + durées) en une opération.
-export async function savePlaylistItems(playlistId: string, items: { mediaId: string; duration: number }[]) {
-  const seen = new Set<string>();
-  items = items.filter((it) => !seen.has(it.mediaId) && seen.add(it.mediaId));
-  const { error } = await supabase.rpc("replace_playlist_items", { p_playlist_id: playlistId, p_items: items });
+export async function savePlaylistItems(playlistId: string, items: (Pick<PlaylistItem, 'mediaId' | 'duration'> & Partial<PlaylistItem>)[]) {
+  const payload = items.map(item => ({ mediaId: item.mediaId, duration: item.duration, ...(item.id ? { id: item.id } : {}), ...(item.schedule === undefined ? {} : { schedule: item.schedule === null ? null : itemScheduleSchema.parse(item.schedule) }), ...(item.transition === undefined ? {} : { transition: item.transition === null ? null : slideTransitionSchema.parse(item.transition) }) }));
+  const { error } = await supabase.rpc("replace_playlist_items", { p_playlist_id: playlistId, p_items: payload });
   if (error) throw error;
   // Notify TVs showing this playlist so they update within seconds; best effort.
   const { data: screens } = await supabase.from("screens").select("id").eq("playlist_id", playlistId);
   for (const screen of screens ?? []) void enqueueCommand({ data: { screenId: screen.id, command: "refresh_content" } }).catch(() => {});
+}
+
+export async function savePlaylistItemSettings(playlistId: string, itemId: string, value: ItemSettings) {
+  const settings = itemSettingsSchema.parse(value);
+  const { error } = await supabase.from('playlist_items').update({ playback_schedule: settings.schedule, slide_transition: settings.transition }).eq('id', itemId).eq('playlist_id', playlistId).select('id').single();
+  if (error) throw new Error('Réglages du média refusés');
+  await refreshPlaylistScreens(playlistId);
 }
 
 export async function assignPlaylist(playlistId: string, targetType: "screen" | "group", targetId: string) {

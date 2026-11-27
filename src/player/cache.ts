@@ -46,7 +46,7 @@ export function downloadContent(content: Content, progress: (done: number, total
   return pending;
 }
 async function storeContent(content: Content, progress: (done: number, total: number) => void) {
-  const items = contentItems(content);
+  const items = [...new Map(contentItems(content).map(item => [cacheKey(content, item), item])).values()];
   // Download the complete replacement before switching playback; keep the old manifest on failure.
   // Three concurrent downloads speed up updates without exhausting TV memory.
   let done = 0; let next = 0;

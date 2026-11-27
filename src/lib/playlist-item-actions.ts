@@ -8,3 +8,9 @@ export function changePlaylistItem<T>(items: readonly T[], index: number, action
   if (item !== undefined) next.splice(target, 0, item);
   return next;
 }
+
+export function duplicatePlaylistItem<T extends { id: string }>(items: readonly T[], index: number, newId: string): T[] {
+  const item = items[index];
+  if (!item || items.some(entry => entry.id === newId)) return [...items];
+  return [...items.slice(0, index + 1), { ...item, id: newId }, ...items.slice(index + 1)];
+}

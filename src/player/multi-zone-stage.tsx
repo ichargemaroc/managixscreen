@@ -4,6 +4,7 @@ import { nextItem, imageDuration, missingMediaAction, type Content, type Item } 
 import { zoneRect, type Zone } from '@/lib/multi-zone';
 import { WebpageStage } from './webpage-stage';
 import { resolveSlideTransition, slideTransitionSchema } from '@/lib/slide-transition';
+import { itemIsActive } from '@/lib/playlist-item-settings';
 
 export function MultiZoneStage({ content, paused, onVideoPlaying }: { content: Content; paused: boolean; onVideoPlaying?: (playing: boolean) => void }) {
   const videos = useRef(new Set<string>());
@@ -11,9 +12,12 @@ export function MultiZoneStage({ content, paused, onVideoPlaying }: { content: C
   useEffect(() => () => { onVideoPlaying?.(false); }, [onVideoPlaying]);
   return <div className="absolute inset-0 bg-player-background">{content.layout?.zones.map(z => <div key={`${content.layout?.id}:${content.layout?.revision}:${z.id}:${z.playlist?.updated_at}`} style={zoneRect(z)} className="absolute overflow-hidden"><ZonePlaylist content={content} zone={z} items={z.playlist?.items ?? []} paused={paused} reportVideo={report} /></div>)}</div>;
 }
-function ZonePlaylist({ content, zone, items, paused, reportVideo }: { content:Content;zone:Zone;items:Item[];paused:boolean;reportVideo: (id: string, playing: boolean) => void }) {
-  const transition = content.layout?.zones.find(z => z.id === zone.id)?.playlist?.slide_transition ?? 'default';
+function ZonePlaylist({ content, zone, items: allItems, paused, reportVideo }: { content:Content;zone:Zone;items:Item[];paused:boolean;reportVideo: (id: string, playing: boolean) => void }) {
+  const [now, setNow] = useState(0);
+  useEffect(() => { setNow(Date.now()); const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
+  const items = allItems.filter(entry => itemIsActive(entry.schedule, now + (content.clock_offset ?? 0)));
   const [index,setIndex] = useState(0); const [source,setSource] = useState(''); const [error,setError] = useState(''); const video=useRef<HTMLVideoElement>(null); const latest=useRef(content);latest.current=content;const item=items[index % Math.max(1,items.length)];
+  const transition = item?.transition ?? content.layout?.zones.find(z => z.id === zone.id)?.playlist?.slide_transition ?? 'default';
   useEffect(()=>{ if(items.length && index>=items.length) setIndex(0); },[items.length,index]);
   // Hors connexion : sauter les médias locaux manquants au lieu de figer la zone.
   const missing=useRef(0);

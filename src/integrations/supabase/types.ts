@@ -616,24 +616,30 @@ export type Database = {
           duration: number
           id: string
           media_id: string
+          playback_schedule: Json | null
           playlist_id: string
           position: number
+          slide_transition: string | null
         }
         Insert: {
           created_at?: string
           duration?: number
           id?: string
           media_id: string
+          playback_schedule?: Json | null
           playlist_id: string
           position?: number
+          slide_transition?: string | null
         }
         Update: {
           created_at?: string
           duration?: number
           id?: string
           media_id?: string
+          playback_schedule?: Json | null
           playlist_id?: string
           position?: number
+          slide_transition?: string | null
         }
         Relationships: [
           {
@@ -1613,6 +1619,10 @@ export type Database = {
       invite_content_member: { Args: { p_email: string }; Returns: Json }
       manifest_media: {
         Args: { m: Database["public"]["Tables"]["media"]["Row"] }
+        Returns: Json
+      }
+      manifest_playlist: {
+        Args: { p_id: string; p_owner: string }
         Returns: Json
       }
       playlist_ticker_key_status: {

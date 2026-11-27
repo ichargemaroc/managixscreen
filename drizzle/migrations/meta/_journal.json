@@ -274,6 +274,27 @@
       "when": 1795730621199,
       "tag": "0038_scope_launch_plan_changes",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1795815439935,
+      "tag": "0039_playlist_item_playback_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1795815609124,
+      "tag": "0040_atomic_playlist_item_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1795815710374,
+      "tag": "0041_playlist_entry_transaction_fix",
+      "breakpoints": true
     }
   ]
 }

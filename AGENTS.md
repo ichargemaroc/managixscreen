@@ -63,7 +63,7 @@ use the editor.
 - Wall position tests reuse device_commands with server-derived assignment snapshots, expiring sessions and owner-only RPCs; independent five-second player polling must not wait for media downloads, and acknowledgements confirm rendered tests rather than enqueue success.
 - Player D-pad focus and native Back handling live in src/player/tv-navigation.ts; Back closes playback controls before exiting at root without changing cached media or paired identity.
 - Wall media placement uses normalized offsets and a uniform scale persisted by the owner-scoped wall RPC; previews and native playback share wallMediaRect so movement and resizing change actual cropping without distortion.
-- Screen detail settings share one local draft; item menus reorder/remove through savePlaylistItems after shared-playlist confirmation, preserving device permissions and duplicate prevention.
+- Item menus use stable entry IDs and store actions; explicit duplication reuses media, while ordinary adds prevent duplicates. Cached per-entry schedules use corrected local time in standard/zoned playback, preserving offline rules and permissions.
 - Screen-detail image previews use per-media compressed thumbnail queries from the store and reuse the media-library cache, avoiding full-library signing on metadata pages.
 - Media library menus reuse existing store actions and transactional playlist saves; unsupported folder and replacement operations stay explicitly disabled to avoid implying unimplemented capabilities.
 - Library video thumbnails extract muted, bounded frames only for visible items, serialize extraction and cache images in the session QueryClient; never alter stored videos or player playback.

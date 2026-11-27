@@ -4,6 +4,7 @@ import { displayRotationSchema } from './display-rotation';
 import { tickerSchema } from '@/lib/ticker';
 import { slideTransitionSchema } from './slide-transition';
 import { musicManifestSchema } from './background-music';
+import { itemScheduleSchema } from './playlist-item-settings';
 
 export const manifestMediaSchema = z.object({ id: z.string().uuid(), name: z.string(), type: z.enum(['image', 'video', 'webpage']), size: z.number(), duration: z.number().nullable(), path: z.string(), webpage_url: z.string().nullable().optional(), refresh_minutes: z.number().int().min(0).max(1440).default(0), webpage_fullscreen: z.boolean().default(true) });
 
@@ -21,7 +22,7 @@ export const manifestSchema = z.object({
   wall: wallPlaybackSchema.nullable().optional(), server_time: z.string().optional(),
   screen_id: z.string().uuid(), assignment_updated_at: z.string(),
   playlist: z.object({ id: z.string().uuid(), name: z.string(), updated_at: z.string(), slide_transition: slideTransitionSchema.optional(), ticker: tickerSchema.nullable().optional().catch(null), items: z.array(z.object({
-    id: z.string().uuid(), position: z.number(), display_duration: z.number(), media: manifestMediaSchema,
+    id: z.string().uuid(), position: z.number(), display_duration: z.number(), schedule: itemScheduleSchema.nullable().optional(), transition: slideTransitionSchema.nullable().optional(), media: manifestMediaSchema,
   })) }).nullable(),
 });
 export const COMMAND_LABELS: Record<z.infer<typeof deviceCommand>, string> = {
