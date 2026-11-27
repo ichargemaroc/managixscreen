@@ -1,3 +1,7 @@
+## Menu des médias sur la fiche TV
+- [x] Ajouter le menu de référence aux médias de la playlist par défaut ; déplacement et retrait avec confirmation de l’impact sur toutes les TV, options individuelles non prises en charge et duplication désactivées.
+- [x] Menu connecté vérifié sur une playlist temporaire : déplacement et retrait relus après rechargement, annulation conservant le média, téléphone sans débordement ; affectation initiale restaurée et données temporaires supprimées. Sept tests réussis, compilation correcte.
+
 ## Nouveaux tarifs marocains
 - [x] Appliquer Starter/Pro/Business, l’essai à deux écrans et l’offre Fondateurs aux nouveaux comptes ; préserver les abonnements existants.
 - [x] Relier les demandes de devis Enterprise à karim.gharbi@me.com via un e-mail prérempli.

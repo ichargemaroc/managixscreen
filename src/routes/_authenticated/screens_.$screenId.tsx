@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/app-shell";
-import { useStore, updateScreen, deleteScreen, revokeDeviceAccess, sendDeviceCommand, setScreenEnabled, type Screen, type DeviceCommand } from "@/lib/store";
+import { useStore, updateScreen, deleteScreen, revokeDeviceAccess, sendDeviceCommand, setScreenEnabled, savePlaylistItems, type Screen, type DeviceCommand } from "@/lib/store";
 import { COMMAND_LABELS, COMMAND_STATUSES } from "@/lib/player-protocol";
 import { sendApkUpdate } from "@/lib/player.functions";
 import { DisplayRotationPicker } from '@/components/display-rotation-picker';
@@ -17,6 +17,8 @@ import type { DisplayRotation } from '@/lib/display-rotation';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Switch } from '@/components/ui/switch';
 import { MediaThumbnail } from '@/components/media-thumbnail';
+import { PlaylistItemMenu } from '@/components/playlist-item-menu';
+import { changePlaylistItem } from '@/lib/playlist-item-actions';
 
 export const Route = createFileRoute("/_authenticated/screens_/$screenId")({
   head: () => ({ meta: [
@@ -69,6 +71,19 @@ function Details({ screen }: { screen: Screen }) {
     finally { setBusy(false); }
   };
   const assignedPlaylist = playlists.find((p) => p.id === screen.playlistId);
+  const [itemAction, setItemAction] = useState<{ itemId: string; action: 'up' | 'down' | 'remove' } | null>(null);
+  const applyItemAction = async () => {
+    if (!assignedPlaylist || !itemAction || busy) return;
+    const index = assignedPlaylist.items.findIndex((item) => item.id === itemAction.itemId);
+    if (index < 0) { setItemAction(null); return; }
+    setBusy(true);
+    try {
+      const next = changePlaylistItem(assignedPlaylist.items, index, itemAction.action);
+      await savePlaylistItems(assignedPlaylist.id, next.map((item) => ({ mediaId: item.mediaId, duration: item.duration })));
+      refresh(); setItemAction(null); toast.success('Playlist mise à jour');
+    } catch { toast.error('La playlist n’a pas pu être enregistrée'); }
+    finally { setBusy(false); }
+  };
   const assignedGroup = groups.find((g) => g.id === screen.groupId);
   const dirty = name !== screen.name || location !== screen.location || code !== screen.pairingCode || groupId !== (screen.groupId ?? "none") || playlistId !== (screen.playlistId ?? "none") || rotation !== (screen.displayRotation ?? 0) || sound !== (screen.soundEnabled ?? true);
   const reset = () => { setName(screen.name); setLocation(screen.location); setCode(screen.pairingCode); setGroupId(screen.groupId ?? "none"); setPlaylistId(screen.playlistId ?? "none"); setRotation(screen.displayRotation ?? 0); setSound(screen.soundEnabled ?? true); };
@@ -99,7 +114,7 @@ function Details({ screen }: { screen: Screen }) {
           {assignedPlaylist?.items.length ? <ol className="mt-5 divide-y divide-border border-y border-border">{assignedPlaylist.items.map((item, index) => {
             const file = media.find((m) => m.id === item.mediaId);
             const Icon = file?.type === "video" ? Film : file?.type === "webpage" ? Globe : ImageIcon;
-            return <li key={item.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3"><span className="w-6 text-center text-xs text-muted-foreground">{index + 1}</span><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-16 shrink-0 items-center justify-center overflow-hidden rounded border border-border bg-muted">{file ? <MediaThumbnail media={file} /> : <Icon className="size-5 text-muted-foreground" />}</div><div className="min-w-0"><p className="truncate text-sm font-medium">{file?.name ?? "Média indisponible"}</p><p className="text-xs text-muted-foreground">{file?.type === "video" ? "Vidéo" : file?.type === "webpage" ? "Page Web" : "Image"}</p></div></div><span className="text-xs tabular-nums text-muted-foreground">{item.duration} s</span></li>;
+            return <li key={item.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3"><span className="w-6 text-center text-xs text-muted-foreground">{index + 1}</span><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-16 shrink-0 items-center justify-center overflow-hidden rounded border border-border bg-muted">{file ? <MediaThumbnail media={file} /> : <Icon className="size-5 text-muted-foreground" />}</div><div className="min-w-0"><p className="truncate text-sm font-medium">{file?.name ?? "Média indisponible"}</p><p className="text-xs text-muted-foreground">{file?.type === "video" ? "Vidéo" : file?.type === "webpage" ? "Page Web" : "Image"}</p></div></div><div className="flex items-center gap-1"><span className="text-xs tabular-nums text-muted-foreground">{item.duration} s</span><PlaylistItemMenu name={file?.name ?? 'Média indisponible'} first={index === 0} last={index === assignedPlaylist.items.length - 1} disabled={busy} onAction={(action) => setItemAction({ itemId: item.id, action })} /></div></li>;
           })}</ol> : <div className="mt-5 flex flex-col items-center justify-center gap-3 border-y border-border py-12 text-muted-foreground"><ListVideo className="size-9" strokeWidth={1.25} /><p className="text-sm">{assignedPlaylist ? "Cette playlist est vide." : "Aucune playlist affectée à cette TV."}</p></div>}
           </section>
           <section className="min-w-0 lg:border-l lg:border-border lg:pl-8"><h2 className="mb-5 text-lg font-semibold">Informations du lecteur</h2>
@@ -157,6 +172,10 @@ function Details({ screen }: { screen: Screen }) {
     </div></div>
       </TabsContent>
     </Tabs>
+    <Dialog open={itemAction !== null} onOpenChange={(open) => { if (!open && !busy) setItemAction(null); }}><DialogContent>
+      <DialogHeader><DialogTitle>{itemAction?.action === 'remove' ? 'Retirer ce média de la playlist ?' : 'Modifier l’ordre de la playlist ?'}</DialogTitle><DialogDescription>Cette modification s’applique à la playlist « {assignedPlaylist?.name} » et à toutes les TV qui la diffusent.{itemAction?.action === 'remove' && ' Le fichier reste dans la médiathèque.'}</DialogDescription></DialogHeader>
+      <DialogFooter><Button variant="outline" disabled={busy} onClick={() => setItemAction(null)}>Annuler</Button><Button variant={itemAction?.action === 'remove' ? 'destructive' : 'default'} disabled={busy} onClick={() => void applyItemAction()}>{busy ? 'Enregistrement…' : 'Confirmer'}</Button></DialogFooter>
+    </DialogContent></Dialog>
     <Dialog open={confirm !== null} onOpenChange={(open) => { if (!open && !busy) setConfirm(null); }}><DialogContent>
       <DialogHeader><DialogTitle>{confirm === 'disable' ? 'Désactiver cet écran ?' : confirm === 'enable' ? 'Réactiver cet écran ?' : confirm === "delete" ? "Supprimer cet écran ?" : "Révoquer l’accès ?"}</DialogTitle><DialogDescription>{confirm === 'disable' ? 'Une place sera libérée et la synchronisation suspendue. Le lecteur mis à jour affichera la désactivation, sans effacer son identité ni son cache. Les anciens APK et les TV hors ligne peuvent conserver la lecture locale.' : confirm === 'enable' ? 'La capacité du forfait sera vérifiée. Aucun nouveau jumelage n’est nécessaire.' : 'L’appareil perdra immédiatement son accès. Un nouveau jumelage sera nécessaire.'}</DialogDescription></DialogHeader>
       <DialogFooter><Button variant="outline" disabled={busy} onClick={() => setConfirm(null)}>Annuler</Button><Button variant="destructive" disabled={busy} onClick={() => void act()}>Confirmer</Button></DialogFooter>
