@@ -11,6 +11,7 @@ export function webpageThumbnailConfig(input: string, origin: string) {
   return {
     src: url.href,
     hostname: new URL(input).hostname,
-    sandbox: trusted ? 'allow-scripts allow-same-origin' : 'allow-scripts',
+    // Cross-origin sites keep their own origin so CORS module scripts load; same-origin pages stay opaque.
+    sandbox: trusted || url.origin !== new URL(origin).origin ? 'allow-scripts allow-same-origin' : 'allow-scripts',
   };
 }

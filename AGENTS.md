@@ -68,8 +68,8 @@ use the editor.
 - Media library menus reuse existing store actions and transactional playlist saves; unsupported folder and replacement operations stay explicitly disabled to avoid implying unimplemented capabilities.
 - Library video thumbnails extract muted, bounded frames only for visible items, serialize extraction and cache images in the session QueryClient; never alter stored videos or player playback.
 - The paginated media library reads metadata first and resolves thumbnail or original links only for mounted cards and opened previews, avoiding full-library signing while preserving other media consumers.
-- Web library thumbnails use visible-only, non-interactive sandboxed miniature frames with autoplay denied; only allow-listed internal display paths retain origin, and embedding restrictions are never bypassed.
+- Web library thumbnails use visible-only, non-interactive sandboxed miniature frames with autoplay denied; cross-origin sites and allow-listed internal paths retain origin, and embedding restrictions are never bypassed.
 - Library filters use existing metadata before pagination; unsupported orientation/tags stay disabled to avoid extra downloads or invented metadata.
 - Billing catalogs are versioned per subscription; launch prices never mutate legacy plans or account rights. Founder slots are reserved transactionally on eligible signup, and service-only quotes apply monthly discounts without charging; the discount period starts at paid monthly activation.
 - Public pricing reads use an anon-scoped server function and store query options; the landing and tariff page share PricingSection to keep amounts and terms consistent.
-- Player web iframes keep their own origin only when cross-origin to the player, because opaque-origin sandboxes block CORS module scripts and blank modern sites; same-origin pages stay opaque.
+- Player/library web iframes keep origin only when cross-origin (opaque origins blank CORS module scripts).
