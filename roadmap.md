@@ -1,3 +1,9 @@
+## Diffusion des pages web
+- [x] Corriger le décompte avant chargement et les URL conservées après modification ; tests des lecteurs normal et multi-zones, 50 tests réussis.
+- [x] Lecteur web réellement jumelé : carte Carrion ajoutée et affectée dans une playlist temporaire, chargement retardé, carte complète affichée puis passage au suivant ; données temporaires supprimées.
+- [x] Code relu : aperçu du formulaire, miniature et aperçu agrandi sans minuterie ; manifeste/RPC de playlist et zones incluent les pages ; cache conserve les URL ; murs sans décompte ; WebView Android signale le chargement au même lecteur. Aucun changement de données existantes ni de permissions.
+- [ ] Validation Android physique des deux modes : compiler et installer un nouvel APK, puis vérifier sur les TV ; matériel indisponible ici.
+
 ## Réglages individuels des médias
 - [x] Enregistrer les horaires quotidiens, périodes/jours et transitions par élément ; duplication explicite sans réimporter le fichier.
 - [x] Conserver les identités et réglages lors du tri et des modifications depuis la médiathèque ou les playlists ; les ajouts ordinaires restent sans doublons.
