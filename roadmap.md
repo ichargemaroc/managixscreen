@@ -2,6 +2,7 @@
 - [x] Corriger le décompte avant chargement et les URL conservées après modification ; tests des lecteurs normal et multi-zones, 50 tests réussis.
 - [x] Lecteur web réellement jumelé : carte Carrion ajoutée et affectée dans une playlist temporaire, chargement retardé, carte complète affichée puis passage au suivant ; données temporaires supprimées.
 - [x] Code relu : aperçu du formulaire, miniature et aperçu agrandi sans minuterie ; manifeste/RPC de playlist et zones incluent les pages ; cache conserve les URL ; murs sans décompte ; WebView Android signale le chargement au même lecteur. Aucun changement de données existantes ni de permissions.
+- [x] TV SALLE (1.0.5) observée 7 min : les 4 photos tournent et la page web est abandonnée en moins de 5 s. Diagnostic ajouté : raison affichée 5 s sur la TV et dans la supervision, nouvelle tentative réseau, certificats refusés signalés.
 - [ ] Validation Android physique des deux modes : compiler et installer un nouvel APK, puis vérifier sur les TV ; matériel indisponible ici.
 
 ## Réglages individuels des médias

@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { reportedWebpageFailure } from '@/lib/webpage-diagnostics';
 import { useEffect, useState } from "react";
 import { Activity, AlertTriangle, Eye, Monitor, RefreshCw } from "lucide-react";
 import { PageHeader, EmptyState, StatusBadge } from "@/components/app-shell";
@@ -70,6 +71,7 @@ export function ScreenMonitoring({ showSummary = true }: { showSummary?: boolean
             const pl = playlists.find((p) => p.id === (pb.playlist_id ?? s.playlistId));
             const md = media.find((m) => m.id === pb.media_id);
             const storage = parseStorageReport(s.deviceInfo);
+            const webpageFailure = reportedWebpageFailure(s.playbackStatus);
             return (
               <Card key={s.id} className={s.status === "online" ? "" : "opacity-80"}>
                 <CardContent className="space-y-3 p-5">
@@ -83,6 +85,7 @@ export function ScreenMonitoring({ showSummary = true }: { showSummary?: boolean
                     <dt className="text-muted-foreground">Playlist</dt><dd className="truncate">{pl?.name ?? "Aucune"}</dd>
                     <dt className="text-muted-foreground">Média</dt><dd className="truncate">{md?.name ?? "—"}</dd>
                     <dt className="text-muted-foreground">Lecture</dt><dd className="flex items-center gap-1"><Activity className="size-3" />{pb.state ? playbackLabels[pb.state] ?? pb.state : "Inconnue"}</dd>
+                    {webpageFailure && <><dt className="text-muted-foreground">Page web</dt><dd className="text-destructive">{webpageFailure}</dd></>}
                     <dt className="text-muted-foreground">Version</dt><dd className="truncate">{s.playerVersion ?? "—"}</dd>
                     <dt className="text-muted-foreground">Stockage total</dt><dd>{storage ? formatStorageBytes(storage.storage_total_bytes) : '—'}</dd>
                     <dt className="text-muted-foreground">Stockage disponible</dt><dd>{storage ? formatStorageBytes(storage.storage_available_bytes) : '—'}</dd>

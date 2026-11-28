@@ -24,12 +24,15 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 public class WebpagePlayerPlugin extends Plugin {
   private final java.util.Map<String, PageState> pages = new java.util.HashMap<>();
   private static class PageState {
-    WebView page; FrameLayout layer; String session; Runnable deadline; boolean loadFailed; boolean silent;
+    WebView page; FrameLayout layer; String session; Runnable deadline; boolean loadFailed; boolean silent; boolean retried; String url;
     android.view.View host; android.view.View.OnLayoutChangeListener layoutListener;
   }
   private final Handler timer = new Handler(Looper.getMainLooper());
-  private void event(PageState p, String state) {
+  private void event(PageState p, String state) { event(p, state, null); }
+  // Codes are allow-listed tokens (net_<int>, http_<int>, ssl_<int>, timeout); never raw native messages.
+  private void event(PageState p, String state, String code) {
     JSObject data = new JSObject(); data.put("session", p.session); data.put("state", state);
+    if (code != null) data.put("code", code);
     notifyListeners("webpageState", data);
   }
   private boolean allowed(String value) {
@@ -43,7 +46,7 @@ public class WebpagePlayerPlugin extends Plugin {
   }
   private void cancelDeadline(PageState p) { if (p.deadline != null) timer.removeCallbacks(p.deadline); }
   private void armDeadline(PageState p) {
-    cancelDeadline(p); p.deadline = () -> { if (p.page != null) { p.loadFailed = true; p.page.stopLoading(); event(p, "error"); } };
+    cancelDeadline(p); p.deadline = () -> { if (p.page != null) { p.loadFailed = true; p.page.stopLoading(); event(p, "error", "timeout"); } };
     timer.postDelayed(p.deadline, 15000);
   }
   private void destroyPage(PageState p) {
@@ -67,7 +70,7 @@ public class WebpagePlayerPlugin extends Plugin {
     getActivity().runOnUiThread(() -> {
       PageState old = pages.get(requested); if (old != null) destroyPage(old);
       if (pages.size() >= 4) { call.reject("WEBPAGE_LIMIT"); return; }
-      PageState p = new PageState(); p.session = requested; p.silent = Boolean.TRUE.equals(call.getBoolean("muted", false));
+      PageState p = new PageState(); p.session = requested; p.url = url; p.silent = Boolean.TRUE.equals(call.getBoolean("muted", false));
       p.layer = new FrameLayout(getActivity()); p.page = new WebView(getActivity()); pages.put(requested, p);
       WebView page = p.page; FrameLayout layer = p.layer;
       WebSettings settings = page.getSettings();
@@ -85,8 +88,19 @@ public class WebpagePlayerPlugin extends Plugin {
         }
         @Override public void onPageStarted(WebView view, String target, Bitmap icon) { p.loadFailed = false; armDeadline(p); }
         @Override public void onPageFinished(WebView view, String target) { if (view == p.page && !p.loadFailed && !"about:blank".equals(target)) { cancelDeadline(p); if (p.silent) view.evaluateJavascript("document.querySelectorAll('video,audio').forEach(function(e){e.muted=true;});", null); event(p,"loaded"); } }
-        @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) { if (request.isForMainFrame()) { p.loadFailed = true; cancelDeadline(p); event(p,"error"); } }
-        @Override public void onReceivedHttpError(WebView view, WebResourceRequest request, android.webkit.WebResourceResponse response) { if (request.isForMainFrame() && response.getStatusCode() >= 400) { p.loadFailed = true; cancelDeadline(p); event(p,"error"); } }
+        @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+          if (!request.isForMainFrame() || view != p.page) return;
+          p.loadFailed = true; cancelDeadline(p);
+          // One delayed retry absorbs transient TV DNS/network failures before reporting.
+          if (!p.retried) { p.retried = true; timer.postDelayed(() -> { if (p.page != null) { armDeadline(p); p.page.loadUrl(p.url); } }, 2000); return; }
+          event(p, "error", "net_" + error.getErrorCode());
+        }
+        @Override public void onReceivedHttpError(WebView view, WebResourceRequest request, android.webkit.WebResourceResponse response) { if (request.isForMainFrame() && response.getStatusCode() >= 400) { p.loadFailed = true; cancelDeadline(p); event(p, "error", "http_" + response.getStatusCode()); } }
+        // Certificate errors are never bypassed; report them instead of leaving a blank page.
+        @Override public void onReceivedSslError(WebView view, android.webkit.SslErrorHandler handler, android.net.http.SslError error) {
+          handler.cancel();
+          if (view == p.page) { p.loadFailed = true; cancelDeadline(p); event(p, "error", "ssl_" + error.getPrimaryError()); }
+        }
       });
       page.setDownloadListener((a,b,c,d,e) -> {});
       page.setOnKeyListener((view, key, event) -> {
