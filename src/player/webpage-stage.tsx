@@ -11,19 +11,21 @@ export function WebpageStage({ url, name, fullscreen = true, refreshMinutes = 0,
   const handlers = useRef({ onError, onState }); handlers.current = { onError, onState };
   const completed = useRef(false); const timeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const rejected = useRef(false); const nativeClose = useRef<(() => void) | undefined>(undefined);
-  const fail = (reason: unknown = 'open_failed') => { if (rejected.current) return; const code = webpageFailureCode(reason); rejected.current = true; completed.current = true; clearTimeout(timeout.current); nativeClose.current?.(); setLoading(false); setFailed(code); handlers.current.onState('error'); handlers.current.onError(code); };
-  const loaded = () => { if (rejected.current) return; completed.current = true; clearTimeout(timeout.current); setLoading(false); handlers.current.onState('playing'); };
+  // Once a page has been shown, later native/frame errors (late redirects, stalled reloads) must not cut its display slot short.
+  const shown = useRef(false);
+  const fail = (reason: unknown = 'open_failed', force = false) => { if (rejected.current) return; if (shown.current && !force) { clearTimeout(timeout.current); setLoading(false); return; } const code = webpageFailureCode(reason); rejected.current = true; completed.current = true; clearTimeout(timeout.current); nativeClose.current?.(); setLoading(false); setFailed(code); handlers.current.onState('error'); handlers.current.onError(code); };
+  const loaded = () => { if (rejected.current) return; shown.current = true; completed.current = true; clearTimeout(timeout.current); setLoading(false); handlers.current.onState('playing'); };
   useEffect(() => {
     if (!active) { handlers.current.onState('paused'); return; }
     let cancelled = false; let close: (() => void) | undefined; let refresh: ReturnType<typeof setInterval> | undefined;
-    const session = crypto.randomUUID(); completed.current = false; rejected.current = false; setLoading(true); setFailed(null); setWeb(false); handlers.current.onState('buffering');
+    const session = crypto.randomUUID(); completed.current = false; rejected.current = false; shown.current = false; setLoading(true); setFailed(null); setWeb(false); handlers.current.onState('buffering');
     timeout.current = setTimeout(() => fail('timeout'), WEBPAGE_TIMEOUT_MS);
     void (async () => {
       try {
         const safeUrl = displayWebpageUrl(url); const native = await nativeWebpage();
         if (cancelled) return;
         if (native) {
-          const listener = await native.listen(event => { if (cancelled || event.session !== session) return; if (event.state === 'loaded') loaded(); else { completed.current = false; fail(event.state === 'back' ? 'open_failed' : event.code ?? 'open_failed'); } });
+          const listener = await native.listen(event => { if (cancelled || event.session !== session) return; if (event.state === 'loaded') loaded(); else { completed.current = false; if (event.state === 'back') fail('open_failed', true); else fail(event.code ?? 'open_failed'); } });
           close = () => { void listener.remove(); void native.close(session).catch(() => {}); };
           nativeClose.current = close;
           if (cancelled) { close(); return; }

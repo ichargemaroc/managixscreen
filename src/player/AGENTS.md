@@ -9,3 +9,4 @@
 - Remote APK updates come only from the latest GitHub Release APK of the player repository, triggered manually per screen via an owner-scoped update_apk command; Android's installer keeps the final confirmation.
 - On restart, recover server-confirmed pairing for saved identities even after the code expires; expired sessions only poll status every 30 seconds and never automatically enroll again.
 - Webpage failures send allow-listed codes (net_/http_/ssl_/timeout/plugin codes) through heartbeat playback_status.error for ten minutes and stay visible on the TV five seconds before skipping; native main-frame errors retry once and certificate errors are cancelled, never bypassed.
+- Once a webpage has loaded, later native or frame errors never cut its display slot short; only failures before first display (or native Back) skip it.
